@@ -1,0 +1,94 @@
+I’m still stuck on an endless “Preparing camera…” spinner. We verified getUserMedia succeeds and a MediaStream is acquired, but the preview never renders because the <video> element isn’t mounted into the correct HtmlElementView container at the time we attach srcObject.
+
+Implement the architect-grade fix below. Do not change unrelated code.
+
+Goals
+
+Preview-first architecture: preview shows reliably before any recording logic.
+
+Deterministic DOM mount into the Flutter Web platform view container, not document.body.
+
+Robust retry with clear UI and bounded attempts (no endless spinner).
+
+Keep working fallback to file-picker when preview cannot be mounted.
+
+Required changes
+
+A) Deterministic container targeting
+
+Identify the HtmlElementView container for our recording widget (by the viewType / platform view ID created by HtmlElementView).
+
+Mount the <video> element inside THAT container only.
+
+Add CSS on the video:
+width: 100%; height: 100%; object-fit: cover; background: black;
+
+B) DOM-ready wait strategy (no microtask)
+
+Replace addPostFrameCallback/scheduleMicrotask with a requestAnimationFrame + polling loop that:
+
+waits until the HtmlElementView container exists and has non-zero size (getBoundingClientRect width & height > 0),
+
+then attaches video.srcObject = stream.
+
+Log each step.
+
+C) Verification and logging (exact messages)
+Print these logs in order:
+
+[CAMERA_PREVIEW] container lookup start
+[CAMERA_PREVIEW] container found: id=<id> size=<w>x<h>
+[CAMERA_PREVIEW] attaching stream to video
+[CAMERA_PREVIEW] video.readyState=<n> before play()
+[CAMERA_PREVIEW] onloadedmetadata fired w=<videoWidth> h=<videoHeight>
+[CAMERA_PREVIEW] canplay fired
+[CAMERA_PREVIEW] preview started
+
+
+If size is 0, log:
+
+[CAMERA_PREVIEW] container size 0 — waiting…
+
+
+D) Safari/iOS attributes (set BEFORE play)
+
+video.playsInline = true;
+video.muted = true;
+video.setAttribute('webkit-playsinline','true');
+video.autoplay = true;
+await video.play().catch(() => {/* swallow, will retry on canplay */});
+
+
+E) Retry & timeout
+
+Max 10 attempts (≈ 2–3s total using rAF or 200ms polling).
+
+If still not mounted, show an inline error panel with:
+
+“Preview failed to start”,
+
+buttons: Retry Preview (reruns mount verification without re-requesting permissions) and Upload a Video (opens picker).
+
+Keep existing 3s global timeout, but replace endless spinner with that panel.
+
+F) Recording separation (preserve preview)
+
+prepareRecording() must use the existing preview stream.
+
+If MediaRecorder fails, keep preview alive and surface “Recording unavailable on this browser—use Upload” with a Retry.
+
+G) Acceptance criteria (must all pass)
+
+On first open, logs show container found with non-zero size, then preview started. Live preview visible.
+
+On iOS Safari, preview shows without entering fullscreen; user can see themselves before any recording.
+
+If preview fails, the error panel appears with Retry/Upload (no infinite spinner).
+
+Hitting Retry Preview eventually shows preview without requesting camera again.
+
+Upload fallback still works.
+
+Do not remove prior [RECORD] logs; add the new [CAMERA_PREVIEW] logs. Keep the file-picker fallback and the record→post navigation.
+
+When done, print the last 20 relevant console logs from a run so I can verify the order.

@@ -1,0 +1,74 @@
+{
+  "task": "Implement conditional UI for Street Performer registration",
+  "files_involved": [
+    "registration_screen.dart",
+    "performer_specific_fields.dart",
+    "common_form_fields.dart",
+    "terms_and_privacy_widget.dart",
+    "account_type_header.dart"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "file": "registration_screen.dart",
+      "action": "Add conditional rendering based on selected account type.",
+      "logic": {
+        "if": "accountType == 'Street Performer'",
+        "then": "Render performer_specific_fields.dart + common_form_fields.dart",
+        "else": "Render new_yorker_specific_fields.dart + common_form_fields.dart"
+      }
+    },
+    {
+      "step": 2,
+      "file": "performer_specific_fields.dart",
+      "action": "Define additional input fields for street performers.",
+      "fields": [
+        "bio (short text input, multiline)",
+        "performance_type (dropdown or segmented buttons)",
+        "location_verification_widget (import and render)",
+        "social_links (Instagram, TikTok, YouTube, optional)"
+      ],
+      "note": "Keep social links optional during registration. They can be edited later."
+    },
+    {
+      "step": 3,
+      "file": "common_form_fields.dart",
+      "action": "Ensure basic inputs exist for all account types.",
+      "fields": [
+        "full_name",
+        "username",
+        "email",
+        "password (with password_strength_indicator.dart)",
+        "confirm_password"
+      ]
+    },
+    {
+      "step": 4,
+      "file": "terms_and_privacy_widget.dart",
+      "action": "Always display at the bottom of registration screen for both account types."
+    },
+    {
+      "step": 5,
+      "file": "account_type_header.dart",
+      "action": "At the top of the registration screen, show the account type header so the user knows they selected Street Performer or New Yorker."
+    },
+    {
+      "step": 6,
+      "post_registration": "Ensure bio and social links are editable later.",
+      "files_to_update": [
+        "edit_profile_page.dart",
+        "profile_service.dart"
+      ],
+      "fields_editable_later": [
+        "bio",
+        "social_links"
+      ],
+      "note": "This ensures Street Performer info can be updated after signup."
+    }
+  ],
+  "ui_behavior": {
+    "street_performer": "Shows extra performer fields during signup.",
+    "new_yorker": "Keeps simple flow with only common_form_fields.dart + new_yorker_specific_fields.dart."
+  },
+  "output": "Street Performer registration screen matches performer-specific needs while keeping New Yorker registration unchanged."
+}

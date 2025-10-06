@@ -1,0 +1,85 @@
+I want to remove the new "Edit Profile" page (the one with avatar + Full Name + Username + Bio inputs) and instead make the old User Profile page layout (Performance Stats, Account, Activity, Support, Settings) the only UserProfile screen.
+
+🔧 Required Changes
+
+Delete the new Edit Profile screen
+
+Remove the widget/class/file that renders the form with "Full Name", "Username", "Bio", and "Save Changes".
+
+Delete any route references to /user-profile-edit.
+
+Keep old User Profile layout intact
+
+The old User Profile page (with Performance Stats, Account, Activity, Support, and Settings) should remain exactly the same visually.
+
+Do not redesign or replace its layout — just wire in real data.
+
+Fix navigation from PerformerProfile → UserProfile
+
+In profile_header_widget.dart, update the Edit button onPressed to navigate directly to the old UserProfile widget instead of /user-profile-edit.
+
+onPressed: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => UserProfile(userId: currentUserId),
+    ),
+  );
+}
+
+
+Update UserProfile widget to fetch real Supabase data
+
+In user_profile.dart, add a constructor that takes userId.
+
+class UserProfile extends StatefulWidget {
+  final String userId;
+  const UserProfile({Key? key, required this.userId}) : super(key: key);
+}
+
+
+Replace all mock data with a Supabase fetch function:
+
+Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
+  final response = await Supabase.instance.client
+      .from('user_profiles')
+      .select('id, full_name, username, role, bio, profile_image_url, followers_count, video_count, supporter_count')
+      .eq('id', userId)
+      .single();
+  return response;
+}
+
+
+Use FutureBuilder in user_profile.dart to load the real user profile data and pass it into the existing widgets (profile_section_widget.dart, supporter_stats_widget.dart, activity_item_widget.dart, etc.).
+
+Update profile widgets to accept real data
+
+Ensure profile_section_widget.dart, supporter_stats_widget.dart, and activity_item_widget.dart receive their data from the fetchUserProfile call instead of hardcoded maps.
+
+Handle null values gracefully (show placeholder avatar if profile_image_url is null, show 0 for counts if missing).
+
+Supabase SQL Reference Query
+The underlying query your app should always run when loading the User Profile page:
+
+SELECT 
+  id,
+  full_name,
+  username,
+  role,
+  bio,
+  profile_image_url,
+  followers_count,
+  video_count,
+  supporter_count
+FROM user_profiles 
+WHERE id = '<userId>';
+
+✅ Expected Result
+
+Clicking Edit from PerformerProfile now takes me to the old User Profile layout.
+
+That page now shows real Supabase data instead of mock/hardcoded values.
+
+The new Edit Profile screen is completely removed.
+
+The app looks exactly like screenshots 2–4, just populated dynamically with live user data.

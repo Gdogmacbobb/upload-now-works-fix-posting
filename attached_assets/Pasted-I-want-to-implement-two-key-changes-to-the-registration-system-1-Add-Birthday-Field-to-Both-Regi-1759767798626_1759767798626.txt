@@ -1,0 +1,50 @@
+I want to implement two key changes to the registration system.
+
+1️⃣ Add Birthday Field to Both Registration Flows  
+   • In both Street Performer and New Yorker registration pages, add a required “Birthday” field.  
+   • Use a DatePicker widget with format MM/DD/YYYY.  
+   • Store it in the local registration state and pass it to Supabase inside the profile metadata as "birthday".  
+   • Ensure the Supabase table public.user_profiles has a column:
+        ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS birthday date;
+   • When creating or upserting the profile, include the new field:
+        'birthday': selectedBirthday.toIso8601String().split('T').first
+
+2️⃣ Prevent Insecure Partial Registrations  
+   • Never create the Supabase auth account or user_profiles record until the frontend confirms all validation passes and navigation to the main app succeeds.  
+   • Change registration flow to:
+        a) Validate all form fields locally (including handle + birthday).  
+        b) Attempt Supabase signUp() only after successful validation.  
+        c) Immediately check the result:
+             - If signUp fails (returns null or error), show SnackBar error and DO NOT insert anything in user_profiles.  
+             - If signUp succeeds but profile insert fails, rollback: delete the newly created auth.user to prevent orphan accounts.
+   • Add rollback code:
+        try {
+          final res = await supabase.auth.signUp(email: email, password: password);
+          final user = res.user;
+          if (user == null) throw Exception('SignUp failed');
+          await supabase.from('user_profiles').insert({
+            'id': user.id,
+            'full_name': fullName,
+            'role': role,
+            'handle': handle,
+            'birthday': birthdayIso,
+            'performance_types': performanceTypes
+          });
+          context.go('/discovery-feed');
+        } catch (e) {
+          debugPrint('[SECURITY] Registration failed, rolling back auth...');
+          final currentUser = supabase.auth.currentUser;
+          if (currentUser != null) await supabase.auth.admin.deleteUser(currentUser.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Registration failed. Please try again.'))
+          );
+        }
+
+   • This ensures that any user who does NOT fully navigate into the app will have their auth entry deleted, keeping the backend clean.
+
+3️⃣ Test Plan  
+   - Fill out both registration forms with valid data and birthday → confirm record appears in Supabase with birthday.  
+   - Intentionally trigger an error (e.g., disconnect network mid-sign-up) → confirm no auth.user or profile record remains.  
+   - On success → confirm console logs:
+       [SECURITY] ✅ Registration and navigation complete
+       [SUPABASE] ✅ Profile created with birthday 1998-04-21

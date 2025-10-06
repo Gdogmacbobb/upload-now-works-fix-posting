@@ -1,0 +1,104 @@
+URGENT: Fix Supabase URL/Key everywhere. The app is using the WRONG Supabase project (I see the old domain like “oemeugiejcjfbpmsftot…supabase.co”). Do the following precisely and ONLY these changes:
+
+Source of truth config (single file)
+
+Create/overwrite: lib/config/supabase_config.dart
+
+Contents must define compile-time constants and a helper:
+
+class AppSupabase {
+static const String url = '<PUT_CORRECT_SUPABASE_URL_HERE>';
+static const String anonKey = '<PUT_CORRECT_SUPABASE_ANON_KEY_HERE>';
+}
+
+Do NOT print the anonKey anywhere. Never log it.
+
+Use the single source everywhere
+
+Replace all Supabase.init / Supabase.initialize calls to use:
+await Supabase.initialize(url: AppSupabase.url, anonKey: AppSupabase.anonKey);
+
+Ensure there is only ONE initialize call (in main.dart before runApp).
+
+Update every client reference to Supabase.instance.client.
+
+Delete/neutralize any other constants/fields that hardcode URLs or keys:
+
+lib/** (services, core, presentation)
+
+web/** (index.html, flutter_bootstrap.js)
+
+Any env helper files (env.dart, secrets.dart, config.dart)
+
+Remove all occurrences of ANY other Supabase domain or key strings.
+Search and replace these patterns (case-insensitive):
+supabase.co
+Supabase.initialize
+anonKey
+supabaseKey
+SUPABASE_URL
+SUPABASE_ANON_KEY
+
+If any file still declares its own url/key, delete those lines and import lib/config/supabase_config.dart instead.
+
+Replit secrets / dart-define (compile-time)
+
+Update the run command to pass the CORRECT values via dart-define:
+flutter run -d web-server --web-port=5000 --web-hostname=0.0.0.0
+--dart-define=SUPABASE_URL=<PUT_CORRECT_SUPABASE_URL_HERE>
+--dart-define=SUPABASE_ANON_KEY=<PUT_CORRECT_SUPABASE_ANON_KEY_HERE>
+
+In lib/config/supabase_config.dart, the constants above remain the canonical fallback. Do NOT rely on runtime environment reads for web.
+
+Purge old cached project references (web)
+
+Confirm service worker is NOT registering. No flutter_service_worker.js in build/web and no registration code in web/index.html or web/flutter_bootstrap.js.
+
+On app start, before Supabase.initialize, clear stale tokens once:
+localStorage.removeItem('sb-${project-ref}-auth-token'); // replace project-ref if present
+
+Do NOT clear again after first run.
+
+Safety & logging
+
+Add one safe log on startup after initialize:
+print('[SUPABASE] URL in use: ' + Uri.parse(AppSupabase.url).host);
+
+Never log the key. Never log full URL with query strings.
+
+If any code still references an old domain (e.g., “oemeugiejcjfbpmsftot”), fail the build with a clear error.
+
+Rebuild & verify
+
+flutter clean
+
+flutter pub get
+
+flutter build web (or the run command above)
+
+On first launch, confirm console shows only:
+[SUPABASE] URL in use: <correct-domain>.supabase.co
+
+Confirm login/registration hit the correct project (successful session, profiles load, etc.).
+
+Constraints:
+
+DO NOT touch UI, navigation, or database schema.
+
+DO NOT change my service worker removal.
+
+Preserve all prior UI edits (performer vs new yorker, camera/community button, performer Edit Profile).
+
+Make NO changes beyond swapping to the correct Supabase URL/key and deduplicating initialization.
+
+Replace the placeholders now:
+<PUT_CORRECT_SUPABASE_URL_HERE> = [PASTE MY REAL URL]
+<PUT_CORRECT_SUPABASE_ANON_KEY_HERE> = [PASTE MY REAL ANON KEY]
+
+When finished, post:
+
+A list of files that previously contained the wrong URL/key and what was changed.
+
+The single location of Supabase.initialize.
+
+The startup console line showing the correct host.

@@ -1,0 +1,51 @@
+Great — the fake presplash is gone and my authentic login UI is back. 
+Now restore the rest of my authentic UI with these requirements:
+
+1. Supabase Authentication:
+   - Verify login is wired to my real Supabase project.
+   - In login_screen.dart → onPressed must call Supabase.auth.signInWithPassword() with email/password.
+   - Ensure Supabase.auth.currentUser is returned after successful login.
+   - If login fails, show inline error messages in the login form.
+
+2. Role-Based Registration Differences:
+   - Restore performer vs New Yorker registration flows.
+   - Performers must have these fields:
+       • Stage Name  
+       • Type of Performance (dropdown: Musician, Dancer, Poet, Comedian, etc.)  
+       • Bio / About Me  
+       • Profile Photo Upload  
+   - New Yorkers must have these fields:
+       • Username / Handle  
+       • Interests (multi-select tags)  
+       • Location  
+   - Store account_type in Supabase user metadata.
+   - After registration, route Performers → performer_profile.dart and New Yorkers → user_profile.dart.
+   - UI for these two flows must be visually different, not identical.
+
+3. Performer Profile:
+   - Must include an **Edit Profile button** (top-right).
+   - Show Stats (Followers, Videos, Supporters).
+   - Display videos grid below profile header.
+   - Orange accent elements (#FF8C00).
+
+4. New Yorker Profile:
+   - No edit button.
+   - Show “Community” button instead of Camera in nav.
+   - Profile has simpler stats (Following, Reposts, Liked).
+
+5. Bottom Navigation (3 tabs only):
+   - Tab 0: Search / Discovery Feed  
+   - Tab 1: Camera (Performers only) or Community (New Yorkers only)  
+   - Tab 2: Profile (routes to Performer Profile or New Yorker Profile depending on account type)  
+   - This must be enforced dynamically by account_type.
+
+6. Preserve All Authentic UI Elements:
+   - Dark theme background (#121212) with orange (#FF8C00) accents.
+   - Statue of Liberty splash screen + “WE OUTSIDE” branding.
+   - Role-based navigation differences.
+   - Support Performer flow with payment buttons.
+   - Video upload/recording restricted to Performers only.
+   - Repost button + New Yorker-only repost tab in profile.
+
+⚠️ DO NOT overwrite Supabase configs, .env, database, or dataset. 
+Only fix authentication wiring, restore role-specific registration, and reapply my authentic UI edits.

@@ -1,0 +1,61 @@
+Implement Phase 5: Donations & Monetization for YNFNY app.
+
+Requirements:
+1. Supabase Database Schema
+- Create new table: public.transactions
+  Columns:
+    id (UUID, PK, default gen_random_uuid())
+    sender_id (UUID, FK → user_profiles.id)
+    recipient_id (UUID, FK → user_profiles.id)
+    amount DECIMAL(10,2) NOT NULL CHECK (amount > 0)
+    currency TEXT DEFAULT 'USD'
+    status ENUM('pending','completed','failed','refunded') DEFAULT 'pending'
+    payment_provider TEXT DEFAULT 'stripe'
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+- Add policies:
+  Users can SELECT all transactions where sender_id = auth.uid() OR recipient_id = auth.uid()
+  Users can INSERT only if sender_id = auth.uid()
+
+2. Payment Integration
+- Integrate Stripe SDK for secure payments.
+- Create PaymentService.dart:
+  - sendDonation({required senderId, required recipientId, required amount})
+  - validatePayment()
+  - updateTransactionStatus()
+- Ensure all keys stored in secure config (supabase_config.dart, environment-safe).
+
+3. Performer Donations
+- Add "Tip Jar" button on PerformerProfilePage.
+- New Yorkers can donate → direct Stripe checkout → updates transactions table.
+- Show confirmation snackbar: "Thanks for supporting this performer!"
+- Performer wallet balance auto-updated (total_donations_received column in user_profiles).
+
+4. Performer-to-Performer Donations
+- Enable same "Tip Jar" button when viewing another performer’s profile.
+- Transactions table records sender & recipient (both performers).
+- Wallet balance updates for recipient.
+
+5. Wallet & Transaction History
+- Add new "Wallet" tab under UserProfilePage:
+  - Show total donations received
+  - Show transaction history list (amount, sender, date, status)
+- Add Withdrawal button (stub function for now, Stripe payout to be implemented Phase 6).
+- Placeholder if no transactions: "No donations yet."
+
+6. Hardening & Testing
+- All API calls wrapped in try/catch with user-friendly errors:
+  - "Payment failed, please try again"
+  - "Donation successful!"
+- Protect against double submission:
+  - Disable donate button during processing
+- Add debug markers:
+  debugPrint("[DONATION] Sender: $senderId → Recipient: $recipientId, Amount: $amount")
+  debugPrint("[DONATION] Transaction status: $status")
+
+⚡ GOAL:
+- New Yorkers can securely donate to Performers
+- Performers can donate to other Performers
+- All transactions tracked in Supabase
+- Wallet balance and history visible to users
+- App never crashes: always shows fallback text or snackbars

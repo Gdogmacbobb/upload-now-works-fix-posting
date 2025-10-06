@@ -1,0 +1,45 @@
+{
+  "task": "Rebuild and verify Street Performer registration UI",
+  "objectives": [
+    "Completely clean and rebuild the registration screen so changes render correctly in the Flutter web environment.",
+    "Ensure performer_specific_fields.dart inside lib/presentation/registration_screen/widgets/ is the ONLY version used — remove or ignore any duplicate versions from backup_*, build_*, or old folders.",
+    "Implement a 6-category performance selector (Music, Dance, Visual Art, Comedy, Magic, Other) with Material icons:",
+    {
+      "Music": "Icons.music_note",
+      "Dance": "Icons.accessibility_new",
+      "Visual Art": "Icons.palette",
+      "Comedy": "Icons.theater_comedy",
+      "Magic": "Icons.auto_awesome",
+      "Other": "Icons.category"
+    },
+    "Allow multi-select (users can pick more than one category).",
+    "When a main category is selected, display a second row showing 7 subcategories relevant to that main category (use real global street performance styles — music, dance, visual art, comedy, magic, etc.).",
+    "Each subcategory can be selected independently. Selecting a main category automatically selects all subcategories.",
+    "Store selected categories and subcategories in Supabase under user_profiles.performance_types as an array of strings.",
+    "On the Performer Profile page, display selected categories (and subcategories if any) as stylized badges below the bio, before the performance stats row. Each badge should include its icon + text label.",
+    "Fix icon visibility by forcing MaterialIcons to load locally using Flutter’s built-in MaterialIcons-Regular.otf and rebuild with --no-tree-shake-icons flag.",
+    "Fix all layout spacing issues — performance type grid must be consistent in size and alignment with clean rounded corners and even padding.",
+    "Ensure the registration_screen.dart uses the correct conditional check: accountType == UserRoles.performerLabel so that performer fields render when Street Performer is selected.",
+    "After code regeneration, run the following rebuild commands automatically:",
+    [
+      "flutter clean",
+      "flutter pub get",
+      "flutter build web --no-tree-shake-icons"
+    ],
+    "Verify in console that the PerformerSpecificFields widget is building by logging: DEBUG: Building PerformerSpecificFields and DEBUG: Selected categories: [list here]."
+  ],
+  "acceptance_criteria": [
+    "Icons visible for all categories.",
+    "UI polished — grid aligned, subcategories styled properly.",
+    "Users can multi-select both categories and subcategories.",
+    "Selections are stored and displayed correctly on the Performer Profile page.",
+    "App compiles with no warnings or dependency errors.",
+    "No more duplicate widget files exist."
+  ],
+  "final_checklist": [
+    "Confirm UI displays all 6 main performance types with icons.",
+    "Confirm tapping a category shows 7 subcategories below it.",
+    "Confirm multi-selection works for both levels.",
+    "Confirm selected types appear on profile page below bio."
+  ]
+}

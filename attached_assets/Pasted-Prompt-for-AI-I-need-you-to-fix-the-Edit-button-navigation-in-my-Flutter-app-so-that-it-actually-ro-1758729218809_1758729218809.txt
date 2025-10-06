@@ -1,0 +1,87 @@
+Prompt for AI
+
+I need you to fix the Edit button navigation in my Flutter app so that it actually routes from the PerformerProfile screen to the UserProfile screen, using the same Supabase data.
+
+Requirements:
+
+Edit Button Navigation
+
+Location: lib/presentation/performer_profile/widgets/profile_header_widget.dart
+
+Replace the current Navigator.pushNamed call.
+
+New behavior:
+
+onPressed: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => UserProfile(userId: performerData["id"]),
+    ),
+  );
+}
+
+
+Ensure UserProfile is imported at the top.
+
+UserProfile Constructor
+
+Location: lib/presentation/user_profile/user_profile.dart
+
+Update class:
+
+class UserProfile extends StatefulWidget {
+  final String userId;
+  const UserProfile({Key? key, required this.userId}) : super(key: key);
+}
+
+
+Update _UserProfileState to use widget.userId.
+
+Supabase Query for UserProfile
+
+Replace any mock data in user_profile.dart with a real Supabase query:
+
+final response = await supabase
+    .from('user_profiles')
+    .select('id, full_name, username, role, bio, profile_image_url, followers_count, video_count, supporter_count')
+    .eq('id', widget.userId)
+    .maybeSingle();
+
+
+If response == null, show "No profile found".
+
+Shared Data
+
+UserProfile must display the same live Supabase data as PerformerProfile.
+
+Use consistent field names: full_name, username, role, bio, profile_image_url, followers_count, video_count, supporter_count.
+
+Default Image
+
+If profile_image_url is null, display a placeholder avatar (don’t fallback to "Unknown Performer").
+
+Supabase SQL Query for consistency
+
+select
+  id,
+  full_name,
+  username,
+  role,
+  bio,
+  profile_image_url,
+  followers_count,
+  video_count,
+  supporter_count
+from user_profiles
+where id = '<userId>';
+
+Expected Outcome:
+
+The Profile tab still opens PerformerProfile.
+
+The orange Edit button on PerformerProfile now correctly navigates to UserProfile.
+
+UserProfile shows the detailed account settings screen (like in my design mockups), using real Supabase data tied to that userId.
+
+No more blank/black "Failed to load profile data" screen.

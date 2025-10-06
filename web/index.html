@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <title>YNFNY</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <link rel="preload" href="assets/fonts/MaterialIcons-Regular.otf" as="font" type="font/otf" crossorigin>
+    <style>
+      @font-face {
+        font-family: 'MaterialIcons';
+        src: url('assets/fonts/MaterialIcons-Regular.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      var serviceWorkerVersion = '{{flutter_service_worker_version}}';
+      window._flutter = window._flutter || {};
+      window._flutter.buildConfig = {
+        builds: [
+          {
+            compileTarget: 'dart2js',
+            renderer: 'canvaskit',
+            mainJsPath: 'main.dart.js',
+          }
+        ]
+      };
+    </script>
+    <script>
+      window.addEventListener('load', function(ev) {
+        _flutter.loader.load({
+          serviceWorkerSettings: {
+            serviceWorkerVersion: serviceWorkerVersion,
+          }
+        });
+      });
+    </script>
+    <script src="flutter.js" defer></script>
+  </body>
+</html>

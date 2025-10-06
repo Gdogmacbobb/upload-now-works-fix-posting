@@ -1,0 +1,108 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.ynfny.app"
+<<<<<<< HEAD
+    compileSdk = 34
+=======
+    compileSdk = flutter.compileSdkVersion
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+<<<<<<< HEAD
+        applicationId "com.ynfny.app"
+        minSdk 23
+        targetSdk 34
+        versionCode flutter.versionCode ?: 1
+        versionName flutter.versionName ?: '1.0'
+        multiDexEnabled true
+        
+        // Performance optimizations
+        renderscriptTargetApi 23
+        renderscriptSupportModeEnabled false
+        
+        // Native build optimizations
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+    }
+
+    signingConfigs {
+        release {
+            // For production, you'd use a real keystore
+            // For now, using debug keystore for testing builds
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storeFile file('../debug.keystore')
+            storePassword 'android'
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.debug
+        }
+        
+        release {
+            // Disable optimization for safer testing - enable after device validation
+            minifyEnabled false
+            shrinkResources false
+            useProguard false
+            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            // Use debug signing for test APKs - works without keystore setup
+            signingConfig signingConfigs.debug
+            
+            // Build optimizations
+            zipAlignEnabled true
+            debuggable false
+=======
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.ynfny.app"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+        multiDexEnabled true
+        minSdkVersion 23
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.debug
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation "androidx.multidex:multidex:2.0.1"
+}

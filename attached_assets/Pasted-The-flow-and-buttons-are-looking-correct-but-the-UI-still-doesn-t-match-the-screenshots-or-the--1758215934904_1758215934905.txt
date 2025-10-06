@@ -1,0 +1,38 @@
+The flow and buttons are looking correct, but the **UI still doesn’t match the screenshots** or the authentic YNFNY design. I need you to **fully restore the UI styling** across all screens, using the screenshots I uploaded as references AND including the edits we already made together. Right now, the app’s backend/auth/navigation looks solid, but the UI is still off.
+
+📌 Do not change the Supabase integration or navigation logic.
+📌 Do not reset the progress we’ve made on tasks (sign-in fixes, navigation test, storage, following feed data).
+📌 Only update the UI so that it looks exactly like the screenshots with the custom edits we made.
+
+🔑 Apply these requirements:
+
+1. **Navigation**
+   - 4-tab layout: Following | Search | Camera (performers) or Community (New Yorkers) | Profile
+   - Account type detection: performers see Camera, New Yorkers see Community
+   - Profile button should route to performer_profile_screen.dart vs newyorker_profile_screen.dart (for now both can look the same)
+
+2. **Registration Differences**
+   - Performer registration: extra fields (performance type, location, bio, social links)
+   - New Yorker registration: simpler form, routes to main app with Community in bottom nav
+
+3. **Profile Pages**
+   - Performer profile: must include Edit button + expanded stats (earnings, followers, donations, etc.)
+   - New Yorker profile: for now, same look, but community button in nav replaces camera
+
+4. **Support Performer Page**
+   - Apple Pay, Google Pay, card entry
+   - Quick messages for encouragement
+
+5. **Video Upload (Performers only)**
+   - Caption, hashtags, performance type, location picker, privacy settings
+
+6. **UI Styling**
+   - Dark theme, orange #FF8C00 accents
+   - Rounded buttons, clean input fields
+   - Consistent padding and professional layout
+   - Donation buttons should pop with bright orange
+
+🚨 Important:
+- Do not undo the progress from the implementation plan (auth flow, bottom nav fixes, Supabase queries).
+- Restore the UI faithfully to screenshots + edits.
+- After restoration, continue the pending tasks in the task list.

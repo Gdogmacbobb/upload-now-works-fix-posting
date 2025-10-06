@@ -1,0 +1,62 @@
+{
+  "role": "Senior Flutter Engineer & Supabase Specialist",
+  "goal": "Fix the Street Performer registration so that tapping 'Create Account' reliably (a) validates the form, (b) signs up the user through Supabase Auth, (c) upserts the record into public.user_profiles under proper RLS, and (d) navigates to /discovery on success. Add full debug visibility: console logging for every step, SnackBars for errors and success states, and remove any pointer-blocking overlays.",
+  "context": {
+    "framework": "Flutter Web",
+    "auth_provider": "Supabase email/password",
+    "database": "public.user_profiles (RLS enabled)",
+    "routing": "go_router preferred; ensure /discovery route exists",
+    "logging": "Use debugPrint for console logs and ScaffoldMessenger.of(context).showSnackBar() for visible UI feedback"
+  },
+  "repository_paths_to_inspect": [
+    "lib/screens/registration/registration_screen.dart",
+    "lib/screens/registration/widgets/performer_specific_fields.dart",
+    "lib/services/auth_service.dart",
+    "lib/router/app_router.dart",
+    "lib/main.dart"
+  ],
+  "acceptance_criteria": [
+    "Clicking 'Create Account' prints '🚀 CREATE ACCOUNT BUTTON PRESSED' in the console.",
+    "Console logs show the full sequence: connectivity check → Supabase auth signup → profile upsert → navigation.",
+    "Form validation errors prevent submission and show visible SnackBars.",
+    "Supabase sign-up succeeds or gracefully handles 'email confirmation required' without crashing.",
+    "Profile is successfully inserted or upserted into public.user_profiles (verified in Network tab or Supabase logs).",
+    "User is navigated exactly once to /discovery via context.go('/discovery') after successful registration.",
+    "No AbsorbPointer, IgnorePointer, or ModalBarrier widgets block the Create Account button when not submitting.",
+    "Network tab shows 2xx responses for auth and user_profiles requests."
+  ],
+  "explicit_tasks": [
+    "Implement onCreateAccountPressed() with full debug logging and SnackBars for each stage.",
+    "Wire this handler to the Create Account button; ensure onPressed is active only when validation passes.",
+    "Add console logs for validation result, signup request, Supabase responses, and navigation triggers.",
+    "Inject SnackBars for success, validation errors, and failure cases (5-second duration).",
+    "Audit the registration screen widget tree for AbsorbPointer, IgnorePointer, or loading overlays that block taps; remove or toggle them properly.",
+    "Ensure /discovery route is defined in app_router.dart and reachable through go_router or Navigator.",
+    "Add and verify RLS policies on user_profiles; include trigger on auth.users to auto-insert profiles if desired."
+  ],
+  "console_log_verification": [
+    "🚀 CREATE ACCOUNT BUTTON PRESSED",
+    "[SUPABASE] Step 1: Checking connectivity...",
+    "[SUPABASE] Step 2: Creating auth account for user@example.com",
+    "[SUPABASE] Step 3: Preparing profile data...",
+    "[SUPABASE] Step 4: Inserting profile into user_profiles table...",
+    "[SUPABASE] ✅ Profile created successfully",
+    "[NAVIGATION] Step 5: Navigating to /discovery page..."
+  ],
+  "tests": [
+    "Submitting an empty form → validation errors appear; no Supabase calls logged.",
+    "Submitting valid form → Supabase auth and profile insert logs appear in console.",
+    "If email confirmation required → SnackBar shows clear message; app does not crash.",
+    "Upon success → navigation to /discovery confirmed; page loads correctly after refresh.",
+    "All SnackBars display within 5 seconds for visibility; no silent failures remain."
+  ],
+  "deliverables": [
+    "A unified git diff applying fixes to registration_screen.dart and related routing/auth files.",
+    "Notes summarizing any pointer-blocking overlays removed or toggled.",
+    "Confirmation that /discovery route exists and navigation works after registration."
+  ],
+  "run_commands": [
+    "flutter clean && flutter pub get",
+    "flutter run -d chrome --web-port 5000 -v"
+  ]
+}

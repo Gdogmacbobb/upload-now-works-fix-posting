@@ -1,0 +1,93 @@
+🛠️ The Strongest Plan (Root Cause Fix)
+
+Step 1 — Nuke and Rebuild Clean
+
+Run:
+
+flutter clean
+flutter pub get
+flutter build web
+
+
+Delete /build/web entirely before rebuilding (kills stale splash assets).
+
+Verify in /build/web/index.html → the only script is:
+
+<script src="main.dart.js" type="application/javascript"></script>
+
+
+Step 2 — Minimal Navigation Only
+In main.dart replace navigation with just this until it works:
+
+void main() {
+  print('[APP] main() started');
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    initialRoute: '/presplash',
+    routes: {
+      '/presplash': (_) => PresplashScreen(),
+      '/splash': (_) => StatueSplashScreen(),
+      '/login': (_) => LoginScreen(),
+      '/discovery': (_) => DiscoveryScreen(),
+    },
+    onUnknownRoute: (_) => MaterialPageRoute(
+      builder: (_) => DiscoveryScreen(),
+    ),
+  ));
+}
+
+
+Step 3 — Minimal Screens
+
+class PresplashScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    Future.delayed(Duration(seconds: 1), () {
+      Navigator.pushReplacementNamed(context, '/splash');
+    });
+    return Scaffold(body: Center(child: Text('[PRESPLASH]')));
+  }
+}
+
+class StatueSplashScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    Future.delayed(Duration(seconds: 3), () {
+      Navigator.pushReplacementNamed(context, '/login');
+    });
+    return Scaffold(
+      body: Center(child: Text('[SPLASH] Statue of Liberty Screen')),
+    );
+  }
+}
+
+class LoginScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: ElevatedButton(
+          child: Text('Login → Discovery'),
+          onPressed: () =>
+              Navigator.pushReplacementNamed(context, '/discovery'),
+        ),
+      ),
+    );
+  }
+}
+
+class DiscoveryScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Text('[DISCOVERY] Feed')));
+  }
+}
+
+
+Step 4 — Kill All Service Workers
+
+Confirm no flutter_service_worker.js exists in /build/web/.
+
+In Chrome DevTools → Application → Service Workers → click Unregister for all.
+
+Hard refresh (Ctrl+Shift+R).

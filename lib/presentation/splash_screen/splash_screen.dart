@@ -1,0 +1,310 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+<<<<<<< HEAD
+import 'package:ynfny/utils/responsive_scale.dart';
+=======
+import 'package:sizer/sizer.dart';
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../core/app_export.dart';
+import '../../theme/app_theme.dart';
+import '../../services/supabase_service.dart';
+import '../../services/auth_service.dart';
+import './widgets/animated_logo_widget.dart';
+import './widgets/gradient_background_widget.dart';
+import './widgets/loading_indicator_widget.dart';
+import './widgets/retry_connection_widget.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  bool _isLoading = true;
+  bool _showRetry = false;
+  String _loadingText = 'Initializing YNFNY...';
+  Timer? _timeoutTimer;
+  Timer? _loadingTextTimer;
+
+  final SupabaseService _supabaseService = SupabaseService();
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+<<<<<<< HEAD
+    print('DEBUG: SplashScreen init');
+=======
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+    _setSystemUIOverlay();
+    _startInitialization();
+  }
+
+  @override
+  void dispose() {
+    _timeoutTimer?.cancel();
+    _loadingTextTimer?.cancel();
+    super.dispose();
+  }
+
+  void _setSystemUIOverlay() {
+    // Hide status bar on Android, use dark theme on iOS
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.immersiveSticky,
+      overlays: [],
+    );
+
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppTheme.backgroundDark,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
+  }
+
+  void _startInitialization() {
+    _startLoadingTextAnimation();
+    _startTimeoutTimer();
+    _performInitializationTasks();
+  }
+
+  void _startLoadingTextAnimation() {
+    final loadingMessages = [
+      'Initializing YNFNY...',
+      'Connecting to Supabase...',
+      'Checking authentication...',
+      'Loading user preferences...',
+      'Verifying NYC location services...',
+      'Preparing video cache...',
+      'Almost ready...',
+    ];
+
+    int messageIndex = 0;
+    _loadingTextTimer =
+        Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      if (mounted && _isLoading) {
+        setState(() {
+          _loadingText = loadingMessages[messageIndex % loadingMessages.length];
+          messageIndex++;
+        });
+      }
+    });
+  }
+
+  void _startTimeoutTimer() {
+    _timeoutTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted && _isLoading) {
+        setState(() {
+          _isLoading = false;
+          _showRetry = true;
+        });
+        _loadingTextTimer?.cancel();
+      }
+    });
+  }
+
+  Future<void> _performInitializationTasks() async {
+    try {
+<<<<<<< HEAD
+      print('DEBUG: Starting initialization tasks');
+      // Initialize Supabase and check authentication
+      await _supabaseService.waitForInitialization(); // Proper initialization wait
+      print('DEBUG: Supabase service ready');
+=======
+      // Initialize Supabase and check authentication
+      await _supabaseService.client; // This will trigger initialization
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+
+      // Simulate other background tasks
+      await Future.wait([
+        _checkAuthenticationStatus(),
+        _loadUserPreferences(),
+        _verifyGeofencingCapabilities(),
+        _prepareCachedVideoData(),
+      ]);
+<<<<<<< HEAD
+      print('DEBUG: Background tasks completed');
+=======
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+
+      // Ensure minimum splash display time
+      await Future.delayed(const Duration(milliseconds: 2500));
+
+      if (mounted) {
+<<<<<<< HEAD
+        print('DEBUG: Navigating to next screen');
+        _navigateToNextScreen();
+      }
+    } catch (e) {
+      print('DEBUG: Initialization error - ${e.toString()}');
+=======
+        _navigateToNextScreen();
+      }
+    } catch (e) {
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+      debugPrint('Initialization error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _showRetry = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _checkAuthenticationStatus() async {
+    // Check real authentication status with Supabase
+    await Future.delayed(const Duration(milliseconds: 800));
+    // Authentication check is handled by SupabaseService
+  }
+
+  Future<void> _loadUserPreferences() async {
+    // Load user preferences
+    await Future.delayed(const Duration(milliseconds: 600));
+  }
+
+  Future<void> _verifyGeofencingCapabilities() async {
+    // Verify NYC geofencing capabilities
+    await Future.delayed(const Duration(milliseconds: 700));
+  }
+
+  Future<void> _prepareCachedVideoData() async {
+    // Prepare video cache
+    await Future.delayed(const Duration(milliseconds: 900));
+  }
+
+  void _navigateToNextScreen() {
+    _timeoutTimer?.cancel();
+    _loadingTextTimer?.cancel();
+
+    // Restore system UI before navigation
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    // Navigation logic based on real authentication status
+    String nextRoute;
+
+    if (_supabaseService.isAuthenticated) {
+<<<<<<< HEAD
+      print('DEBUG: User authenticated, navigating to /discovery-feed');
+      // Authenticated users go to Discovery Feed
+      nextRoute = '/discovery-feed';
+    } else {
+      print('DEBUG: No user session found, navigating to /login-screen');
+=======
+      // Authenticated users go to Discovery Feed
+      nextRoute = '/discovery-feed';
+    } else {
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+      // Non-authenticated users go directly to login screen
+      nextRoute = '/login-screen';
+    }
+
+<<<<<<< HEAD
+    print('DEBUG: Pushing route: $nextRoute');
+=======
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+    Navigator.pushReplacementNamed(context, nextRoute);
+  }
+
+  void _retryInitialization() {
+    setState(() {
+      _isLoading = true;
+      _showRetry = false;
+    });
+    _startInitialization();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
+      body: SafeArea(
+        child: GradientBackgroundWidget(
+          child: _showRetry ? _buildRetryView() : _buildSplashView(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSplashView() {
+    return Column(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Center(
+            child: AnimatedLogoWidget(
+              onAnimationComplete: () {
+                // Logo animation completed
+              },
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 1,
+<<<<<<< HEAD
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LoadingIndicatorWidget(
+                  loadingText: _loadingText.replaceAll('...', ''),
+                ),
+                SizedBox(height: 8.h),
+                // NYC Street Culture tagline
+                Text(
+                  'Discover NYC Street Performers',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppTheme.textSecondary.withOpacity(0.8),
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+=======
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              LoadingIndicatorWidget(
+                loadingText: _loadingText.replaceAll('...', ''),
+              ),
+              SizedBox(height: 8.h),
+              // NYC Street Culture tagline
+              Text(
+                'Discover NYC Street Performers',
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.textSecondary.withValues(alpha: 0.8),
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRetryView() {
+    return Center(
+      child: RetryConnectionWidget(
+        onRetry: _retryInitialization,
+        message: 'Unable to connect to YNFNY servers',
+      ),
+    );
+  }
+}

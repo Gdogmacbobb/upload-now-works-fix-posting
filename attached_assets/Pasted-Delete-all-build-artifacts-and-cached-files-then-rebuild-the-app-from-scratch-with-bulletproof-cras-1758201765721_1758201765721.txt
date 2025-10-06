@@ -1,0 +1,84 @@
+Delete all build artifacts and cached files, then rebuild the app from scratch with bulletproof crash-safe navigation. Follow these exact steps in order:
+
+Clean & Rebuild
+
+Run flutter clean
+
+Run rm -rf build/web
+
+Run flutter pub get
+
+Run flutter build web
+
+Service Worker Removal
+
+Delete build/web/flutter_service_worker.js
+
+In build/web/index.html, before closing </body>, insert:
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for (let reg of registrations) { reg.unregister(); }
+      console.log('[SW] Service worker unregistered');
+    });
+  }
+</script>
+
+
+Cache-Busting
+
+In index.html, append version strings to assets:
+
+<script src="flutter_bootstrap.js?v=999"></script>
+
+
+Do the same for main.dart.js and any other JS files.
+
+Minimal 4-Screen App
+Rebuild with these exact routes and debug logs:
+
+/presplash → black screen with [PRESPLASH] text (1s)
+
+/splash → Statue of Liberty image (assets/YNFNY_Logo.png, height 200) + orange text “You Not From New York” (3s)
+
+/login → black screen with blue button “Login → Discovery”
+
+/discovery → black screen with text “Discovery Feed”
+
+Crash-Safety
+
+Use _hasNavigated flags to prevent double navigation
+
+Use if (mounted) guards before all navigation calls
+
+Add dual timers (1s/1.5s presplash, 3s/3.5s splash)
+
+Dispose timers properly in dispose()
+
+Debug Logging (must appear in console in this order):
+
+[SW] Service worker unregistered
+[APP] main() started
+[PRESPLASH] initState()
+[PRESPLASH] timer fired → navigating
+[NAV] pushReplacementNamed(/splash)
+[SPLASH] initState()
+[SPLASH] timer fired → navigating
+[NAV] pushReplacementNamed(/login)
+[LOGIN] initState()
+[LOGIN] navigation success → Discovery
+[DISCOVERY] initState()
+
+
+Deliverables:
+
+Clean lib/main.dart with 4 routes
+
+Separate screen files (presplash_screen.dart, statue_splash_screen.dart, login_screen.dart, discovery_screen.dart)
+
+Updated index.html with service worker removal + cache-busting
+
+Console logs exactly as above
+
+Confirm GET /flutter_service_worker.js returns 404 in server logs

@@ -1,0 +1,127 @@
+1) Quick answers to their questions (copy/paste)
+
+Q: What placeholder UI are you seeing?
+A: The AI-generated “generic YNFNY” UI (rounded orange logo, simplified login, generic account chooser). Please delete every file that introduced this look and revert to my authentic UI.
+
+Q: Is this a different/newer version?
+A: Yes. The correct version is the one that existed right before I asked for “Phase 6” (the big features prompt). That’s the newest authentic UI I want.
+
+Q: Re-upload the zip?
+A: I’ve uploaded the archive again. Use it only to restore my UI files. Do not touch Supabase keys, tables, RLS, or real data.
+
+2) Paste-ready, single message prompt for your coding agent
+
+BEGIN PROMPT
+
+Goal (non-negotiable): Replace any AI-generated UI with my authentic YNFNY UI exactly as it was just before the “Phase 6” prompt, while preserving Supabase setup, env, and data.
+
+Source of truth
+
+Use the zip I uploaded (the most recent ynfny*.zip) as the canonical UI.
+
+If there’s a conflict, prefer the UI from that zip or the files that existed pre-Phase-6 in the repo.
+
+Keep these EXACT edits/features:
+
+3-tab bottom nav (left→right):
+Search | Camera (Performers) or Community (New Yorkers) | Profile (acts as “Home”).
+
+Registration differences: Performer vs New Yorker forms remain different.
+
+Buttons: Camera button for performers, Community button for New Yorkers, Edit button on Performer profile.
+
+Do/Don’t lists (very important)
+
+✅ You may modify / overwrite:
+
+lib/presentation/** (screens)
+
+lib/widgets/** (UI widgets)
+
+lib/theme/** (colors/typography)
+
+assets/** (logos, icons, images)
+
+lib/router/** or wherever routing/nav is defined to enforce the 3-tab layout
+
+pubspec.yaml (only to add missing UI deps & assets)
+
+⛔ Do NOT modify, delete, or rotate keys for:
+
+lib/services/** (Supabase/auth/video/user/donation services)
+
+supabase/** (SQL, migrations, RLS)
+
+.env, .env.local, .env.production, or any secrets
+
+.replit, replit.yaml, replit.nix
+
+Any config that would change Supabase project, tables, or data
+
+Clean out the fake UI
+
+Remove any screens/widgets/assets that were introduced by the agent and do not exist in my archive (common tell: generic orange square logo login, “auto-generated TikTok feed” comments).
+
+Where names collide, use the versions from my archive.
+
+Routing & navigation (lock this in)
+
+Ensure app entry shows my authentic presplash → Statue splash → login flow.
+
+Bottom nav = 3 tabs in this exact order:
+
+Search
+
+Camera if role=performer else Community
+
+Profile (and this is the Home button)
+
+Profile routes to Performer or New Yorker profile by account type (UI may be same for now but route differs).
+
+Pubspec & build fixes (Flutter 3.32 / Dart 3.8 web)
+
+Add dependency to fix Matrix4/Vector3 missing errors:
+
+dependencies:
+  vector_math: ^2.1.4
+
+
+Then run flutter pub get.
+
+Ensure no dependency_overrides remove vector_math.
+
+Keep service worker behavior as default Flutter web or unregister if a custom SW was added by the agent (black screens). Don’t touch my Supabase config.
+
+Assets & branding
+
+Make sure pubspec.yaml lists all authentic assets from the archive (logos, icons, splash).
+
+Remove any AI-added placeholder assets.
+
+Verification steps (must complete)
+
+Print a file change summary (paths added/removed/modified).
+
+Run flutter analyze and flutter build web – fix UI-level issues.
+
+Launch the dev server on 0.0.0.0:5000 (no service worker caching).
+
+Navigate and confirm visually:
+
+Login matches my authentic screenshots (not the generic orange square login).
+
+Account type chooser shows Performer vs New Yorker with my copy & layout.
+
+Bottom nav is exactly 3 tabs (Search | Camera/Community | Profile).
+
+Performer profile shows Edit button.
+
+Post the 3 screenshots: Login, Account Type, Performer Profile, and the console log line with the 3-tab labels.
+
+If conflict persists
+
+Create a backup folder backup_ai_ui/ with the removed AI-generated files (so nothing is lost), but keep the running app on my authentic UI.
+
+Deliverable: Running app using my real UI, 3-tab nav enforced, registration differences preserved, Supabase untouched. Include the change summary + screenshots.
+
+END PROMPT

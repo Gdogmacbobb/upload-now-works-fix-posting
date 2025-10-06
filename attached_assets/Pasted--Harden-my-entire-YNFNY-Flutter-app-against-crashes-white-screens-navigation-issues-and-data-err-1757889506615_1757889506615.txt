@@ -1,0 +1,37 @@
+*“Harden my entire YNFNY Flutter app against crashes, white screens, navigation issues, and data errors. Apply these rules across every single screen (Splash, Login, Registration, Performer Profile, User Profile, Discovery Feed, Following Feed, Settings, Upload/Camera, etc.):
+	1.	Startup Flow Protection
+	•	PreSplash → Splash → Login/Discovery must always render something visible within 3 seconds.
+	•	Never freeze on Supabase calls or session checks.
+	•	If Supabase fails, show a branded fallback screen with retry instead of white screen.
+	2.	Navigation Hardening
+	•	Always use initialRoute + routes instead of home:.
+	•	Add onUnknownRoute fallback → redirect to LoginScreen with a debugPrint of the failed route.
+	•	Ensure every BottomNavBar button, back button, and redirect always leads to a valid screen.
+	•	Add debug logs: [NAV] navigating to /route-name.
+	3.	UI/UX Hardening
+	•	Wrap every screen in SafeArea + Scaffold.
+	•	Use consistent placeholders: “Not set” for missing text, default avatar image if no profile picture.
+	•	Never collapse UI when optional fields (bio, socials, borough, performance type) are null.
+	4.	Supabase Hardening
+	•	Store URL + anon key in a dedicated config file and lock it.
+	•	Lazy-load Supabase services (no async work in imports).
+	•	Add try/catch to every Supabase query with clear user-friendly errors.
+	•	Always confirm role from database (user_profiles.role) instead of trusting client.
+	5.	Profile/Feed Data Safety
+	•	Performer Profile + User Profile must always show real fields from database (name, handle, bio, borough, socials, performance type, follower/following/video counts).
+	•	If any field is missing, display “Not set” instead of crashing.
+	•	Discovery + Following feeds should display “No videos yet” if empty instead of failing.
+	6.	Video/Upload Hardening (Future-proof)
+	•	Camera/Upload button should never crash if permissions denied.
+	•	If video fails to load, show a thumbnail with retry.
+	•	Protect against oversized uploads with user-friendly error message.
+	7.	Global Error Handling
+	•	Add ErrorWidget.builder to catch ALL uncaught errors → show branded error screen.
+	•	Add debug logs for every error with clear [ERROR] prefix.
+	•	Ensure no async error ever results in a blank screen.
+	8.	Permanent Stability Checks
+	•	After edits/rebuilds, app must still compile and route correctly.
+	•	Add [SELFTEST] ok debug marker after each screen successfully renders.
+	•	Ensure safe fallbacks: if a screen cannot load, redirect to login or show placeholder UI instead of breaking the app.
+
+Apply these hardening rules across every screen and service in the app. Do not just protect splash/login — ensure performer profile, user profile, discovery feed, following feed, and uploads are equally hardened. Preserve branding, navigation, and Supabase integration while making the app bulletproof and production-ready

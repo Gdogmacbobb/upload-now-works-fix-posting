@@ -1,0 +1,60 @@
+“Stop general fixes. Do this exact sequence to restore the app quickly and identify the blocker. Do not refactor anything outside the steps.
+
+A) Route Hijack → Known-Good Placeholder
+
+Temporarily map /login-screen to a minimal, self-contained placeholder screen defined in the same file that declares the routes (to avoid any cross-file import side effects).
+
+The placeholder must render a SafeArea + Scaffold + big text: LOGIN PLACEHOLDER — ROUTE OK.
+
+Keep splash as-is (3s timer → /login-screen).
+
+Rebuild and show console logs from splash timer fire through first frame of the placeholder.
+
+Goal: If the placeholder renders, routing is healthy and the bug lives inside the real LoginScreen file or its imports.
+
+B) If the placeholder renders → Binary-Search the Real LoginScreen
+
+Swap /login-screen back to the real LoginScreen, but wrap its entire build in a try/catch that prints the exception and returns a Safe fallback saying: LOGIN FALLBACK — EXCEPTION CAUGHT.
+
+If fallback triggers, print the full exception + stack with file & line.
+
+Binary search the imports/sections of LoginScreen:
+
+Start with just a Scaffold + one Text.
+
+Add imports back one by one (GoogleFonts, theme, validators, controllers, Supabase helpers, custom widgets).
+
+After each add, rebuild and confirm which add causes the crash.
+
+When the crashing dependency is found, apply a minimal surgical fix (move async calls out of top-level/build, guard platform calls on web, replace global singletons with lazy init, etc.).
+
+Restore the full LoginScreen and prove it renders.
+
+C) If the placeholder does NOT render
+
+Print the effective route table at runtime (all keys) and the exact string used by splash to navigate.
+
+Add a global onUnknownRoute that logs the unknown name and pushes the placeholder so the app can’t freeze.
+
+Rebuild and show logs proving the placeholder appears.
+
+D) Evidence I Need (don’t skip)
+
+Logs with these markers:
+[SPLASH] Timer fired, [NAV] to /login-screen, [ROUTER] resolving /login-screen, [LOGIN] building… or [LOGIN] fallback exception: …
+
+One screenshot or text render of what appears after splash.
+
+The single import/section identified (if any) that caused the crash, and the exact fix applied.
+
+Rules:
+
+No broad refactors.
+
+No theme/router rewrites.
+
+Touch only: route map, Splash → Login navigation, LoginScreen file.
+
+Keep Supabase calls out of LoginScreen build; any IO must be in initState with guards.
+
+Deliverable: App launches → Splash (3s) → visible login UI or placeholder. Include logs and the precise root cause.”**

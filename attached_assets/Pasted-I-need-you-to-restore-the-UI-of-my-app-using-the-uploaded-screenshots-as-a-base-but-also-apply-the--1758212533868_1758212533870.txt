@@ -1,0 +1,43 @@
+I need you to restore the UI of my app using the uploaded screenshots as a base, but also apply the specific edits we had already made after those screenshots.
+
+📌 General Rules:
+- Use the screenshots as visual references only (colors, layout, spacing).
+- Re-apply all post-screenshot edits we implemented together.
+- Keep Supabase logic, auth flow, and navigation intact — only fix UI.
+
+🔑 Critical Edits to Apply:
+1. Registration Flow:
+   - New Yorker registration: standard signup fields + routes user to main app with **Community button** on bottom navigation.
+   - Performer registration: includes additional fields (performance type, location, bio, social links) + routes user to main app with **Camera button** on bottom navigation.
+
+2. Navigation Differences:
+   - New Yorker bottom nav: Home, Following, Search, **Community**, Profile.
+   - Performer bottom nav: Home, Following, Search, **Camera**, Profile.
+
+3. Performer Profile Page:
+   - Must include **Edit Profile button** for updating bio, schedule, social links.
+   - Keep expanded stats section (earnings, donations, followers, performance schedule).
+
+4. Discovery & Following Feeds:
+   - Both screens remain TikTok-style vertical feeds.
+   - Following feed pulls data based on user’s follows.
+   - Discovery shows trending content.
+
+5. Support Performer Page:
+   - Must include Apple Pay / Google Pay / Credit Card options.
+   - Keep quick messages feature for sending encouragement.
+
+6. Video Upload (Performer Only):
+   - Camera upload feature tied to performer account type.
+   - Include caption, hashtags, performance type, location selector, privacy settings.
+
+7. UI Consistency:
+   - Dark theme with orange accents throughout.
+   - Rounded buttons, modern input fields, consistent padding.
+   - Keep donation buttons styled in bright orange.
+
+🚨 Important:
+- Do not remove or reset Supabase integration.
+- Do not touch service worker or navigation logic.
+- Apply edits consistently across both iOS and web preview.
+- After restoring UI, continue pending tasks in the list (sign-in fixes, navigation test, media storage, following feed data).

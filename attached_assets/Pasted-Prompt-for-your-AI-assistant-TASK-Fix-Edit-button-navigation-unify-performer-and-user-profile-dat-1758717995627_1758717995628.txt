@@ -1,0 +1,71 @@
+Prompt for your AI assistant
+TASK: Fix Edit button navigation + unify performer and user profile data
+
+1. Navigation:
+   - Update the orange "Edit" button inside performer_profile/widgets/profile_header_widget.dart.
+   - OnPressed → must navigate to `UserProfile()` (NOT `/user-profile-edit`, since that route may not exist).
+   - Use:
+     Navigator.push(
+       context,
+       MaterialPageRoute(
+         builder: (context) => UserProfile(userId: currentUserId),
+       ),
+     );
+
+2. UserProfile Page:
+   - Ensure UserProfile page is styled like the design in the provided screenshots.
+   - Must pull data from the same Supabase row as PerformerProfile, so the information is consistent.
+   - Fields required:
+     • full_name
+     • handle (username)
+     • role (performer/new_yorker)
+     • bio
+     • profile_image_url
+     • followers_count
+     • video_count
+     • supporter_count (donations)
+   - Replace any mock/demo data in user_profile.dart with real Supabase queries.
+
+3. Shared Data Source:
+   - Both PerformerProfile and UserProfile must query the same `user_profiles` table, filtered by `id`.
+   - Add `userId` parameter to UserProfile constructor to ensure it loads the correct record.
+   - Example:
+     class UserProfile extends StatefulWidget {
+       final String userId;
+       const UserProfile({Key? key, required this.userId}) : super(key: key);
+     }
+
+4. Supabase SQL Query (always fetch id):
+   ```sql
+   select
+     id,
+     full_name,
+     username,
+     role,
+     bio,
+     profile_image_url,
+     followers_count,
+     video_count,
+     supporter_count
+   from user_profiles
+   where id = '<currentUserId>';
+
+
+Default Profile Image:
+
+If profile_image_url is null, show a simple placeholder avatar instead of "Unknown Performer."
+
+Remove Old Edit Button:
+
+Delete any previous Edit button (like in AppBar of performer_profile.dart).
+
+Only keep the new orange Edit button next to Supporters count.
+
+
+---
+
+👉 This will:
+- Make the **Edit button work properly** (takes you to your personal User Profile page).  
+- Ensure **User Profile** and **Performer Profile** always show the same real Supabase data.  
+- Eliminate mock/demo data.  
+- Guarantee `id` is always fetched in the query for ownership checks and edit access.  

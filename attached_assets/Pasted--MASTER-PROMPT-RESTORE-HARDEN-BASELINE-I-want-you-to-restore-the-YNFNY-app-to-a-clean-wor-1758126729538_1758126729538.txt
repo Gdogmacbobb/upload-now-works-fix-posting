@@ -1,0 +1,75 @@
+🚨 MASTER PROMPT — RESTORE + HARDEN BASELINE 🚨
+
+I want you to restore the YNFNY app to a clean, working baseline where navigation and feeds are stable, then harden it step by step.
+
+Phase 1 — Full Restore (Baseline)
+
+Restore Discovery feed, Following feed, and Home button navigation so they work exactly as before.
+
+Preserve existing auth logic (New Yorker vs Performer) but ensure presplash → Discovery navigation doesn’t freeze.
+
+Keep vertical scroll on both feeds working.
+
+Keep horizontal swipe between Discovery ↔ Following working.
+
+Ensure Home button works (always routes back to Discovery).
+
+Add [DISCOVERY], [FOLLOWING], [HOME] debug logs to confirm navigation flow.
+
+Phase 2 — Auth Hardening
+
+Ensure performers can access camera/upload screens.
+
+New Yorkers cannot access camera, only view/like/share/repost.
+
+Add [AUTH] logs: currentUser, isAuthenticated, role (performer/new_yorker).
+
+Fix role-loading race conditions: allow up to 1s for role init before redirecting.
+
+Phase 3 — Camera Safety (Crash-Safe Preview)
+
+Separate preview initialization from recording prep.
+
+If preview fails → fallback to file picker immediately.
+
+Add 8-second timeout guard → force fallback if preview spinner doesn’t resolve.
+
+Add [CAMERA_PREVIEW] logs for every step:
+
+Requesting getUserMedia
+
+Stream acquired
+
+Stream track count + status
+
+Video element srcObject set
+
+video.play() called
+
+onloadedmetadata fired
+
+Preview started
+
+Safari/iOS compatibility: playsinline, webkit-playsinline, muted, H.264 MP4 priority.
+
+Phase 4 — Recording → Upload Flow
+
+After recording ends, navigate to Upload/Post screen.
+
+On Upload screen: autoplay video preview at top (9:16).
+
+Include caption, hashtags, location tag, privacy setting, “Drop Content” button.
+
+Add fallback: if recording fails, still allow file picker upload.
+
+Phase 5 — Hardened Stability
+
+Wrap all async ops in try/catch + !mounted checks.
+
+Add retry buttons for preview/recording failure.
+
+Add [ERROR] logs for all failure states.
+
+Ensure Discovery ↔ Camera ↔ Upload flow works without freezing.
+
+Preserve fallback safety: file picker always works if camera fails.

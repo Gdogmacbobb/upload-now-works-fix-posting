@@ -1,0 +1,38 @@
+{
+  "task": "Reconnect Supabase Authentication",
+  "goal": "Fix the 'AuthRetryableFetchException: Client Load failed' error when users try to create an account.",
+  "steps": [
+    {
+      "action": "Update Supabase Configuration",
+      "details": "Open the supabase_client.dart or supabase_config.dart file in lib/services or lib/core. Replace the existing URL and anon key with the current project credentials from Supabase Dashboard > Settings > API.",
+      "codeExample": {
+        "dart": [
+          "const String supabaseUrl = 'https://YOUR_PROJECT_ID.supabase.co';",
+          "const String supabaseAnonKey = 'YOUR_NEW_ANON_KEY';"
+        ]
+      }
+    },
+    {
+      "action": "Verify Environment Setup",
+      "details": "Ensure the environment variables are properly loaded in main.dart before Supabase.initialize(). If using .env or secrets.yaml, confirm values are being imported correctly."
+    },
+    {
+      "action": "Check Supabase Project Status",
+      "details": "Go to Supabase Dashboard > Project Settings > General. If the project shows 'paused', click Resume Project. Free-tier projects can automatically pause after inactivity."
+    },
+    {
+      "action": "Restart Development Server",
+      "details": "Stop and rerun `flutter run -d chrome` or the Replit preview server to reload environment variables and rebuild the Supabase client."
+    },
+    {
+      "action": "Validate Connection",
+      "details": "Once restarted, test account creation again. You should no longer see 'Client Load failed'. Instead, the Supabase log should confirm successful signup and profile creation."
+    }
+  ],
+  "expectedOutcome": "When creating a new account, the app connects successfully to Supabase and registers the user without throwing any AuthRetryableFetchException errors.",
+  "notes": [
+    "Make sure to remove any old .config/flutter_env.sh files or outdated Supabase setup scripts.",
+    "Ensure that the Supabase URL starts with 'https://' and the anon key is not truncated.",
+    "If multiple environments exist (dev vs production), verify that the correct credentials are being used."
+  ]
+}

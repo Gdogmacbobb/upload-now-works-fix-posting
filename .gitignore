@@ -1,0 +1,23 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+build/
+coverage/
+ios/Flutter/Flutter.podspec
+ios/Pods/
+android/.gradle/
+android/app/build/
+web/.dart_tool/
+
+# Replit & temp
+.replit
+*.lock
+*.log
+
+# Local SDKs / archives (do NOT commit)
+.flutter-sdk/
+flutter.tar.xz
+
+# Misc generated
+**/*.lock

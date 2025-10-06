@@ -1,0 +1,70 @@
+{
+  "task": "Rebuild account-type-selection screen to match the template screenshots exactly.",
+  "details": {
+    "target_files": ["account_type_selection.dart"],
+    "requirements": {
+      "layout": {
+        "type": "Scaffold",
+        "background": "#000000",
+        "body": {
+          "type": "Column",
+          "alignment": "center",
+          "children": [
+            {
+              "widget": "YNFNYLogoWidget",
+              "padding": "EdgeInsets.only(top: 40, bottom: 24)"
+            },
+            {
+              "widget": "ExplanationTextWidget",
+              "props": {
+                "icon": "Icons.info",
+                "iconColor": "Colors.orange",
+                "title": "Account Information",
+                "subtitle": "Choose the account type that best describes you.",
+                "note": "You can switch account types after registration in your profile settings."
+              }
+            },
+            {
+              "widget": "AccountTypeCard",
+              "props": {
+                "icon": "Icons.mic",
+                "iconColor": "Colors.orange",
+                "title": "Street Performer",
+                "subtitle": "Showcase your talent and earn from your performances",
+                "features": [
+                  "Upload and share performance videos",
+                  "Receive donations from supporters",
+                  "Build your follower base"
+                ],
+                "verification": "Verification required: 1–2 business days approval process"
+              }
+            },
+            {
+              "widget": "AccountTypeCard",
+              "props": {
+                "icon": "Icons.favorite",
+                "iconColor": "Colors.green",
+                "title": "New Yorker",
+                "subtitle": "Discover and watch amazing street performers do their thing",
+                "features": [
+                  "Discover local street performances",
+                  "Support performers with donations",
+                  "Share and repost favorite content"
+                ],
+                "verification": "Instant access: Start discovering performances immediately"
+              }
+            },
+            {
+              "widget": "ContinueButtonWidget",
+              "props": {
+                "text": "Continue",
+                "fullWidth": true,
+                "alignment": "bottomCenter"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

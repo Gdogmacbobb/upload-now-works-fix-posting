@@ -1,0 +1,85 @@
+{
+  "feature": "Performer Extended About Info (Crash Safe)",
+  "context": {
+    "userProfile": {
+      "accountSection": {
+        "items": [
+          {
+            "label": "Social Media",
+            "icon": "link",
+            "action": "openSocialMediaPage"
+          },
+          {
+            "label": "Frequent Performance Location",
+            "icon": "map-pin",
+            "action": "openLocationInput",
+            "dbColumn": "frequent_location",
+            "fallback": "Not set yet"
+          },
+          {
+            "label": "Performance Schedule",
+            "icon": "calendar",
+            "action": "openScheduleInput",
+            "dbColumn": "performance_schedule",
+            "fallback": "Not set yet"
+          }
+        ]
+      }
+    },
+    "performerProfile": {
+      "aboutSection": {
+        "display": {
+          "fields": [
+            {
+              "section": "Social Media",
+              "style": "matchAboutSectionTheme",
+              "safeRender": true,
+              "items": [
+                {
+                  "platform": "Instagram",
+                  "icon": "instagram",
+                  "handle": "socials_instagram",
+                  "urlFormat": "https://instagram.com/{handleWithoutAt}",
+                  "fallback": "No Instagram linked"
+                },
+                {
+                  "platform": "TikTok",
+                  "icon": "tiktok",
+                  "handle": "socials_tiktok",
+                  "urlFormat": "https://tiktok.com/@{handleWithoutAt}",
+                  "fallback": "No TikTok linked"
+                },
+                {
+                  "platform": "YouTube",
+                  "icon": "youtube",
+                  "handle": "socials_youtube",
+                  "urlFormat": "https://youtube.com/{handleWithoutAt}",
+                  "fallback": "No YouTube linked"
+                }
+              ]
+            },
+            {
+              "section": "Frequent Performance Location",
+              "icon": "map-pin",
+              "field": "frequent_location",
+              "safeRender": true,
+              "fallback": "Location not set",
+              "clickAction": {
+                "type": "openUrl",
+                "urlFormat": "https://www.google.com/maps/search/{frequent_location}"
+              }
+            },
+            {
+              "section": "Performance Schedule",
+              "icon": "calendar",
+              "field": "performance_schedule",
+              "safeRender": true,
+              "fallback": "Schedule not set"
+            }
+          ]
+        }
+      }
+    },
+    "availability": "performersOnly"
+  }
+}

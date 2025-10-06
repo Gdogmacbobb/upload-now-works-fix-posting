@@ -1,0 +1,94 @@
+Rebuild my Flutter web app with Phase 2.1: Permanent Splash Removal + Restore
+
+Tasks:
+
+Rebuild Minimal 4-Screen App (Crash-Safe)
+
+/presplash → black screen with [PRESPLASH] text (1s + backup 1.5s)
+
+/splash → Statue of Liberty image (assets/YNFNY_Logo.png, height 200) + orange text "You Not From New York" (3s + backup 3.5s)
+
+/login → black screen with blue button "Login → Discovery"
+
+/discovery → black screen with "Discovery Feed"
+
+Exact Debug Logging
+
+[SW] Service worker unregistered
+[APP] main() started
+[PRESPLASH] initState()
+[PRESPLASH] timer fired → navigating
+[NAV] pushReplacementNamed(/splash)
+[SPLASH] initState()
+[SPLASH] timer fired → navigating
+[NAV] pushReplacementNamed(/login)
+[LOGIN] initState()
+[LOGIN] navigation success → Discovery
+[DISCOVERY] initState()
+
+
+Permanently Remove Flutter’s Auto Splash
+
+Overwrite /web/index.html with minimal loader:
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>YNFNY</title>
+  </head>
+  <body>
+    <script src="main.dart.js?v=999" type="application/javascript"></script>
+  </body>
+</html>
+
+
+Delete all Flutter default splash <style> and <div> placeholders.
+
+Disable Service Worker
+
+Run build with flutter build web --no-web-service-worker.
+
+After build:
+
+Delete build/web/flutter_service_worker.js.
+
+In build/web/flutter_bootstrap.js, remove any service worker registration code.
+
+Add unconditional unregistration script to index.html:
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      for (let r of regs) { r.unregister(); }
+      console.log('[SW] Service worker unregistered');
+    });
+  }
+</script>
+
+
+Cache-Busting
+
+Append ?v=999 to main.dart.js and other assets in index.html.
+
+Confirm fresh asset loads (no stale cache).
+
+Crash-Safety
+
+_hasNavigated flags to prevent double nav.
+
+if (mounted) before navigation.
+
+Proper dispose() cleanup for timers.
+
+Deliverables:
+
+lib/main.dart + 4 screen files rebuilt clean.
+
+web/index.html stripped down and cache-busting ready.
+
+flutter_bootstrap.js cleaned of service worker code.
+
+flutter_service_worker.js permanently deleted.
+
+Console logs confirming exact sequence.

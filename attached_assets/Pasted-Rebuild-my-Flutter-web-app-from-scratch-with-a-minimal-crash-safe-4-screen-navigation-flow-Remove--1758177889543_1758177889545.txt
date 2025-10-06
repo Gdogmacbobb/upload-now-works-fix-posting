@@ -1,0 +1,80 @@
+Rebuild my Flutter web app from scratch with a minimal, crash-safe 4-screen navigation flow. Remove ALL legacy/branding splash logic and make sure it always loads fresh (no service workers, no cache issues).
+
+Requirements:
+
+Screens & Flow
+
+PresplashScreen: black screen with [PRESPLASH] text. Show 1 second then auto-navigate to /splash.
+
+StatueSplashScreen: black screen with my asset assets/YNFNY_Logo.png (height 200) and orange text "You Not From New York". Show 3 seconds then auto-navigate to /login.
+
+LoginScreen: black background, one button "Login → Discovery". On tap navigate to /discovery.
+
+DiscoveryScreen: black background with white "Discovery Feed" text.
+
+Routes & Navigation
+
+Initial route = /presplash.
+
+Routes map: /presplash, /splash, /login, /discovery.
+
+Use Navigator.pushReplacementNamed for all transitions.
+
+Debug Logging (must match exactly)
+
+[APP] main() started
+
+[PRESPLASH] initState()
+
+[PRESPLASH] timer fired → navigating
+
+[NAV] pushReplacementNamed(/splash)
+
+[SPLASH] initState()
+
+[SPLASH] timer fired → navigating
+
+[NAV] pushReplacementNamed(/login)
+
+[LOGIN] initState()
+
+[LOGIN] navigation success → Discovery
+
+[DISCOVERY] initState()
+
+Crash-Safety
+
+Add _hasNavigated flags to prevent double navigation.
+
+Add if (mounted) checks before navigation.
+
+Add backup timers: 1.5s for presplash, 3.5s for splash.
+
+Remove all service worker logic from index.html and add:
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    for (let r of regs) { r.unregister(); }
+    console.log('[SW] Service worker unregistered');
+  });
+}
+
+
+Assets
+
+Standardize logo path: assets/YNFNY_Logo.png.
+
+Update pubspec.yaml to include it.
+
+Build & Deploy
+
+Run flutter clean && flutter pub get && flutter build web.
+
+Ensure index.html, manifests, and bootstrap are clean.
+
+Verify HTTP 200s for assets.
+
+📋 Final Outcome:
+When I open the app in browser I should see:
+Presplash (1s) → Statue splash (3s) → Login → Discovery.
+With the exact debug logs, no branding splash, no infinite loops, no cache issues.

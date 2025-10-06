@@ -1,0 +1,43 @@
+The app navigation and Supabase integration are mostly correct, but the UI is wrong. I need you to restore the UI to match the real YNFNY design.
+
+📌 Instructions:
+1. Use the uploaded screenshots as the base reference for the visual design of each screen (colors, layout, fonts, buttons, styling). 
+2. After applying the base designs, re-apply the edits and improvements that were made after those screenshots:
+   - Use the updated color scheme (dark theme with orange highlights).
+   - Keep the improved spacing, rounded buttons, and modern input fields we already edited.
+   - Maintain the donation/support flow we polished with Apple Pay/Google Pay and quick messages.
+   - Maintain the improved profile stats section (earnings, followers, donations).
+   - Keep the navigation bar we updated (Home, Following, Search, Profile tabs).
+3. Do not touch navigation logic or Supabase integration — only update UI.
+4. Make sure every screen matches the reference design + our previous edits.
+
+📱 Screens to Restore:
+- Splash Screen → use “Splash Screen Page.png” as base, apply our improved gradient and animation edits.
+- Login Screen → use “Login Page.png” as base, with the dark theme, orange accents, and our edited rounded login button.
+- Account Type Selection → use “Account Type Page Part 1–2.png” as base, but keep our updated performer vs. New Yorker toggle styling.
+- Account Creation / Registration → use “Account Creation Page Part 1–4.png” as base, but apply our previous edits (improved text fields, styled signup button, metadata fields for performer).
+- Handle Creation → use “Handle Creation Screen Page.png” as base, keep orange accent for error messages and confirmation.
+- Discovery Feed → use “Discovery Feed Page.png” as base, TikTok-style vertical feed with Supabase integration.
+- Following Feed → use “Following Feed Page.png” as base, same vertical feed layout, real Supabase data.
+- Performer Page → use “Performer Page Part 1–4.png” as base, but keep our edits:
+   * Expanded About tab
+   * Performance types & frequent locations
+   * Social media links
+   * Donation button with orange style
+   * Stats section (likes, views, donations)
+- Support Performer → use “Support Performer Page Part 1–2.png” as base, with our improved quick messages and Apple Pay/Google Pay buttons.
+- User Profile → use “User Profile Page Part 1–3.png” as base, but keep:
+   * Stats section (earnings, followers, donations)
+   * Activity feed with donations/likes
+   * Account settings and preferences sections
+- Video Player → use “Video Play Page.png” as base, apply our edit for orange play button.
+- Video Upload → use “Video Upload Page Part 1–3.png” as base, but keep:
+   * Hashtags/mentions input field
+   * Performance type selection (music, dance, etc.)
+   * Location selection dropdown
+   * Privacy settings (public/followers only)
+
+🚨 Critical:
+- Don’t overwrite Supabase logic, navigation flow, or service worker settings.
+- Focus ONLY on restoring the UI to the correct style + edits we had.
+- After restoring UI, continue with pending tasks (sign-in fixes, navigation test with logging, permanent media storage, following feed data).

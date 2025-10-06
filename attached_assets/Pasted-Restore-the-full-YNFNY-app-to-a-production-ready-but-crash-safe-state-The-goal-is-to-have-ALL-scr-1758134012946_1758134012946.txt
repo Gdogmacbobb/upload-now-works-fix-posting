@@ -1,0 +1,51 @@
+Restore the full YNFNY app to a production-ready but crash-safe state.  
+The goal is to have ALL screens, real Supabase connectivity, and safe fallbacks.  
+
+⚡ Restore Navigation & Screens:
+- Bottom Navigation Bar with 3 tabs: Home, Discovery, Profile.  
+- Center Camera Button: Opens video recording/upload flow.  
+- Login/Register Screen: Supabase auth (email/password or magic link).  
+- Performer Profile Screen: Shows performer’s videos, followers, bio.  
+- User Profile Screen: Shows likes, reposts, following list.  
+- Discovery Feed: TikTok-style vertical scrolling feed.  
+- Following Feed: Shows videos from followed performers.  
+- Upload/Record Screen: Full video post flow with captions, hashtags, location.  
+- Settings/Logout option in Profile.  
+
+⚡ Supabase Integration (primary data source):
+- Videos: stored in Supabase storage, metadata in `videos` table.  
+- Profiles: from `user_profiles` table with performer vs New Yorker roles.  
+- Likes, Comments, Reposts: placeholder tables but wired up.  
+- Follow system: `follows` table connecting performer → user.  
+- Auth: Supabase session management for login/logout.  
+
+⚡ Crash-Safe Guards:
+- Wrap ALL async calls in try/catch with !mounted checks.  
+- Add timeout wrappers (8s max) → fallback UI if data doesn’t load.  
+- If Supabase/env vars missing:  
+   → Log `[ERROR] Supabase config missing`  
+   → Show fallback mock data for Discovery only.  
+   → Still allow navigation between screens.  
+- No infinite spinners: always show either content or fallback.  
+
+⚡ UI/UX Rules:
+- Discovery & Following feed: autoplay muted videos, swipe vertically.  
+- Right-hand action buttons (like, comment, repost, share).  
+- Performer Profile: grid of uploaded videos + follow/unfollow button.  
+- User Profile: reposts, liked videos, and settings/logout.  
+- Upload Screen: add caption, hashtags, optional location.  
+- Retry button on all error/fallback states.  
+
+⚡ Stability & Logging:
+- Add detailed logs for navigation, Supabase calls, and video playback:  
+   → [NAV] route changes  
+   → [AUTH] login/logout state  
+   → [VIDEO] preload/playback events  
+- Never crash app → always catch errors and display safe fallback.  
+
+🚀 Final Goal:
+A fully working, crash-safe TikTok-style app with:  
+- ALL screens and buttons restored.  
+- Supabase-driven by default.  
+- Mock/fallback only when absolutely necessary.  
+- Stable navigation + recording flow.  

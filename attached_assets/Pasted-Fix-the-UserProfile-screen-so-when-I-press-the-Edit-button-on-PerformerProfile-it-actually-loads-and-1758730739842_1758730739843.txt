@@ -1,0 +1,55 @@
+Fix the UserProfile screen so when I press the Edit button on PerformerProfile it actually loads and allows editing of the user’s real data from Supabase instead of showing the placeholder “Failed to load profile data” screen.
+
+Required changes:
+	1.	Edit Button Navigation
+File: lib/presentation/performer_profile/widgets/profile_header_widget.dart
+Ensure it uses:
+Navigator.push(
+context,
+MaterialPageRoute(
+builder: (context) => UserProfile(userId: performerData[“id”]),
+),
+);
+Confirm UserProfile is properly imported.
+	2.	UserProfile Constructor
+File: lib/presentation/user_profile/user_profile.dart
+Must accept the userId:
+class UserProfile extends StatefulWidget {
+final String userId;
+const UserProfile({Key? key, required this.userId}) : super(key: key);
+}
+	3.	Supabase Query for Data Load
+Replace all mock or placeholder code inside _UserProfileState with this:
+Future<Map<String, dynamic>?> _loadUserProfile() async {
+final response = await supabase
+.from(‘user_profiles’)
+.select(‘id, full_name, username, role, bio, profile_image_url, followers_count, video_count, supporter_count’)
+.eq(‘id’, widget.userId)
+.maybeSingle();
+return response;
+}
+	4.	UI Rendering
+• While loading: show a CircularProgressIndicator.
+• On null response: show “Profile not found”.
+• On success: render the profile using real Supabase data (same structure as PerformerProfile).
+• If profile_image_url is null: show a placeholder avatar.
+	5.	Enable Editing (write-back to Supabase)
+Add editable text fields for full_name, username, and bio.
+Prepopulate fields with existing values.
+Add a Save button at the bottom.
+On Save button press, run:
+await supabase.from(‘user_profiles’).update({
+‘full_name’: updatedFullName,
+‘username’: updatedUsername,
+‘bio’: updatedBio,
+}).eq(‘id’, widget.userId);
+Show a success Snackbar and pop back to PerformerProfile with updated data.
+	6.	Default Supabase SQL Query
+select id, full_name, username, role, bio, profile_image_url, followers_count, video_count, supporter_count from user_profiles where id = ‘’;
+
+Expected behavior:
+• Profile tab still opens PerformerProfile.
+• Pressing the orange Edit button navigates to UserProfile.
+• UserProfile loads live data for that same userId from Supabase.
+• User can edit fields and save changes.
+• Data updates in Supabase and shows immediately on returning to PerformerProfile.

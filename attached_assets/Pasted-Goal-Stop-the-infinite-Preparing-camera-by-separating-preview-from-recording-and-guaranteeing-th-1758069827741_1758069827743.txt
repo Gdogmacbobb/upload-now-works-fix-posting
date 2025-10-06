@@ -1,0 +1,239 @@
+Goal: Stop the infinite “Preparing camera…” by separating preview from recording and guaranteeing the <video> element gets the stream after its DOM container exists. Add strict logs, a 5s timeout fallback, and keep preview alive even if recording fails.
+
+1) Files to edit
+
+lib/services/browser_recording_service.dart
+
+lib/presentation/video_recording/widgets/web_recording_widget.dart
+
+(optional) lib/routes/app_routes.dart → ensure performer-only route guard doesn’t bounce once authenticated.
+
+2) Service: split preview from recording
+
+In BrowserRecordingService:
+
+class BrowserRecordingService {
+  MediaStream? _previewStream;
+  bool _previewRequested = false;
+  bool _previewAttached = false;
+
+  Future<MediaStream> initializePreview() async {
+    if (_previewStream != null) return _previewStream!;
+    _previewRequested = true;
+    debugPrint('[CAMERA_PREVIEW] Requesting getUserMedia');
+
+    final constraints = {
+      'video': {
+        'facingMode': 'user', // front cam default
+        'aspectRatio': 9/16,
+      },
+      'audio': true,
+    };
+
+    final stream = await window.navigator.mediaDevices!.getUserMedia(constraints);
+    debugPrint('[CAMERA_PREVIEW] Stream acquired');
+    debugPrint('[CAMERA_PREVIEW] Tracks: '
+      'video=${stream.getVideoTracks().length}, audio=${stream.getAudioTracks().length}');
+    _previewStream = stream;
+    return stream;
+  }
+
+  /// Deterministic DOM mount with rAF polling and timeout.
+  Future<bool> attachPreviewToVideoElement(
+    VideoElement videoEl, {
+    Duration timeout = const Duration(seconds: 5),
+    Duration pollEvery = const Duration(milliseconds: 200),
+    VoidCallback? onTimeout,
+  }) async {
+    if (_previewStream == null) throw StateError('Call initializePreview() first');
+
+    // Force attributes every time.
+    videoEl
+      ..muted = true
+      ..autoplay = true
+      ..playsInline = true
+      ..setAttribute('webkit-playsinline', 'true')
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.objectFit = 'cover'
+      ..style.background = 'black';
+
+    final start = DateTime.now();
+    debugPrint('[CAMERA_PREVIEW] Mount verification started');
+
+    bool containerReady() {
+      final w = videoEl.offsetWidth;
+      final h = videoEl.offsetHeight;
+      debugPrint('[CAMERA_PREVIEW] DOM size check: ${w}x${h}');
+      return w > 0 && h > 0 && videoEl.isConnected;
+    }
+
+    // rAF polling loop
+    while (true) {
+      if (containerReady()) {
+        videoEl.srcObject = _previewStream;
+        debugPrint('[CAMERA_PREVIEW] Video element srcObject set');
+        debugPrint('[CAMERA_PREVIEW] readyState(before)=${videoEl.readyState}');
+        try {
+          final play = videoEl.play();
+          if (play != null) await play;
+          debugPrint('[CAMERA_PREVIEW] Video element.play() awaited');
+        } catch (e) {
+          debugPrint('[CAMERA_PREVIEW] play() threw: $e');
+        }
+
+        // Attach event logs once
+        videoEl.onLoadedMetadata.first.then((_) {
+          debugPrint('[CAMERA_PREVIEW] onloadedmetadata fired '
+                     '(${videoEl.videoWidth}x${videoEl.videoHeight})');
+        });
+        videoEl.onLoadedData.first.then((_) {
+          debugPrint('[CAMERA_PREVIEW] onloadeddata fired');
+        });
+        videoEl.onCanPlay.first.then((_) {
+          debugPrint('[CAMERA_PREVIEW] canplay fired');
+        });
+
+        debugPrint('[CAMERA_PREVIEW] Preview started');
+        _previewAttached = true;
+        return true;
+      }
+
+      // timeout
+      if (DateTime.now().difference(start) > timeout) {
+        debugPrint('[CAMERA_PREVIEW] Timeout - stream active but not rendering');
+        if (onTimeout != null) onTimeout();
+        return false;
+      }
+
+      // wait next rAF-ish tick
+      await Future.delayed(pollEvery);
+    }
+  }
+
+  void dispose() {
+    _previewStream?.getTracks().forEach((t) => t.stop());
+    _previewStream = null;
+    _previewRequested = false;
+    _previewAttached = false;
+  }
+}
+
+3) Widget: use preview-first lifecycle + fallback
+
+In web_recording_widget.dart:
+
+On initState():
+
+create the <video> element and put it in the tree,
+
+call initializePreview(),
+
+then call attachPreviewToVideoElement(...),
+
+if attach returns false, show file picker (don’t spin forever).
+
+@override
+void initState() {
+  super.initState();
+  debugPrint('[ROUTE] VideoRecording initState() entered');
+  _init();
+}
+
+Future<void> _init() async {
+  setState(() => _loadingPreview = true);
+
+  // 1) ensure HtmlElementView is built first
+  await Future.delayed(const Duration(milliseconds: 50));
+
+  // 2) initialize stream
+  final stream = await _svc.initializePreview();
+
+  // 3) deterministic mount with fallback
+  await _svc.attachPreviewToVideoElement(
+    _videoEl,
+    timeout: const Duration(seconds: 5),
+    onTimeout: _showFilePickerFallback, // must set state to show picker
+  );
+
+  setState(() => _loadingPreview = false);
+}
+
+void _showFilePickerFallback() {
+  if (!mounted) return;
+  debugPrint('[CAMERA_PREVIEW] Fallback picker shown');
+  setState(() {
+    _showPicker = true;     // render your Select Video card
+    _loadingPreview = false;
+  });
+}
+
+
+Do not create/start MediaRecorder in preview init. Only when user taps Record.
+
+4) Don’t kill the preview on recording failure
+
+When starting MediaRecorder, if creation fails, log it and keep the preview:
+
+try {
+  _recorder = MediaRecorder(_svc.previewStream!, {'mimeType': 'video/mp4;codecs=h264'});
+  _recorder!.start();
+} catch (e) {
+  debugPrint('[RECORD] MediaRecorder creation failed: $e (preview stays alive)');
+  _showRecordingErrorSnackBar();
+}
+
+5) Exact log sequence to verify
+
+You should see in order:
+
+[ROUTE] VideoRecording initState() entered
+[CAMERA_PREVIEW] Requesting getUserMedia
+[CAMERA_PREVIEW] Stream acquired
+[CAMERA_PREVIEW] Tracks: video=1, audio=1
+[CAMERA_PREVIEW] Mount verification started
+[CAMERA_PREVIEW] DOM size check: WxH   (repeats)
+[CAMERA_PREVIEW] Video element srcObject set
+[CAMERA_PREVIEW] readyState(before)=X
+[CAMERA_PREVIEW] Video element.play() awaited
+[CAMERA_PREVIEW] onloadedmetadata fired (1920x1080)
+[CAMERA_PREVIEW] canplay fired
+[CAMERA_PREVIEW] Preview started
+
+
+If the container never becomes valid by 5s:
+
+[CAMERA_PREVIEW] Timeout - stream active but not rendering
+[CAMERA_PREVIEW] Fallback picker shown
+
+6) UI states
+
+While preview mounting → “Preparing camera…” + spinner.
+
+On success → show live preview.
+
+On timeout → hide spinner and show the Select Video card (web fallback).
+
+Recording failures must not stop the preview.
+
+7) Route guard sanity
+
+Only redirect to login if currentUser == null.
+
+If role is temporarily null but user exists, wait up to 1s before deciding.
+
+Never set window.location.hash in navigation (causes onUnknownRoute).
+
+8) Cleanup
+
+On dispose(), call BrowserRecordingService.dispose() to stop tracks and free the camera.
+
+✅ Acceptance criteria
+
+No more infinite spinner: within ≤5s you either see live preview or the file picker fallback.
+
+Logs match the exact sequence above.
+
+Recording failures do not blank the preview.
+
+Leaving the screen releases the camera (tracks stopped).

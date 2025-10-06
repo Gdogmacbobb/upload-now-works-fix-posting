@@ -1,0 +1,170 @@
+{
+  "task": "Fix Street Performer registration screen to match product spec",
+  "scope": "Only affect Street Performer flow in registration. Leave New Yorker flow unchanged.",
+  "files_to_update": [
+    "lib/presentation/registration_screen/registration_screen.dart",
+    "lib/presentation/registration_screen/widgets/performer_specific_fields.dart",
+    "lib/presentation/registration_screen/widgets/location_verification_widget.dart",
+    "lib/presentation/registration_screen/widgets/common_form_fields.dart"
+  ],
+  "do_not_add": [
+    "profile photo upload on registration",
+    "bio field on registration",
+    "social handles on registration",
+    "any demo/mock data"
+  ],
+  "ui_spec": {
+    "page_title": "Create your account",
+    "sections_in_order": [
+      "AccountTypeHeader (preselected: street_performer)",
+      "CommonFields",
+      "PerformerFields",
+      "LocationVerification",
+      "TermsAndPrivacy",
+      "SubmitButton"
+    ],
+    "style": {
+      "theme": "dark",
+      "brand_orange": "#FF8C00",
+      "surface_dark": "#1C1C1E"
+    }
+  },
+  "fields": {
+    "common_fields": [
+      {
+        "key": "full_name",
+        "label": "Full name",
+        "type": "text",
+        "required": true,
+        "maxLength": 60
+      },
+      {
+        "key": "username",
+        "label": "Handle",
+        "type": "text",
+        "required": true,
+        "pattern": "^[a-z0-9_]{3,20}$",
+        "validation": "lowercase letters, numbers, underscores; 3-20 chars; must be unique",
+        "uniqueness_check": {
+          "table": "user_profiles",
+          "column": "username"
+        }
+      },
+      {
+        "key": "email",
+        "label": "Email",
+        "type": "email",
+        "required": true
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "type": "password",
+        "required": true,
+        "rules": "min 8 chars, at least 1 letter and 1 number"
+      },
+      {
+        "key": "confirm_password",
+        "label": "Confirm password",
+        "type": "password",
+        "required": true,
+        "match": "password"
+      }
+    ],
+    "performer_fields": [
+      {
+        "key": "performance_type",
+        "label": "Performance type",
+        "type": "select",
+        "required": true,
+        "options": ["Music", "Dance", "Comedy", "Magic", "Art", "Other"]
+      },
+      {
+        "key": "performance_subcategory",
+        "label": "Subcategory",
+        "type": "select_or_text",
+        "required": true,
+        "depends_on": "performance_type",
+        "options_by_type": {
+          "Music": ["Busking Singer", "Hip-Hop MC", "Street Drummer", "Saxophonist", "Guitarist", "Violinist", "Beatboxer", "DJ/Controllerist", "A Cappella", "Brass Band"],
+          "Dance": ["Breakdance/B-Boy", "Hip-Hop/Urban", "Popping/Locking", "Contemporary", "Afrobeats", "Tap Dance", "Latin (Salsa/Bachata)", "Vogue/House", "Ballet Street", "Street Crew"],
+          "Comedy": ["Stand-up Street", "Improv Bits", "Roaming Character", "Sketch Duo", "Prop Comedy", "Musical Comedy", "Beat-the-Clock Bits", "Crowd Work", "Mime Comedy", "Parody"],
+          "Magic": ["Close-up/Card", "Coin Magic", "Street Illusions", "Mentalism", "Sleight of Hand", "Escapology", "Street Hypnosis", "Fire Magic (where legal)", "Levitation Gags", "Street Stage"],
+          "Art": ["Spray Paint Portraits", "Chalk Art", "Caricature", "Graffiti on Canvas", "Calligraphy", "Origami", "Speed Painting", "Sand Art", "Puppetry", "Balloon Art"],
+          "Other": ["Free text"]
+        }
+      }
+    ],
+    "location_verification": {
+      "mode": "either",
+      "options": [
+        {
+          "key": "use_gps",
+          "label": "Use current location",
+          "type": "gps_permission_request",
+          "notes": "On web, gracefully degrade. On mobile, request runtime permission."
+        },
+        {
+          "key": "borough",
+          "label": "Select borough",
+          "type": "select",
+          "options": ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island", "Outside NYC"]
+        }
+      ],
+      "required": "one_of"
+    }
+  },
+  "logic": {
+    "rendering": "Show PerformerFields and LocationVerification ONLY when account_type == 'street_performer'. Keep New Yorker flow unchanged.",
+    "validation_order": [
+      "full_name",
+      "username (and uniqueness check)",
+      "email",
+      "password + confirm_password",
+      "performance_type",
+      "performance_subcategory",
+      "location_verification (gps or borough)"
+    ],
+    "no_profile_photo_on_registration": true
+  },
+  "persistence": {
+    "auth_signup": "Use supabase.auth.signUp(email, password)",
+    "insert_profile": {
+      "table": "user_profiles",
+      "fields": {
+        "id": "auth.user.id",
+        "full_name": "full_name",
+        "username": "username",
+        "role": "'street_performer'",
+        "performance_type": "performance_type",
+        "performance_subcategory": "performance_subcategory",
+        "borough": "borough_or_null",
+        "location_lat": "gps_lat_or_null",
+        "location_lng": "gps_lng_or_null",
+        "bio": null,
+        "socials_instagram": null,
+        "socials_tiktok": null,
+        "socials_youtube": null,
+        "profile_image_url": null
+      }
+    }
+  },
+  "supabase_queries": {
+    "check_username_unique": "select username from user_profiles where lower(username) = lower(:username) limit 1",
+    "insert_profile": "insert into user_profiles (id, full_name, username, role, performance_type, performance_subcategory, borough, location_lat, location_lng) values (:id, :full_name, :username, 'street_performer', :performance_type, :performance_subcategory, :borough, :lat, :lng)",
+    "fetch_profile_after_signup": "select id, full_name, username, role, performance_type, performance_subcategory, borough from user_profiles where id = :id"
+  },
+  "runtime_notes": [
+    "DO NOT introduce localization/i18n; keep existing en-US strings.",
+    "Guard GPS permissions on web; show borough select fallback.",
+    "No demo data anywhere. All values must be from form inputs and Supabase.",
+    "Keep New Yorker registration untouched and out of scope."
+  ],
+  "acceptance_tests": [
+    "If user selects Street Performer, they MUST see performance type + subcategory and location verification block.",
+    "Username uniqueness is enforced before sign-up.",
+    "Submitting creates auth user and profile row with role='street_performer'.",
+    "No photo, bio, or socials fields on this screen.",
+    "New Yorker flow remains unchanged."
+  ]
+}

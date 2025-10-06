@@ -1,0 +1,81 @@
+{
+  "role": "Senior Flutter Engineer & Supabase Specialist",
+  "goal": "Fully repair the 'Unable to verify username availability' issue inside the Street Performer registration flow — entirely from Replit — without using external dashboards. The fix must ensure the Supabase client is initialized, the check_username_availability RPC exists and runs correctly, the Create Account flow works end-to-end, and all console + SnackBar visibility is active.",
+  "context": {
+    "framework": "Flutter Web",
+    "backend": "Supabase (initialized within Replit environment)",
+    "database": "public.user_profiles with RLS enabled",
+    "rpc": "check_username_availability(p_username text) returning boolean",
+    "routing": "go_router with /discovery-feed route",
+    "environment": "Replit AI (no external SQL console)"
+  },
+  "repository_paths_to_inspect": [
+    "lib/services/supabase_service.dart",
+    "lib/screens/registration/registration_screen.dart",
+    "lib/screens/registration/widgets/handle_selection.dart",
+    "lib/screens/registration/widgets/performer_specific_fields.dart",
+    "lib/router/app_router.dart",
+    "lib/main.dart"
+  ],
+  "step_by_step_tasks": [
+    "1️⃣ Verify that SupabaseService is initialized before any RPC call.",
+    "   - If missing, add an async wait function: await supabaseService.waitForInitialization();",
+    "   - Ensure Supabase.instance.client is never null.",
+    "2️⃣ Create or revalidate the SQL RPC 'check_username_availability' directly via Replit Supabase SQL execution call.",
+    "   - Generate SQL script inside Replit: create or replace function public.check_username_availability(p_username text) returns boolean language plpgsql security definer as $$ declare exists_count int; begin select count(*) into exists_count from public.user_profiles where lower(handle)=lower(p_username); return exists_count=0; end; $$;",
+    "   - Execute the script through Supabase from Replit (use supabase.rpc('sql_exec', ...) if available).",
+    "3️⃣ Fix the Flutter call to the RPC:",
+    "   - Function must be: final result = await supabase.rpc('check_username_availability', params: {'p_username': username});",
+    "   - Ensure it returns true/false, not null.",
+    "   - Wrap in try/catch; print all error details with debugPrint('[USERNAME CHECK] ❌ $e');",
+    "4️⃣ Add complete user feedback:",
+    "   - On success → show green SnackBar: 'Username available ✅'.",
+    "   - On taken → red SnackBar: 'Username already taken ❌'.",
+    "   - On RPC/network failure → red SnackBar: 'Unable to verify username availability. Please try again.'",
+    "   - Keep all logs visible in Replit console output.",
+    "5️⃣ Confirm navigation consistency:",
+    "   - After successful registration, navigate to /discovery-feed using context.go('/discovery-feed');"
+  ],
+  "acceptance_criteria": [
+    "✅ Clicking Change or submitting handle triggers '[USERNAME CHECK] Starting availability check' log.",
+    "✅ RPC executes successfully within Replit environment (returns true/false).",
+    "✅ No null response or silent failure in console.",
+    "✅ User-visible SnackBars appear for success, taken, or retry errors.",
+    "✅ Create Account button becomes enabled once a valid username is confirmed.",
+    "✅ Entire flow (signup → profile insert → navigation) completes with visible console logs.",
+    "✅ No external Supabase dashboard interaction required."
+  ],
+  "explicit_code_tasks": [
+    "Add the SQL RPC definition string and run it from Replit if missing.",
+    "Ensure Supabase client initialization is awaited before RPC calls.",
+    "Add detailed logging inside checkUsernameAvailability(), including parameter name and RPC response.",
+    "Refactor registration_screen.dart so Create Account button depends on _isUsernameAvailable == true.",
+    "Add SnackBars and console logs for all success/failure states."
+  ],
+  "console_log_expectations": [
+    "[USERNAME CHECK] Starting availability check for: samplehandle",
+    "[USERNAME CHECK] Supabase initialized, calling RPC...",
+    "[USERNAME CHECK] RPC response: true",
+    "[USERNAME CHECK] ✅ Username AVAILABLE",
+    "or",
+    "[USERNAME CHECK] RPC response: false",
+    "[USERNAME CHECK] ❌ Username already taken"
+  ],
+  "tests": [
+    "Enter taken handle → shows red SnackBar 'Username already taken ❌'.",
+    "Enter new handle → shows green SnackBar 'Username available ✅'.",
+    "Disconnect network → shows red SnackBar 'Unable to verify username availability. Please try again.'",
+    "After available handle → Create Account button activates and completes registration → navigates to /discovery-feed."
+  ],
+  "deliverables": [
+    "Unified code diff for registration_screen.dart, handle_selection.dart, and supabase_service.dart showing fixes.",
+    "Inline SQL execution snippet proving RPC exists and returns correct boolean.",
+    "Console logs screenshot showing RPC response true/false.",
+    "Verification that the button now activates and flow navigates successfully."
+  ],
+  "run_commands": [
+    "flutter clean && flutter pub get",
+    "flutter run -d chrome --web-port 5000 -v"
+  ],
+  "final_goal": "After running this prompt, the username verification must work inside Replit without any external database setup or console access. The Create Account flow should proceed seamlessly to /discovery-feed with complete debug visibility and SnackBar feedback at every step."
+}

@@ -1,0 +1,60 @@
+{
+  "task": "Fix and enhance icons on Street Performer registration categories",
+  "details": {
+    "context": "The performer registration screen (performer_specific_fields.dart) must show the correct icons for each main performance category. If icons are missing, not rendering, or incorrectly mapped, identify and fix the root cause.",
+    "objectives": [
+      "Ensure all main categories (Music, Dance, Visual Art, Comedy, Magic, Other) display their corresponding icons.",
+      "If the icons are present in code but not rendering, debug the issue until they appear correctly in the UI.",
+      "Maintain the clean layout and visual hierarchy — icon above the label, both centered.",
+      "Icons must remain visible even when a category is selected (no color blending or disappearance).",
+      "Add smooth highlight animation on category selection (icon + border glow in #FF8C00).",
+      "Preserve Supabase logic and all existing functionality."
+    ],
+    "debug_instructions": {
+      "step_1": "Scan performer_specific_fields.dart for Icon or Image widget usage.",
+      "step_2": "Verify icon assets or Material Icons are correctly imported and not overridden by a missing color property or ThemeData conflict.",
+      "step_3": "Confirm the icon color is not blending with the background (#1C1C1E). Use Colors.white or AppTheme.textPrimaryColor for default state.",
+      "step_4": "If the icons exist but are invisible, check for SizedBox or Container constraints.",
+      "step_5": "If icons are missing entirely, restore proper IconData mapping from the main categories list."
+    },
+    "expected_ui_behavior": {
+      "layout": "2-column grid with evenly spaced ElevatedButtons (or custom Container + GestureDetector)",
+      "icon_position": "Centered above label text",
+      "label_font_size": 15,
+      "spacing": 8,
+      "icon_size": 28,
+      "border_radius": 12,
+      "selected_state": {
+        "border_color": "#FF8C00",
+        "background_color": "#2A2A2D",
+        "icon_color": "#FF8C00",
+        "text_color": "#FFFFFF"
+      },
+      "unselected_state": {
+        "border_color": "#3A3A3D",
+        "background_color": "#1C1C1E",
+        "icon_color": "#FFFFFF",
+        "text_color": "#FFFFFF"
+      }
+    },
+    "category_icon_mapping": {
+      "Music": "Icons.music_note",
+      "Dance": "Icons.directions_run",
+      "Visual Art": "Icons.brush",
+      "Comedy": "Icons.theater_comedy",
+      "Magic": "Icons.auto_awesome",
+      "Other": "Icons.star"
+    },
+    "debug_expectations": [
+      "If any icon does not render → print debug log: '[DEBUG] Icon failed to render for {category}'.",
+      "If fixed → print: '[DEBUG] Icon rendering restored for {category}'.",
+      "If the same icon widget is reused incorrectly → print: '[DEBUG] Icon mapping error, reassigning IconData'."
+    ],
+    "final_validation": [
+      "All 6 categories show icons correctly.",
+      "Icons respond visually when selected.",
+      "No layout overflow or clipping errors occur.",
+      "Icons remain consistent across light and dark modes."
+    ]
+  }
+}

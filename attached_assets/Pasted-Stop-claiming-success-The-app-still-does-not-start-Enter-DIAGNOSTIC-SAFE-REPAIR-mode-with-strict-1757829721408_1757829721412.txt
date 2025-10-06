@@ -1,0 +1,117 @@
+Stop claiming success. The app still does not start. Enter DIAGNOSTIC + SAFE REPAIR mode with strict scope control.
+
+0) Hardening guardrails (must follow)
+
+Do not refactor unrelated files.
+
+Do not change themes, layouts, navigation structure, or database schema.
+
+Only touch what’s proven to be the cause of startup failure.
+
+Before any change: list exact files/lines you will edit. After change: list exactly what you changed.
+
+1) Prove the root cause with logs (no edits yet)
+
+Run the app and print raw startup logs from process start until failure or first frame render. Echo these markers to the console (verbatim):
+
+[BOOT] main.dart entered
+
+[BOOT] runApp() called
+
+[ROUTE] MaterialApp built
+
+[PRESPLASH] rendered
+
+[SPLASH] build() started
+
+[AUTH] session check started
+
+[AUTH] session check finished
+
+[NAV] to /login or /home triggered
+
+Also print any exceptions/stack traces with file + line numbers. Do not fix yet—just show where the flow stops.
+
+2) Verify critical startup artifacts
+
+Without editing, dump the following facts so I can see them:
+
+Entry + routes: which widget is passed to runApp, what the initial route is, and the full routes map.
+
+Assets: the exact pubspec.yaml assets section relevant to splash logo; show the resolved path it’s loading.
+
+Supabase config source: show the file path and the two strings masked as:
+url = https://******.supabase.co and anonKey = ******…(last 6).
+
+Navigator calls between PreSplash → Splash → Login/Home (which file/line triggers them).
+
+3) Minimal Safe Mode (bypass test)
+
+Add a temporary bypass test (no permanent edits): launch directly to a minimal screen that says “YNFNY Safe Mode”.
+
+If Safe Mode renders, the problem is in the Splash/transition layer.
+
+If Safe Mode does not render, the problem is before widgets mount (imports, broken main, or a crashing package).
+Tell me which case occurred.
+
+4) Decide the root cause (pick one, justify with logs)
+
+Choose and justify one:
+
+A) Broken import / route map / missing widget prevents MaterialApp from mounting.
+
+B) Asset load (logo/font) crashes splash build before first frame.
+
+C) Double navigation / race wipes the tree between PreSplash and Splash.
+
+D) Async in build() stalls splash (session check or network blocking).
+
+E) Dependency or SDK version mismatch causing runtime init failure.
+
+5) Apply the smallest possible fix
+
+Change only the file/line(s) that caused the failure.
+
+Keep PreSplash, Splash, Login/Home structure intact.
+
+If asset issue: point to a stable path already declared in pubspec, and add a visible fallback.
+
+If nav race: ensure one pushReplacement runs; guard with a single _isNavigating flag.
+
+If async in build(): move it to initState() with a 2–3s timeout and default to /login.
+
+If import/route: correct the import or route key; do not refactor folders.
+
+6) Re-run and prove the fix (evidence)
+
+Rebuild and show:
+
+The same boot markers now completing through [NAV] to /login or /home triggered.
+
+The first visible screen (identify which).
+
+No uncaught errors in console.
+
+Time from [PRESPLASH] rendered → [NAV] ≤ 3s.
+
+7) Permanence checks (no regressions)
+
+Confirm Safe Mode OFF and normal flow ON.
+
+Confirm the exact files you modified so I can track them.
+
+Add a lightweight startup self-test: on boot, log [SELFTEST] ok after first frame.
+
+Do not change or touch Supabase URL/keys again unless they’re proven to be the cause.
+
+Deliverables:
+
+Raw logs with markers + any stack traces.
+
+One clear root cause.
+
+The minimal edit you made (files/lines).
+
+Proof the app now reaches Login (unauth) or Home (auth) consistently.
+
+Confirmation that PreSplash → Splash → Login/Home never shows a white frame in between.”**

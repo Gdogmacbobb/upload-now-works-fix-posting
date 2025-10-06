@@ -1,0 +1,33 @@
+{
+  "task": "Rebuild and enhance the Street Performer registration UI",
+  "details": {
+    "context": "The performance type section currently has missing icons and an unbalanced layout. We also need subcategories for each main category and allow multi-select options.",
+    "goals": [
+      "Fix the layout of the performance type grid so that icons and labels are centered, evenly spaced, and visually balanced.",
+      "Ensure all 6 main performance categories display their icons natively using Flutter's built-in Material icons package: Music (Icons.music_note), Dance (Icons.accessibility_new), Visual Art (Icons.palette), Comedy (Icons.theater_comedy), Magic (Icons.auto_awesome), Other (Icons.category).",
+      "Bundle icons locally (do NOT rely on CDN links). Ensure icons appear instantly on app load.",
+      "Add a clean orange section header 'Performance Type' and a subtle divider below it.",
+      "Allow users to select multiple performance types (multi-select chips or toggles).",
+      "When a main category is selected (e.g., 'Dance'), show a collapsible subcategory list with at least 7 global subcategories. Users can select multiple subcategories or just the main one.",
+      "Save all selected categories and subcategories in the user's Supabase profile under `performance_types` as an array of strings.",
+      "Display the user's selected performance types/subcategories on the Performer Profile page — right below the bio and above the supporter/videos row.",
+      "Keep all fonts consistent with the app theme. Avoid oversized text.",
+      "Improve visual polish — add rounded cards, consistent spacing, and hover/tap feedback."
+    ],
+    "example_subcategories": {
+      "Music": ["Instrumental", "Vocals", "DJ", "Beatbox", "Band", "Percussion", "Other"],
+      "Dance": ["Hip-Hop", "Breakdance", "Ballet", "Contemporary", "Latin", "Freestyle", "Other"],
+      "Visual Art": ["Painting", "Graffiti", "Sculpture", "Caricature", "Photography", "Digital Art", "Other"],
+      "Comedy": ["Stand-up", "Improv", "Sketch", "Satire", "Parody", "Clowning", "Other"],
+      "Magic": ["Street Magic", "Card Tricks", "Illusion", "Mentalism", "Sleight of Hand", "Escape Acts", "Other"],
+      "Other": ["Performance Poetry", "Circus Arts", "Storytelling", "Mime", "Fire Dancing", "Puppetry", "Other"]
+    },
+    "requirements": {
+      "files_to_update": ["performer_specific_fields.dart", "profile_header_widget.dart"],
+      "flutter_version": "3.24.5",
+      "icons_package": "material",
+      "supabase_field": "performance_types",
+      "output": "Beautiful, functional, multi-select performer registration UI with subcategories and proper icon alignment."
+    }
+  }
+}

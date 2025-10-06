@@ -1,0 +1,95 @@
+I want to update the Street Performer profile layout so that each performer’s performance types are displayed horizontally between the bio and the stats section on the Performer Profile page.
+
+Please do the following:
+
+1️⃣ Locate the performer profile screen widget (likely PerformerProfilePage, PerformerProfileView, or PerformerProfileCard).
+
+2️⃣ Identify where the bio and stats are rendered. Right now the widget likely looks like:
+   BioSection()
+   StatsSection()
+
+3️⃣ Insert a new horizontal Performance Types row between them.
+
+Design requirements:
+- Use the performer's data field "performance_types" from Supabase (it’s stored as an array).
+- Display the list items horizontally in a scrollable Row or a Wrap widget.
+- Each performance type should have:
+    - An icon (the same ones used during registration)
+    - The name (e.g., “Music”, “Dance”, “Comedy”, etc.)
+    - A rounded orange background chip-style container
+- Add proper spacing between chips (8px)
+- If performance_types is empty or null, hide the row entirely.
+- The style should match the app’s dark theme (background #1C1C1E, white text, orange accent #FF8C00).
+
+Example layout snippet (conceptually):
+   Column(
+     children: [
+       BioSection(),
+       SizedBox(height: 12),
+       PerformanceTypeRow(performanceTypes: user.performance_types),
+       SizedBox(height: 12),
+       StatsSection(),
+     ]
+   )
+
+4️⃣ Create a reusable widget named PerformanceTypeRow in components/performance_type_row.dart:
+   class PerformanceTypeRow extends StatelessWidget {
+     final List<String> performanceTypes;
+     const PerformanceTypeRow({required this.performanceTypes});
+
+     @override
+     Widget build(BuildContext context) {
+       if (performanceTypes.isEmpty) return SizedBox.shrink();
+       return SingleChildScrollView(
+         scrollDirection: Axis.horizontal,
+         child: Row(
+           children: performanceTypes.map((type) {
+             final icon = _getIconForType(type);
+             return Container(
+               margin: EdgeInsets.only(right: 8),
+               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+               decoration: BoxDecoration(
+                 color: Color(0xFFFF8C00).withOpacity(0.15),
+                 borderRadius: BorderRadius.circular(20),
+                 border: Border.all(color: Color(0xFFFF8C00))
+               ),
+               child: Row(
+                 children: [
+                   Icon(icon, color: Color(0xFFFF8C00), size: 18),
+                   SizedBox(width: 6),
+                   Text(type, style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                 ],
+               ),
+             );
+           }).toList(),
+         ),
+       );
+     }
+
+     IconData _getIconForType(String type) {
+       switch (type.toLowerCase()) {
+         case 'music': return Icons.music_note;
+         case 'dance': return Icons.directions_run;
+         case 'visual arts': return Icons.brush;
+         case 'comedy': return Icons.theater_comedy;
+         case 'magic': return Icons.auto_awesome;
+         default: return Icons.star;
+       }
+     }
+   }
+
+5️⃣ Fetch performance_types correctly from the Supabase user_profiles table.
+   - Ensure it’s being pulled as a List<String> from the JSONB field.
+   - If it’s not already part of the profile model, add it.
+
+6️⃣ Rebuild and test:
+   - Open a performer profile that has multiple performance types (e.g., Music, Dance, Comedy)
+   - Confirm they appear in one clean horizontal row below the bio and above the stats section.
+   - Check responsiveness (should wrap or scroll if more than 4 chips).
+
+Expected logs:
+[UI] Injected PerformanceTypeRow under bio section.
+[DATA] Loaded performance_types: ["Music", "Dance", "Comedy"]
+[UI] Rendered 3 horizontal chips successfully.
+
+Once complete, show me the updated layout screenshot for confirmation.

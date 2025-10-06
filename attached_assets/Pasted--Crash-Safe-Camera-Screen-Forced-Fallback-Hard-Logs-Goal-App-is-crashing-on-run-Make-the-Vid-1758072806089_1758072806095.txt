@@ -1,0 +1,114 @@
+“Crash-Safe Camera Screen + Forced Fallback & Hard Logs”
+
+Goal: App is crashing on run. Make the VideoRecording screen 100% crash-safe, never spin forever, and always render either live preview or a file-picker fallback within 5s. Add a temporary feature flag to force the fallback so we can verify the screen loads even if camera APIs are blocked.
+
+A) Add a global feature flag (temporary)
+
+Create lib/config/feature_flags.dart:
+
+class FeatureFlags {
+  static const bool FORCE_FILE_PICKER_WEB = true; // TEMP: set true to bypass camera
+  static const bool DISABLE_SERVICE_WORKER = true; // TEMP: to avoid stale SW
+}
+
+
+If DISABLE_SERVICE_WORKER is true on web, register a small script in main() that unregisters any SW on startup.
+
+B) Crash-guards around the whole screen
+
+In VideoRecordingScreen / web_recording_widget.dart:
+
+Wrap initState and any async init in:
+
+try { ... } catch (e, s) {
+  debugPrint('[CRASH_GUARD] init failed: $e\n$s');
+  _showFilePickerFallback(); // must render a usable UI
+}
+
+
+Before any setState, check if (!mounted) return;
+
+Every async call uses .timeout(const Duration(seconds: 8), onTimeout: ...) that calls _showFilePickerFallback() and logs [CRASH_GUARD] timeout.
+
+C) Force-fallback path (so the page always loads)
+
+At the very top of init:
+
+if (kIsWeb && FeatureFlags.FORCE_FILE_PICKER_WEB) {
+  debugPrint('[CRASH_GUARD] FORCE_FILE_PICKER_WEB=true -> bypassing camera');
+  _showFilePickerFallback();
+  return; // do not touch camera APIs
+}
+
+
+_showFilePickerFallback() must:
+
+setState(() { _showPicker = true; _loadingPreview = false; });
+
+show the same orange “Select Video” card you already use.
+
+never throw.
+
+D) Deterministic preview attach (only when not forced)
+
+Keep the preview-first flow (preview separate from recording).
+
+Use the service method initializePreview() and attachPreviewToVideoElement(...).
+
+Never start MediaRecorder in preview init; only on “Record”.
+
+E) Hard logging (exact strings)
+
+Log each step verbatim:
+
+[ROUTE] VideoRecording initState() entered
+[CRASH_GUARD] FORCE_FILE_PICKER_WEB=true -> bypassing camera
+[CAMERA_PREVIEW] Requesting getUserMedia
+[CAMERA_PREVIEW] Stream acquired
+[CAMERA_PREVIEW] Tracks: video=X, audio=Y
+[CAMERA_PREVIEW] Mount verification started
+[CAMERA_PREVIEW] DOM size check: WxH
+[CAMERA_PREVIEW] Video element srcObject set
+[CAMERA_PREVIEW] readyState(before)=N
+[CAMERA_PREVIEW] Video element.play() awaited
+[CAMERA_PREVIEW] onloadedmetadata fired (WxH)
+[CAMERA_PREVIEW] canplay fired
+[CAMERA_PREVIEW] Preview started
+[CAMERA_PREVIEW] Timeout - stream active but not rendering
+[CAMERA_PREVIEW] Fallback picker shown
+[CRASH_GUARD] init failed: <err>
+[CRASH_GUARD] timeout
+
+F) Service-worker + cache safety (web)
+
+If DISABLE_SERVICE_WORKER true: on startup try to navigator.serviceWorker.getRegistrations() and unregister() all; print [SW] unregistered.
+
+Append a cache-buster to your preview route when navigating (e.g., ?v=${DateTime.now().millisecondsSinceEpoch}) only within the app, not window.location.hash.
+
+G) Route guard (no bounce)
+
+Only redirect to login if currentUser == null.
+
+If user exists but role == null, wait up to 1s with 100ms polling before deciding. Log:
+
+[AUTH] currentUser=(id|null)
+
+[AUTH] role=(performer|new_yorker|null)
+
+[AUTH] Allowing navigation to /video-recording
+
+or [AUTH] Redirecting to login because currentUser == null
+
+H) Acceptance criteria
+
+With FORCE_FILE_PICKER_WEB=true, tapping Camera always shows the Select Video card in ≤1s (no crash, no loop).
+
+With the flag false, you either get Preview started logs and live preview, or Timeout → Fallback in ≤5s.
+
+No crashes if camera/permissions are denied; screen remains usable.
+
+I) After deploy — instructions
+
+Run once with FORCE_FILE_PICKER_WEB=true to verify no crash and UI loads.
+
+Then set it to false, test again, and paste the last 30 lines of console that start with [CAMERA_PREVIEW] or [CRASH_GUARD].

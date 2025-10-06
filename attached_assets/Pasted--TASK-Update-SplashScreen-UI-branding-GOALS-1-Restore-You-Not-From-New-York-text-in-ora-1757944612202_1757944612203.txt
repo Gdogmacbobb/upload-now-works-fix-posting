@@ -1,0 +1,94 @@
+// TASK: Update SplashScreen UI branding
+// GOALS:
+// 1. Restore "You Not From New York" text in orange, same font/size as original
+// 2. Add "WE OUTSIDE" box (orange border + text) directly under the title
+// 3. Keep existing Statue of Liberty image + loading spinner untouched
+// 4. Center all splash branding elements vertically
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Existing splash image
+            Image.asset(
+              'assets/images/ynfny_logo.png',
+              height: 180,
+            ),
+
+            const SizedBox(height: 24),
+
+            // TITLE: "You Not From New York"
+            const Text(
+              "You Not From New York",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.orange,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 12),
+
+            // ORANGE BOX: "WE OUTSIDE"
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.orange, width: 2),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.transparent,
+              ),
+              child: const Text(
+                "WE OUTSIDE",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // Existing loading spinner + caption
+            const CircularProgressIndicator(
+              color: Colors.orange,
+              strokeWidth: 3,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Loading YNFNY...",
+              style: TextStyle(color: Colors.white70),
+            ),
+            const Text(
+              "Discover NYC Street Performers",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

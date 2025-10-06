@@ -1,0 +1,105 @@
+{
+  "task": "deep_debug_performance_icons_and_layout",
+  "do_not_do": [
+    "Do NOT mention deployment or iframe rendering limits.",
+    "Do NOT claim success without visual proof (screenshot or DOM snapshot) from the running app."
+  ],
+  "goals": [
+    "Icons for Music, Dance, Visual Arts, Comedy, Magic, Other MUST render on the Street Performer registration screen.",
+    "Use a real DANCING icon for Dance (prefer FontAwesomeIcons.person_dancing; fall back to Material Symbols 'dance').",
+    "Keep the first screenshot’s layout (larger cards/spacings).",
+    "Allow multi-select and show selected state clearly.",
+    "If icons are already in code but not visible, find and fix the root cause (color, font/asset, tree-shaking, theme, z-index)."
+  ],
+  "evidence_required": [
+    "Terminal logs attached as files: /tmp/icons_html.log, /tmp/icons_canvas.log",
+    "Dump of build/web/FontManifest.json",
+    "Screenshot of the registration screen showing all six icons visible"
+  ],
+  "steps": [
+    {
+      "name": "Environment sanity",
+      "commands": [
+        "flutter doctor -v",
+        "flutter --version",
+        "cat pubspec.yaml | sed -n '1,200p'"
+      ],
+      "why": "Confirm toolchain and that material icons/fonts are included."
+    },
+    {
+      "name": "Clean + fetch",
+      "commands": [
+        "flutter clean",
+        "flutter pub get",
+        "flutter analyze"
+      ],
+      "why": "Start from a clean state and surface analyzer issues."
+    },
+    {
+      "name": "Run with verbose logs (HTML renderer)",
+      "commands": [
+        "flutter run -d web-server --web-renderer html -v | tee /tmp/icons_html.log"
+      ],
+      "why": "Capture whether icons/fonts are loaded and if any paint errors occur."
+    },
+    {
+      "name": "Run with verbose logs (CanvasKit)",
+      "commands": [
+        "pkill -f web-server || true",
+        "flutter run -d web-server --web-renderer canvaskit -v | tee /tmp/icons_canvas.log"
+      ],
+      "why": "Compare behavior across renderers."
+    },
+    {
+      "name": "Check built web assets for fonts",
+      "commands": [
+        "flutter build web --release --no-tree-shake-icons -v",
+        "ls -la build/web/assets",
+        "ls -la build/web/assets/fonts",
+        "cat build/web/FontManifest.json"
+      ],
+      "why": "Verify MaterialIcons fonts are bundled and not stripped."
+    },
+    {
+      "name": "Code instrumentation (temporary)",
+      "edits": [
+        {
+          "file": "lib/presentation/registration_screen/widgets/performer_specific_fields.dart",
+          "patch": "Add debug prints in build(): debugPrint('ICON_THEME size=' + (IconTheme.of(context).size?.toString() ?? 'null') + ' color=' + (IconTheme.of(context).color?.toString() ?? 'null')); For each card, print the icon codePoint, size, and color when building."
+        },
+        {
+          "file": "lib/presentation/registration_screen/widgets/performer_specific_fields.dart",
+          "patch": "Force explicit icon color & size: Icon(Icons.music_note, size: 36, color: Colors.white); For Dance, replace with FontAwesomeIcons.person_dancing (package: font_awesome_flutter). If that package is missing, add to pubspec.yaml and run flutter pub get."
+        }
+      ],
+      "why": "Prove the icon widgets are constructed and not inheriting a transparent color."
+    },
+    {
+      "name": "Theme check",
+      "edits": [
+        {
+          "file": "lib/theme/app_theme.dart",
+          "patch": "Ensure IconThemeData(color: Colors.white, size: 28) in dark theme, and card background contrasts with icon color."
+        }
+      ],
+      "why": "Avoid icons blending into the background."
+    },
+    {
+      "name": "Final verification",
+      "actions": [
+        "Navigate to Street Performer registration and capture a screenshot.",
+        "Confirm multi-select works and selected state styling is visible.",
+        "Attach the two log files and FontManifest.json in the reply."
+      ]
+    }
+  ],
+  "fallback_plan": [
+    "If icon font still fails, swap icons to SVG assets via flutter_svg and load from assets/icons/*.svg. This bypasses font tree-shaking entirely.",
+    "If FontAwesome also fails, temporarily render simple Image widgets from /assets icons to confirm rendering path."
+  ],
+  "acceptance_criteria": [
+    "All six icons are visible (with a DANCING icon for Dance).",
+    "Screenshot matches the first layout’s spacing/scale.",
+    "Logs show MaterialIcons or FontAwesome fonts loaded with no paint errors."
+  ]
+}

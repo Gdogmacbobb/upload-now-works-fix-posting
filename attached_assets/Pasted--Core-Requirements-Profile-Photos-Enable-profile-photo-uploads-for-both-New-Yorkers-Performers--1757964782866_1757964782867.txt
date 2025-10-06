@@ -1,0 +1,272 @@
+🎯 Core Requirements
+Profile Photos
+
+Enable profile photo uploads for both New Yorkers & Performers.
+
+Store securely in Supabase Storage with signed URLs + caching headers.
+
+Show profile photos consistently on:
+
+PerformerProfile
+
+UserProfile
+
+Feeds & overlays
+
+Add default avatar fallback if no profile photo.
+
+Video Recording & Uploads
+
+Enable video recording screen:
+
+Camera flip (front/back)
+
+Flash toggle
+
+Settings placeholder
+
+After recording → send user to Video Upload Screen:
+
+Playback preview
+
+Caption + hashtags + location tag input
+
+Upload progress bar with animated %
+
+Disable upload button while uploading
+
+Success/failure snackbars
+
+Retry option if upload fails
+
+Once posted, videos appear in:
+
+Performer profile (grid + playable)
+
+Following feed (followers only)
+
+Discovery feed (all users)
+
+Enforce role restriction:
+
+Only Performers can post
+
+New Yorkers can view, like, share, repost
+
+Video Posting Details
+
+Thumbnails:
+
+Auto-generate on upload
+
+Future: allow custom thumbnail upload
+
+Engagement Tracking (placeholders):
+
+Store view_count, like_count, comment_count, share_count
+
+Update counts via triggers or service layer
+
+Feed Behavior:
+
+Default ordering = created_at DESC
+
+Preload next video while current plays
+
+Lazy load more on scroll
+
+Scalability:
+
+Max video size 200MB
+
+Max duration 30–60s
+
+Engagement & Interaction Placeholders
+
+Likes & Comments:
+
+Stub system → show “x likes / y comments”
+
+Add placeholder comments table
+
+Captions/Hashtags:
+
+Short text caption box
+
+Parse hashtags #NYC and store in DB
+
+Hashtags clickable → placeholder tag screen
+
+Location tags: optional text field
+
+Drafts System
+
+MVP: allow performers to save draft locally if upload fails or they cancel.
+
+Auto-recover unfinished uploads on restart.
+
+Safety & Moderation
+
+Delete/Report flow:
+
+Performers can delete their own videos (RLS enforced)
+
+Add “Report video” stub in overlay (no backend yet)
+
+Spam prevention:
+
+Soft rate limit → 10 uploads/day per user
+
+Add suspended flag in user_profiles
+
+Age filter prep:
+
+Add age_restricted boolean to videos table
+
+Performance & Caching
+
+Use signed URLs with expiration for profile photos + videos.
+
+Add caching headers for smooth feed loading.
+
+CDN-ready structure for future scale.
+
+Notifications (Stub)
+
+Add placeholder for in-app notifications:
+
+“New follower”
+
+“Donation received”
+
+“Your video hit 100 views”
+
+Store in DB now → wire to push later.
+
+Offline Mode & Reliability
+
+Auto-adjust video quality for low bandwidth.
+
+Queue likes/comments offline → sync later.
+
+Resume interrupted uploads (background upload queue).
+
+UI/UX Polish
+
+Vertical swipe: cycle through videos TikTok-style.
+
+Horizontal swipe: switch between Following ↔ Discovery feeds.
+
+Shimmer/skeleton loaders while content loads.
+
+Placeholder avatars while profile pics load.
+
+Playback controls:
+
+Double-tap to like
+
+Swipe left → comments
+
+Swipe right → performer profile
+
+Mute/unmute toggle
+
+🔁 Reposting System
+Core Behavior
+
+Repost button (↻) on vertical right-hand action bar (below like/comment/share).
+
+Must remain consistent in both Discovery & Following feeds.
+
+When reposted:
+
+New Yorker → can repost (Performers cannot repost).
+
+Reposted video appears in:
+
+New Yorker’s profile page under “Reposts” tab.
+
+Their own Following feed.
+
+Show “Reposted by @username” above caption when appearing due to repost.
+
+Database
+CREATE TABLE reposts (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  video_id uuid REFERENCES videos(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES user_profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+ALTER TABLE videos ADD COLUMN repost_count INT DEFAULT 0;
+
+
+RLS: only repost owner can delete their repost.
+
+Everyone can view reposts.
+
+Service Layer
+
+RepostService with:
+
+createRepost(video_id, user_id)
+
+deleteRepost(repost_id, user_id)
+
+getRepostsForUser(user_id)
+
+getRepostCount(video_id)
+
+UI Integration
+
+Add repost icon in feeds’ right-hand vertical bar.
+
+Show repost count below the icon.
+
+On New Yorker profiles → add “Reposts” tab.
+
+On feeds → display “Reposted by X” marker if loaded via repost.
+
+Hardening
+
+Prevent duplicate reposts.
+
+Update repost count in real time.
+
+Error handling with retry.
+
+🛡 Hardening & Testing
+
+Wrap all upload, repost, and donation calls in try/catch.
+
+Add debugPrint markers at key points ([UPLOAD], [REPOST], [PROFILE]).
+
+End-to-end tests for:
+
+Upload video flow
+
+Repost action flow
+
+Feed scrolling + swipe navigation
+
+Cross-platform testing:
+
+Web → file picker fallback
+
+Mobile → direct camera record
+
+✅ Deliverables
+
+Profile photo uploads + signed URL display.
+
+Video recording + upload flow with captions, tags, thumbnails.
+
+Feeds with vertical/horizontal swipe navigation.
+
+Like/comment/repost stubs integrated.
+
+Reposting system fully working with proper UI + DB.
+
+Safety nets: delete, report, moderation placeholders.
+
+Bulletproof hardening for errors, offline use, and scaling.

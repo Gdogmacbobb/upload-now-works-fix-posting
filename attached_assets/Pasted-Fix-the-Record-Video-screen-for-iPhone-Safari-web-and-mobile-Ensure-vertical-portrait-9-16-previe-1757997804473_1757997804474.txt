@@ -1,0 +1,19 @@
+Fix the Record Video screen for iPhone Safari/web and mobile. Ensure vertical portrait (9:16) preview/recording like TikTok/Reels, fix the MediaRecorder(stream) TypeError by validating the stream, and add a fallback to file upload when recording isn’t supported. Keep existing app styles.
+	1.	Add a simple state machine: idle, initializing, ready, recording, stopping, error, fallbackPicker. Enable Record button only in ready state. Show “Preparing camera…” in initializing. Show Retry in error/fallbackPicker.
+	2.	Portrait layout: wrap preview in AspectRatio(9/16), full width, ClipRRect with rounded corners. For web preview (VideoElement): muted=true, autoplay=true, playsinline=true, objectFit=cover, width=100%, height=100%. For mobile (camera plugin): ResolutionPreset.high, letterbox to 9:16 with BoxFit.cover.
+	3.	Web getUserMedia constraints:
+{
+video: { facingMode: “user”, width: { ideal: 1080 }, height: { ideal: 1920 }, aspectRatio: { ideal: 9/16 }, frameRate: { ideal: 30, max: 60 } },
+audio: true
+}
+Add HTTPS + permission guards. If not https, show error + fallback. Wrap getUserMedia in a user gesture.
+	4.	Fix MediaRecorder TypeError: check if stream is MediaStream and if MediaRecorder exists before calling new MediaRecorder. If not, switch to fallbackPicker. Choose mimeType with MediaRecorder.isTypeSupported: try video/mp4;codecs=h264, then webm/vp9, then webm/vp8. Add debug logs for stream acquired, recorder init, start/stop/error.
+	5.	Fallback file picker: if getUserMedia fails or MediaRecorder unsupported, show message “Camera recording unavailable — select a video to upload” with Select Video + Retry buttons. Use  for iPhone front camera. Pass chosen file into existing upload flow.
+	6.	Recording flow (web): On Record → if ready, create MediaRecorder(stream, { mimeType }), capture chunks with ondataavailable, start with recorder.start(100). Switch to recording state. On Stop → recorder.stop(), assemble Blob, create ObjectUrl, pass to upload screen. Switch to stopping then navigate.
+	7.	UI hardening: disable Record until ready. Show portrait hint. If error → snackbar with Retry or Choose File. Keep black theme and typography.
+	8.	Web view factory: register VideoElement with unique id like ‘ynfny-webcam-${DateTime.now().microsecondsSinceEpoch}’.
+	9.	Mobile path: use camera package, portrait UI, stubs for flip and flash. Save temp file then pass to upload screen.
+	10.	Debug logs to print: [RECORD] state, [RECORD_WEB] permissions granted, preview attached, recording started, stopped with size.
+	11.	Fix the two issues seen: black preview → enforce playsinline, muted, autoplay, objectFit cover, start on tap. “Camera recording unavailable” should only show if stream invalid or MediaRecorder unsupported.
+
+Deliverables: Updated Record Video screen with portrait preview, state machine, Safari/iOS fixes, fallback picker, and debug logs. No regressions.

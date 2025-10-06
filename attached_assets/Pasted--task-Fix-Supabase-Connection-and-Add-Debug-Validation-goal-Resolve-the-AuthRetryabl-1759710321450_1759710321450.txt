@@ -1,0 +1,64 @@
+{
+  "task": "Fix Supabase Connection and Add Debug Validation",
+  "goal": "Resolve the 'AuthRetryableFetchException: Client Load failed' error and ensure the app verifies Supabase connectivity before any signup attempt.",
+  "steps": [
+    {
+      "action": "Reinitialize Supabase Client",
+      "details": "Open the Supabase configuration file (for example: lib/services/supabase_client.dart or supabase_config.dart). Replace any outdated credentials with the latest Supabase URL and anon key from your Supabase Dashboard.",
+      "codeExample": {
+        "dart": [
+          "const String supabaseUrl = 'https://YOUR_PROJECT_ID.supabase.co';",
+          "const String supabaseAnonKey = 'YOUR_UPDATED_ANON_KEY';"
+        ]
+      }
+    },
+    {
+      "action": "Add Debug Connectivity Check",
+      "details": "Before calling Supabase.initialize() or signUp(), add a ping test to confirm the project is reachable. If it fails, display a custom alert in the UI instead of throwing an exception.",
+      "codeExample": {
+        "dart": [
+          "Future<bool> checkSupabaseConnection() async {",
+          "  try {",
+          "    final response = await Supabase.instance.client.from('user_profiles').select().limit(1);",
+          "    print('[SUPABASE STATUS] Connected successfully ✅');",
+          "    return true;",
+          "  } catch (e) {",
+          "    print('[SUPABASE ERROR] Connection failed ❌: $e');",
+          "    return false;",
+          "  }",
+          "}"
+        ]
+      }
+    },
+    {
+      "action": "Update Environment Handling",
+      "details": "If using .env, secrets.yaml, or environment variables in Replit, ensure they are being loaded before Supabase.initialize(). Restart your build after updating them."
+    },
+    {
+      "action": "Check Supabase Project Status",
+      "details": "Go to Supabase → Project Settings → General → Status. If the project is paused, click Resume Project. Free-tier projects auto-sleep after inactivity."
+    },
+    {
+      "action": "Restart and Rebuild",
+      "details": "Stop the dev server completely and restart using `flutter run -d chrome` (or Replit preview) to reload the Supabase credentials. This ensures the new configuration is recognized."
+    },
+    {
+      "action": "Test Signup Flow",
+      "details": "Navigate to the registration screen and create a new Street Performer account. Watch the console — you should see `[SUPABASE STATUS] Connected successfully ✅` and a success confirmation from the Supabase Auth service."
+    }
+  ],
+  "expectedOutcome": "The app should verify Supabase connectivity before signup. When the user clicks 'Create Account', the signup completes without errors and their data is saved correctly to Supabase.",
+  "debugEnhancement": {
+    "goal": "Detect connection issues before runtime errors occur.",
+    "features": [
+      "Logs clear messages when Supabase is unreachable.",
+      "Prevents users from seeing raw exceptions.",
+      "Provides fallback UI: 'Unable to connect, please retry in a moment.'"
+    ]
+  },
+  "notes": [
+    "If the Supabase URL or anon key changes again, update it in one place only (the Supabase configuration file).",
+    "Always confirm the anon key starts with 'ey' and is not truncated.",
+    "If you maintain multiple environments (dev / staging / production), verify that the app points to the correct one."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "feature": "Enhanced Performer Categories + Subcategories",
+  "description": "Allow street performers to choose a main performance category and then optionally select from subcategories, with ability to pick multiple. Display chosen performance types on profile page.",
+  "requirements": {
+    "registration_screen": {
+      "for_main_category": ["Music", "Dance", "Visual Arts", "Comedy", "Magic", "Other"],
+      "subcategories": {
+        "Music": ["Acoustic / Singer-Songwriter", "Band", "Instrumental", "DJ / Electronic", "A Cappella / Vocal", "Looping / One-Man Band", "Street Opera"],
+        "Dance": ["Hip-Hop / Breaking", "Locking / Popping", "House", "Waacking / Voguing", "Contemporary / Interpretive", "Ballet / Classical", "Cultural / Folk Dance"],
+        "Visual Arts": ["Live Painting / Mural", "Portrait / Caricature", "Chalk Art", "Sand Art", "Balloon Art", "Graffiti / Spray Art", "Body Art / Face Painting"],
+        "Comedy": ["Stand-Up", "Improv", "Physical Comedy / Slapstick", "Mime", "Sketch", "Clowning", "Storytelling / Anecdotes"],
+        "Magic": ["Close-Up / Sleight of Hand", "Street Magic", "Mentalism", "Illusions", "Escape Acts", "Card Tricks", "Trick Props"],
+        "Other": ["Fire Acts", "Acrobatics / Circus Skills", "Puppetry", "Living Statue", "Spoken Word / Poetry", "Balloon Twisting", "Street Theatre"]
+      },
+      "ui_behavior": {
+        "when_main_selected": "show subcategory multi-select list",
+        "allow_multiple": true,
+        "fallback_option": "Just [Main Category] (no subcategories)"
+      }
+    },
+    "backend": {
+      "schema_changes": {
+        "user_profiles": {
+          "main_performance_category": "text",
+          "performance_subcategories": "text[] or JSON array"
+        }
+      },
+      "data_flow": {
+        "input": "selected main + subcategories",
+        "store": "in user_profiles",
+        "retrieve": "for the performer profile view"
+      }
+    },
+    "profile_page": {
+      "placement": "Between bio and supporters/videos section",
+      "display_format": "Main Category — Subcategory1, Subcategory2, etc.",
+      "if_no_subcategories": "Just display Main Category"
+    }
+  },
+  "constraints": {
+    "existing_registration_flow": "do not break existing UI logic",
+    "database_migration": "preserve backward compatibility for users without subcategories",
+    "performance": "multi-select UI should not block registration"
+  },
+  "expected_result": "Street Performer registration lets users select a main performance category plus subcategories, and the profile page shows their selected performance types"
+}

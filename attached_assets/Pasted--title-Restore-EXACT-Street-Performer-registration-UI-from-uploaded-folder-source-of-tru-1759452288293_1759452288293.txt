@@ -1,0 +1,87 @@
+{
+  "title": "Restore EXACT Street Performer registration UI from uploaded folder",
+  "source_of_truth_files": [
+    "lib/presentation/registration/registration_screen.dart",
+    "lib/presentation/registration/widgets/performer_specific_fields.dart",
+    "lib/presentation/registration/widgets/new_yorker_specific_fields.dart",
+    "lib/presentation/registration/widgets/common_form_fields.dart",
+    "lib/presentation/registration/widgets/location_verification_widget.dart",
+    "lib/presentation/registration/widgets/password_strength_indicator.dart",
+    "lib/presentation/registration/widgets/terms_and_privacy_widget.dart",
+    "lib/presentation/registration/widgets/account_type_header.dart"
+  ],
+  "do": [
+    "Use ONLY the UI and field order defined in the uploaded files for Street Performer registration.",
+    "Render Street Performer fields: performance type selector, location verification, social handles (instagram/tiktok/youtube), and bio textarea (multiline, 150 char max).",
+    "Wire all inputs to controllers in registration_screen.dart exactly as in the uploaded code.",
+    "Validate required vs optional fields exactly as in the uploaded code (do not invent rules).",
+    "Persist REAL data to Supabase (no mock/demo): write to user_profiles (id, full_name, username, role, performance_type, bio, borough/location, socials_instagram, socials_tiktok, socials_youtube).",
+    "After successful save, route to PerformerProfile and show the saved real data.",
+    "Leave New Yorker registration completely unchanged."
+  ],
+  "dont": [
+    "Do not keep or render any AI-generated or placeholder registration widgets for performers.",
+    "Do not alter the New Yorker flow, its fields, or its validators.",
+    "Do not add profile photo upload here.",
+    "Do not show any stub/demo values."
+  ],
+  "ui_spec": {
+    "street_performer": {
+      "sections_order": [
+        "AccountTypeHeader",
+        "CommonFormFields",
+        "PerformerSpecificFields",
+        "LocationVerificationWidget",
+        "PasswordStrengthIndicator",
+        "TermsAndPrivacyWidget",
+        "ContinueButton"
+      ],
+      "performer_specific_fields": {
+        "performance_type": "required (exactly as in performer_specific_fields.dart)",
+        "bio": "optional, multiline, max 150 chars; counter visible",
+        "socials": {
+          "instagram": "optional",
+          "tiktok": "optional",
+          "youtube": "optional"
+        }
+      },
+      "location_verification": "Use LocationVerificationWidget from the uploaded folder (no substitutions)."
+    },
+    "new_yorker": "UNCHANGED"
+  },
+  "data_binding": {
+    "controllers": "Instantiate and dispose exactly as in registration_screen.dart; pass down to PerformerSpecificFields and other widgets.",
+    "submit_handler": "On continue, validate and upsert into Supabase user_profiles using the bound controller values."
+  },
+  "supabase": {
+    "table": "user_profiles",
+    "write": "upsert",
+    "columns": {
+      "id": "auth user id",
+      "full_name": "from common form",
+      "username": "handle from common form",
+      "role": "'street_performer'",
+      "performance_type": "from performer_specific_fields",
+      "bio": "from performer_specific_fields",
+      "borough": "from LocationVerificationWidget (or location fields used in that widget)",
+      "socials_instagram": "from performer_specific_fields",
+      "socials_tiktok": "from performer_specific_fields",
+      "socials_youtube": "from performer_specific_fields"
+    },
+    "dart_example": {
+      "insert_update": "final client = Supabase.instance.client;\nfinal userId = client.auth.currentUser!.id;\nawait client.from('user_profiles').upsert({\n  'id': userId,\n  'full_name': fullNameController.text.trim(),\n  'username': handleController.text.trim(),\n  'role': 'street_performer',\n  'performance_type': selectedPerformanceType,\n  'bio': bioController.text.trim(),\n  'borough': selectedBorough, // or from location widget value\n  'socials_instagram': instagramController.text.trim().isEmpty ? null : instagramController.text.trim(),\n  'socials_tiktok': tiktokController.text.trim().isEmpty ? null : tiktokController.text.trim(),\n  'socials_youtube': youtubeController.text.trim().isEmpty ? null : youtubeController.text.trim(),\n}).select().single();"
+    }
+  },
+  "routing": {
+    "after_success": "Navigator.pushReplacementNamed(context, '/performer-profile');",
+    "profile_reads": "PerformerProfile must read the saved fields from Supabase and render real values."
+  },
+  "acceptance_criteria": [
+    "Street Performer registration screen visually and functionally matches the uploaded folder implementation exactly.",
+    "Performance type selector, bio, socials, and location verification appear and work for Street Performer only.",
+    "New Yorker flow is unchanged.",
+    "Submitting persists all performer fields to Supabase and navigates to PerformerProfile showing the real saved data.",
+    "No demo or placeholder values anywhere."
+  ],
+  "rollback": "If any compile/runtime errors occur, revert only files not listed in source_of_truth_files and re-apply changes using those files as the canonical source."
+}
