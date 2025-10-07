@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **CAMERA CONTROLS DEBUGGED & OPTIMIZED** - Enhanced VideoRecordingScreen controls and performance (Oct 7, 2025). Icon size increased to 28px for optimal visibility. Flash toggle now includes proactive support check (front camera detection). Zoom gesture optimized with fire-and-forget pattern to prevent UI freeze during continuous pinch gestures. Enhanced camera initialization logging for better debugging. Previous: Fixed zoom stability with hardware-aware limits (preserves wide-angle support), resets to 1.0x when switching cameras or toggling mute, polished TikTok/Reels-style vertical video interface with full-screen camera preview, portrait-only lock, four top controls, centered orange record button with live timer, and comprehensive error handling. App builds successfully for web (55.5s) with no LSP errors.
+**Current Status**: ✅ **PRODUCTION-GRADE CAMERA CONTROLS** - Complete camera controller rebuild with isolate-based zoom and always-visible flash icons (Oct 7, 2025). Implemented 30px icons for optimal visibility. Flash icon now always renders with grey-out state for unsupported cameras (lens direction check). Production-ready zoom throttling using Timer.periodic (60ms intervals) with Future.microtask offloading, stream safety checks, and trailing update flush to prevent snap-back. Smooth continuous zoom during sustained pinch gestures with no UI freeze or dropped updates. Enhanced camera initialization logging. Previous: Polished TikTok/Reels-style vertical video interface with full-screen camera preview, portrait-only lock, four top controls, centered orange record button with live timer, and comprehensive error handling. App builds successfully for web (52-55s) with no LSP errors.
 
 # User Preferences
 
@@ -19,19 +19,23 @@ The application follows Flutter's standard architecture patterns:
   - **VideoRecordingScreen**: Polished vertical video recording interface
     - **Full-screen preview**: Transform.scale with aspect ratio calculation to fill entire screen without black bars
     - **Portrait lock**: SystemChrome locks orientation to portraitUp only, restored on dispose
-    - **Top controls**: Four buttons with consistent dark rounded backgrounds (8px radius, black54, 28px icons)
+    - **Top controls**: Four buttons with consistent dark rounded backgrounds (8px radius, black54, 30px icons)
       - Back button (top-left) - Icons.arrow_back
       - Mute/Unmute toggle (top-left) - Icons.mic/mic_off, fully functional, reconfigures camera controller
-      - Flash on/off toggle (top-right) - Icons.flash_on/flash_off, proactive support check (back camera detection), comprehensive error handling
+      - Flash on/off toggle (top-right) - Icons.flash_on/flash_off, **always visible** with grey-out state when unsupported (_hasFlashSupport getter checks lens direction), comprehensive error handling
       - Camera switch (top-right) - Icons.cameraswitch, preserves flash state, disabled during recording
-    - **Pinch-to-zoom**: GestureDetector with ScaleGestureRecognizer for smooth, freeze-free zoom control
+    - **Pinch-to-zoom**: Production-grade zoom with Timer.periodic throttling for smooth, freeze-free control
+      - **Throttling architecture**: Single Timer.periodic(60ms) started in onScaleStart, stopped in onScaleEnd with trailing update flush
+      - **Update flow**: onScaleUpdate queues latest zoom in _pendingZoom, timer applies every 60ms via Future.microtask
+      - **Trailing flush**: onScaleEnd flushes any pending zoom before stopping timer (prevents snap-back on release)
+      - **UI thread offloading**: Future.microtask moves zoom operations off main thread, prevents blocking
+      - **Stream safety**: Checks controller.value.isStreamingImages before applying zoom to avoid frame conflicts
       - Hardware-aware zoom limits: Queries actual camera min/max via getMinZoomLevel()/getMaxZoomLevel()
       - Dynamic range support: Clamps zoom within camera's full reported capabilities (preserves wide-angle support)
       - Zoom reset: Resets to 1.0x (normal view) via setZoomLevel(1.0) when switching cameras or toggling mute
       - Full range access: Pinch-to-zoom works across entire hardware range (e.g., 0.6x wide to 10x tele if supported)
-      - UI thread optimization: Fire-and-forget pattern prevents blocking during continuous pinch gestures
-      - Error feedback: Silent catchError logging for zoom failures (non-intrusive)
-      - Base zoom tracking: onScaleStart stores current zoom, onScaleUpdate applies delta
+      - Error feedback: Silent debug logging for zoom failures (non-intrusive)
+      - Base zoom tracking: onScaleStart stores current zoom, onScaleUpdate calculates delta
     - **Record button**: Centered at bottom with orange ring (5px), changes from white circle to red square when recording
     - **Live timer**: MM:SS format above record button with red indicator dot, only visible during recording
     - **Error handling**: SnackBar feedback for all failures (recording start/stop, flash toggle, zoom, camera operations)
