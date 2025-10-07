@@ -1,0 +1,94 @@
+{
+  "task": "Rebuild Camera Overlay for Guaranteed Icon Rendering, Functional Flash, and Ultra-Fast Zoom",
+  "requirements": {
+    "scope": "VideoRecordingScreen (camera_recording.dart)",
+    "objectives": [
+      "Render flash and camera-switch icons visibly and consistently over the camera preview",
+      "Bind flash toggle directly to hardware flash availability on the active camera",
+      "Optimize pinch-to-zoom responsiveness to 25ms updates without freezing preview"
+    ],
+    "changes": [
+      {
+        "ui_overlay": {
+          "architecture": "replace current Row with Stack overlay on top of CameraPreview",
+          "widgets": [
+            {
+              "type": "Positioned",
+              "name": "FlashButton",
+              "icon": "Icons.flash_on / Icons.flash_off",
+              "size": 32,
+              "color": "#FFFFFFFF",
+              "top": 12,
+              "right": 12,
+              "always_visible": true,
+              "disabled_state": "opacity 0.4 when no flash support",
+              "onTap": "toggleFlash()"
+            },
+            {
+              "type": "Positioned",
+              "name": "CameraSwitchButton",
+              "icon": "Icons.cameraswitch",
+              "size": 32,
+              "color": "#FFFFFFFF",
+              "top": 12,
+              "right": 72,
+              "always_visible": true,
+              "onTap": "switchCamera()"
+            }
+          ],
+          "layout_note": "Stack ensures controls are visible above CameraPreview regardless of widget rebuilds"
+        }
+      },
+      {
+        "flash_functionality": {
+          "hardware_check": "if (controller.value.flashMode != null) and controller.description.lensDirection == CameraLensDirection.back",
+          "toggle_logic": "switch between FlashMode.off and FlashMode.torch",
+          "error_handling": "show snackbar only when hardware truly lacks flash",
+          "success_feedback": "show snackbar 'Flash enabled' or 'Flash disabled'",
+          "ui_update": "call setState() after each toggle to refresh icon"
+        }
+      },
+      {
+        "zoom_optimization": {
+          "hardware_query": "await controller.getMinZoomLevel() / await controller.getMaxZoomLevel()",
+          "gesture_handling": {
+            "onScaleStart": "store current zoom",
+            "onScaleUpdate": "newZoom = (baseZoom * scale).clamp(minZoom, maxZoom)",
+            "onScaleEnd": "apply final zoom asynchronously"
+          },
+          "execution_model": {
+            "async_pattern": "use Future.microtask with Timer.periodic(25ms) to apply queued zoom updates",
+            "cancel_timer_on_end": true,
+            "prevent_freeze": "skip zoom updates if controller.value.isStreamingImages == true"
+          }
+        }
+      },
+      {
+        "controller_rebuild": {
+          "reinit_logic": "dispose old controller → await CameraController.initialize() → setState()",
+          "mounted_guard": "wrap all async calls in if (mounted)"
+        }
+      }
+    ],
+    "unchanged": [
+      "Back button layout",
+      "Mute toggle",
+      "Record button",
+      "Portrait lock"
+    ]
+  },
+  "verification": {
+    "ui_check": [
+      "Flash and camera-switch icons visibly overlay preview at all times",
+      "Flash toggles LED on rear camera",
+      "Zoom pinch gesture smooth up to hardware max zoom",
+      "Preview never freezes during gestures"
+    ],
+    "test_cases": [
+      "Start with rear camera → verify flash LED toggles on/off",
+      "Switch cameras twice → icons remain visible",
+      "Pinch-zoom continuously for 10s → confirm live motion and no frame drop",
+      "Front camera shows greyed-out flash icon but still visible"
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "task": "Rebuild Camera Control Overlay with Hardware-Level Flash and Zoom",
+  "requirements": {
+    "scope": "VideoRecordingScreen / camera_recording.dart",
+    "objectives": [
+      "Render flash and camera-switch icons in all cases using overlay widgets, not conditional trees",
+      "Enable flash control through hardware flash capability (rear camera torch)",
+      "Expand zoom range to match the device's maximum optical and digital limits"
+    ],
+    "changes": [
+      {
+        "ui_overlay": {
+          "render_strategy": "use Stack overlay on top of CameraPreview with Positioned IconButtons",
+          "icons": [
+            {
+              "name": "Icons.flash_on",
+              "fallback": "Icons.flash_off",
+              "color": "#FFFFFFFF",
+              "size": 32,
+              "position": "top_right: Offset(12,12)",
+              "always_visible": true,
+              "disabled_state": "opacity:0.4 if !controller.description.hasFlash"
+            },
+            {
+              "name": "Icons.cameraswitch",
+              "color": "#FFFFFFFF",
+              "size": 32,
+              "position": "top_right: Offset(72,12)",
+              "always_visible": true
+            }
+          ],
+          "rebuild_trigger": "ValueListenableBuilder listening to flashMode and cameraIndex"
+        }
+      },
+      {
+        "flash_control": {
+          "hardware_check": "use controller.description.hasFlash before calling setFlashMode()",
+          "implementation": "toggle between FlashMode.off, FlashMode.torch",
+          "rear_only": "enable only when controller.description.lensDirection == CameraLensDirection.back",
+          "feedback": "snackbar 'Flash enabled' or 'Flash disabled'",
+          "sync_ui": "call setState() after toggling"
+        }
+      },
+      {
+        "zoom_range_upgrade": {
+          "hardware_query": {
+            "minZoom": "await controller.getMinZoomLevel()",
+            "maxZoom": "await controller.getMaxZoomLevel()"
+          },
+          "gesture_logic": {
+            "onScaleStart": "store baseZoom = currentZoom",
+            "onScaleUpdate": "calculate newZoom = (baseZoom * scale).clamp(minZoom, maxZoom)",
+            "onScaleEnd": "stabilize zoom by applying final value"
+          },
+          "asynchronous_execution": "use Future.microtask or Isolate.run() to apply zoom without blocking preview",
+          "update_interval_ms": 40
+        }
+      },
+      {
+        "controller_refresh": {
+          "switch_logic": "dispose old controller, await new controller.initialize(), setState() on success",
+          "mounted_guard": "if (!mounted) return;",
+          "error_logging": "print 'Camera reinit error: $e'"
+        }
+      }
+    ],
+    "unchanged": [
+      "Back button",
+      "Mute toggle",
+      "Record button layout",
+      "Portrait orientation lock"
+    ]
+  },
+  "verification": {
+    "ui_check": [
+      "Flash and switch icons visible at all times (white or greyed)",
+      "Flash toggles LED on rear camera without app error",
+      "Zoom range extends from device's minimum wide to maximum tele (hardware limits)",
+      "No UI freeze during pinch gestures"
+    ],
+    "test_cases": [
+      "Run on rear camera, verify physical LED turns on/off",
+      "Pinch-to-zoom from 0.5x to device max (e.g., 10x) smoothly",
+      "Switch cameras twice, confirm overlay icons persist",
+      "Front camera shows disabled flash icon (greyed)"
+    ]
+  }
+}
