@@ -1,0 +1,73 @@
+{
+  "task": "Decouple Camera Controller from UI Thread and Render Icons via Persistent Overlay",
+  "requirements": {
+    "scope": "VideoRecordingScreen / camera_recording.dart",
+    "objectives": [
+      "Eliminate lag during pinch-to-zoom by isolating camera operations from the UI thread",
+      "Render flash and camera-switch icons through an independent overlay widget tree that never rebuilds with CameraPreview",
+      "Keep CameraPreview locked to a single initialized controller instance"
+    ],
+    "implementation_steps": [
+      {
+        "camera_isolate_service": {
+          "create_file": "services/camera_isolate.dart",
+          "purpose": "run heavy cameraController actions (setZoomLevel, setFlashMode) in background isolate",
+          "methods": [
+            "setZoom(double level)",
+            "toggleFlash(bool enable)"
+          ],
+          "communication": "use IsolateNameServer and ReceivePort to communicate back to main isolate"
+        }
+      },
+      {
+        "ui_overlay": {
+          "architecture": "use Stack + Positioned + IgnorePointer(false) + OverlayEntry",
+          "overlay_entry": {
+            "create_once": "in initState()",
+            "contains": [
+              {
+                "type": "IconButton",
+                "icon": "Icons.flash_on / Icons.flash_off",
+                "size": 32,
+                "color": "#FFFFFFFF",
+                "onTap": "CameraIsolate.toggleFlash()"
+              },
+              {
+                "type": "IconButton",
+                "icon": "Icons.cameraswitch",
+                "size": 32,
+                "color": "#FFFFFFFF",
+                "onTap": "switchCamera()"
+              }
+            ]
+          },
+          "lifecycle": "overlay added once in initState(), removed in dispose()"
+        }
+      },
+      {
+        "zoom_performance": {
+          "gesture_handling": "GestureDetector.onScaleUpdate throttled via Timer.periodic(16ms) (~60fps)",
+          "data_flow": "send new zoom level to CameraIsolate through IsolateNameServer",
+          "hardware_query": "get actual min/max zoom via controller.getMinZoomLevel() / getMaxZoomLevel() once during init"
+        }
+      },
+      {
+        "controller_management": {
+          "single_instance": "ensure controller is initialized only once and reused",
+          "preview_widget": "wrap in RepaintBoundary to isolate GPU layer and prevent unnecessary rebuilds"
+        }
+      }
+    ],
+    "verification": {
+      "ui_check": [
+        "Flash and camera-switch icons always visible on top of preview",
+        "No preview freeze during continuous pinch zoom for 10s",
+        "Flash toggle activates instantly on rear camera"
+      ],
+      "performance_test": [
+        "Profile frame rendering → 60fps steady during pinch gestures",
+        "No jank spikes >16ms per frame in Flutter DevTools"
+      ]
+    }
+  }
+}
