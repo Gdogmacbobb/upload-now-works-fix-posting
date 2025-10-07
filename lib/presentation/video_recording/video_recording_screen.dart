@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:camera/camera.dart';
+import '../../platform/camera_controller_interface.dart';
 import '../../theme/app_theme.dart';
 
 class VideoRecordingScreen extends StatefulWidget {
@@ -12,13 +12,12 @@ class VideoRecordingScreen extends StatefulWidget {
 }
 
 class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
-  CameraController? _controller;
+  PlatformCameraController? _controller;
   bool _isRecording = false;
   bool _isMuted = false;
   bool _isInitialized = false;
-  bool _isFlashOn = false;
-  List<CameraDescription>? _cameras;
-  int _selectedCamera = 0;
+  
+  StreamSubscription<CameraState>? _stateSubscription;
   
   // Timer for recording
   Timer? _recordingTimer;
@@ -29,6 +28,9 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   double _baseZoom = 1.0;
   double _minZoom = 1.0;
   double _maxZoom = 5.0;
+  bool _isFlashOn = false;
+  bool _hasFlashSupport = false;
+  String _lensDirection = 'back';
   
   // Zoom throttling with repeating timer (16ms for 60fps response)
   Timer? _zoomUpdateTimer;
@@ -49,54 +51,43 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
 
   Future<void> _initializeCamera() async {
     try {
-      _cameras = await availableCameras();
-      if (_cameras == null || _cameras!.isEmpty) {
-        debugPrint('Camera initialization error: No cameras available');
-        return;
-      }
-      debugPrint('Camera initialization: Found ${_cameras!.length} camera(s)');
+      _controller = PlatformCameraController();
       
-      _controller = CameraController(
-        _cameras![_selectedCamera],
-        ResolutionPreset.max,
-        enableAudio: !_isMuted,
+      // Listen to state stream for updates
+      _stateSubscription = _controller!.stateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            _currentZoom = state.zoomLevel;
+            _minZoom = state.minZoom;
+            _maxZoom = state.maxZoom;
+            _baseZoom = state.zoomLevel;
+            _isFlashOn = state.torchEnabled;
+            _hasFlashSupport = state.torchSupported;
+            _lensDirection = state.lensDirection;
+          });
+        }
+      });
+      
+      await _controller!.initialize(
+        cameraIndex: 0,
+        targetFps: 60,
+        quality: 'max',
       );
-      await _controller!.initialize();
       
-      // Get actual zoom limits from camera and set to widest view (minZoom)
-      try {
-        _minZoom = await _controller!.getMinZoomLevel();
-        _maxZoom = await _controller!.getMaxZoomLevel();
-        _currentZoom = _minZoom;
-        _baseZoom = _minZoom;
-        await _controller!.setZoomLevel(_minZoom);
-        
-        // Enhanced logging for camera capabilities
-        final camera = _cameras![_selectedCamera];
-        final lensDir = camera.lensDirection == CameraLensDirection.back ? 'Back' : 'Front';
-        final resolution = _controller!.value.previewSize;
-        debugPrint('═══════════════════════════════════════');
-        debugPrint('Camera Initialization Complete');
-        debugPrint('═══════════════════════════════════════');
-        debugPrint('Lens Direction: $lensDir');
-        debugPrint('Flash Support: ${_hasFlashSupport ? "Yes" : "No (front camera)"}');
-        debugPrint('Zoom Range: ${_minZoom.toStringAsFixed(2)}x - ${_maxZoom.toStringAsFixed(2)}x');
-        debugPrint('Starting Zoom: ${_minZoom.toStringAsFixed(2)}x (widest view)');
-        debugPrint('Resolution Preset: ResolutionPreset.max');
-        debugPrint('Preview Size: ${resolution?.width}x${resolution?.height}');
-        debugPrint('Audio Enabled: ${!_isMuted}');
-        debugPrint('═══════════════════════════════════════');
-      } catch (e) {
-        debugPrint('Failed to get zoom limits: $e');
-        // Fallback to safe defaults
-        _minZoom = 1.0;
-        _maxZoom = 1.0;
-        _currentZoom = 1.0;
-        _baseZoom = 1.0;
-      }
-      
+      // Get initial state
+      final state = _controller!.value;
       if (!mounted) return;
-      setState(() => _isInitialized = true);
+      
+      setState(() {
+        _isInitialized = true;
+        _currentZoom = state.zoomLevel;
+        _minZoom = state.minZoom;
+        _maxZoom = state.maxZoom;
+        _baseZoom = state.zoomLevel;
+        _isFlashOn = state.torchEnabled;
+        _hasFlashSupport = state.torchSupported;
+        _lensDirection = state.lensDirection;
+      });
     } catch (e) {
       debugPrint('Camera initialization failed: $e');
       if (mounted) {
@@ -115,7 +106,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     if (!_isRecording) {
       try {
-        await _controller!.startVideoRecording();
+        await _controller!.startRecording();
         setState(() {
           _isRecording = true;
           _recordingSeconds = 0;
@@ -141,13 +132,13 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     } else {
       try {
         _recordingTimer?.cancel();
-        final file = await _controller!.stopVideoRecording();
+        final filePath = await _controller!.stopRecording();
         setState(() {
           _isRecording = false;
           _recordingSeconds = 0;
         });
         if (!mounted) return;
-        Navigator.pushNamed(context, '/video-upload', arguments: file.path);
+        Navigator.pushNamed(context, '/video-upload', arguments: filePath);
       } catch (e) {
         debugPrint('Failed to stop recording: $e');
         if (mounted) {
@@ -163,69 +154,23 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _switchCamera() async {
-    if (_cameras == null || _cameras!.isEmpty || !_isInitialized) return;
+    if (!_isInitialized || _controller == null) return;
     if (_isRecording) return; // Don't switch while recording
     
-    setState(() => _isInitialized = false);
-    
-    _selectedCamera = (_selectedCamera + 1) % _cameras!.length;
-    await _controller?.dispose();
-    
-    _controller = CameraController(
-      _cameras![_selectedCamera],
-      ResolutionPreset.max,
-      enableAudio: !_isMuted,
-    );
-    
-    await _controller!.initialize();
-    
-    // Get zoom limits for new camera and set to widest view (minZoom)
     try {
-      _minZoom = await _controller!.getMinZoomLevel();
-      _maxZoom = await _controller!.getMaxZoomLevel();
-      _currentZoom = _minZoom;
-      _baseZoom = _minZoom;
-      await _controller!.setZoomLevel(_minZoom);
-      
-      // Log camera switch details
-      final camera = _cameras![_selectedCamera];
-      final lensDir = camera.lensDirection == CameraLensDirection.back ? 'Back' : 'Front';
-      debugPrint('Camera switched to: $lensDir (Zoom: ${_minZoom.toStringAsFixed(2)}x-${_maxZoom.toStringAsFixed(2)}x)');
+      await _controller!.switchCamera();
+      // State will be updated via stateStream listener
     } catch (e) {
-      debugPrint('Failed to get zoom limits after camera switch: $e');
-      _minZoom = 1.0;
-      _maxZoom = 1.0;
-      _currentZoom = 1.0;
-      _baseZoom = 1.0;
-    }
-    
-    // Apply flash mode if it was on and supported on new camera
-    if (_isFlashOn && _hasFlashSupport) {
-      try {
-        await _controller!.setFlashMode(FlashMode.torch);
-      } catch (e) {
-        debugPrint('Failed to reapply flash: $e');
-        if (mounted) {
-          setState(() => _isFlashOn = false);
-        }
+      debugPrint('Failed to switch camera: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to switch camera: $e'),
+            backgroundColor: Colors.red.shade900,
+          ),
+        );
       }
-    } else if (_isFlashOn && !_hasFlashSupport) {
-      // Flash was on but new camera doesn't support it
-      setState(() => _isFlashOn = false);
     }
-    
-    if (mounted) {
-      setState(() => _isInitialized = true);
-    }
-  }
-
-  bool get _hasFlashSupport {
-    // Check if camera has flash based on lens direction
-    // Back cameras typically have flash, front cameras don't
-    if (_cameras == null || _cameras!.isEmpty || _controller == null) {
-      return false;
-    }
-    return _cameras![_selectedCamera].lensDirection == CameraLensDirection.back;
   }
 
   Future<void> _toggleFlash() async {
@@ -245,32 +190,19 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     }
     
     try {
-      if (_isFlashOn) {
-        await _controller!.setFlashMode(FlashMode.off);
-        if (mounted) {
-          setState(() => _isFlashOn = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Flash disabled'),
-              backgroundColor: Colors.green.shade900,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        }
-      } else {
-        await _controller!.setFlashMode(FlashMode.torch);
-        if (mounted) {
-          setState(() => _isFlashOn = true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Flash enabled'),
-              backgroundColor: Colors.green.shade900,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        }
+      final newFlashState = !_isFlashOn;
+      await _controller!.setTorch(newFlashState);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(newFlashState ? 'Flash enabled' : 'Flash disabled'),
+            backgroundColor: Colors.green.shade900,
+            duration: const Duration(seconds: 1),
+          ),
+        );
       }
-      debugPrint('Flash toggled: $_isFlashOn');
+      // State will be updated via stateStream listener
     } catch (e) {
       debugPrint('Flash toggle failed: $e');
       if (mounted) {
@@ -288,51 +220,12 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     if (!_isInitialized || _controller == null) return;
     if (_isRecording) return; // Don't toggle while recording
     
-    setState(() => _isInitialized = false);
-    
     // Toggle mute state
-    _isMuted = !_isMuted;
+    setState(() {
+      _isMuted = !_isMuted;
+    });
     
-    // Rebuild controller with new audio setting
-    await _controller?.dispose();
-    
-    _controller = CameraController(
-      _cameras![_selectedCamera],
-      ResolutionPreset.max,
-      enableAudio: !_isMuted,
-    );
-    
-    await _controller!.initialize();
-    
-    // Refresh zoom limits for new controller, set to widest view (minZoom)
-    try {
-      _minZoom = await _controller!.getMinZoomLevel();
-      _maxZoom = await _controller!.getMaxZoomLevel();
-      _currentZoom = _minZoom;
-      _baseZoom = _minZoom;
-      await _controller!.setZoomLevel(_minZoom);
-      debugPrint('Mute toggled: ${_isMuted ? "ON" : "OFF"} (Zoom reset to ${_minZoom.toStringAsFixed(2)}x)');
-    } catch (e) {
-      debugPrint('Failed to get zoom limits after mute toggle: $e');
-      _minZoom = 1.0;
-      _maxZoom = 1.0;
-      _currentZoom = 1.0;
-      _baseZoom = 1.0;
-    }
-    
-    // Reapply flash if it was on and supported
-    if (_isFlashOn && _hasFlashSupport) {
-      try {
-        await _controller!.setFlashMode(FlashMode.torch);
-      } catch (e) {
-        debugPrint('Failed to reapply flash after mute toggle: $e');
-        setState(() => _isFlashOn = false);
-      }
-    }
-    
-    if (mounted) {
-      setState(() => _isInitialized = true);
-    }
+    debugPrint('Mute toggled: ${_isMuted ? "ON" : "OFF"}');
   }
 
   void _startZoomUpdateTimer() {
@@ -341,20 +234,14 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     // Repeating timer fires every 16ms for 60fps zoom response
     _zoomUpdateTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
-      if (_pendingZoom != null && mounted) {
+      if (_pendingZoom != null && mounted && _controller != null) {
         final zoomToApply = _pendingZoom!;
         _pendingZoom = null; // Clear immediately to avoid re-applying
         
         // Use Future.microtask to offload from UI thread
         Future.microtask(() async {
           try {
-            // Safety check: only apply zoom if not currently streaming
-            if (_controller != null && 
-                _controller!.value.isInitialized &&
-                !_controller!.value.isStreamingImages) {
-              await _controller!.setZoomLevel(zoomToApply);
-              debugPrint('Zoom applied: $zoomToApply');
-            }
+            await _controller!.setZoom(zoomToApply);
           } catch (e) {
             debugPrint('Failed to set zoom: $e');
           }
@@ -372,12 +259,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       // Apply final zoom immediately
       Future.microtask(() async {
         try {
-          if (_controller != null && 
-              _controller!.value.isInitialized &&
-              !_controller!.value.isStreamingImages) {
-            await _controller!.setZoomLevel(finalZoom);
-            debugPrint('Final zoom applied: $finalZoom');
-          }
+          await _controller!.setZoom(finalZoom);
+          debugPrint('Final zoom applied: $finalZoom');
         } catch (e) {
           debugPrint('Failed to set final zoom: $e');
         }
@@ -403,7 +286,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         fit: StackFit.expand,
         children: [
           // Full-screen camera preview
-          if (_isInitialized && _controller != null)
+          if (_isInitialized && _controller != null && _controller!.textureId != null)
             _buildCameraPreview()
           else
             const Center(
@@ -456,62 +339,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                     child: _overlayIconButton(
                       icon: Icons.cameraswitch,
                       onPressed: _switchCamera,
-                    ),
-                  ),
-                  
-                  // Debug overlay - top left showing zoom info
-                  Positioned(
-                    top: 132,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white24, width: 1),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Zoom: ${_currentZoom.toStringAsFixed(2)}x',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Range: ${_minZoom.toStringAsFixed(2)}x - ${_maxZoom.toStringAsFixed(2)}x',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${_cameras![_selectedCamera].lensDirection == CameraLensDirection.back ? "Back" : "Front"} Camera',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'ResolutionPreset.max',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                 ],
@@ -603,11 +430,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     // Get screen size
     final size = MediaQuery.of(context).size;
     
-    // Calculate scale to fill screen while maintaining aspect ratio
-    var scale = size.aspectRatio * _controller!.value.aspectRatio;
-    
-    if (scale < 1) scale = 1 / scale;
-
+    // Use Texture widget for preview
     return GestureDetector(
       onScaleStart: (details) {
         _baseZoom = _currentZoom;
@@ -631,14 +454,13 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         // Stop repeating timer when gesture ends
         _stopZoomUpdateTimer();
       },
-      child: Center(
-        child: Transform.scale(
-          scale: scale,
-          child: AspectRatio(
-            aspectRatio: _controller!.value.aspectRatio,
-            child: RepaintBoundary(
-              child: CameraPreview(_controller!),
-            ),
+      child: SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: size.width,
+            height: size.height,
+            child: Texture(textureId: _controller!.textureId!),
           ),
         ),
       ),
@@ -674,6 +496,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   void dispose() {
     _recordingTimer?.cancel();
     _zoomUpdateTimer?.cancel();
+    _stateSubscription?.cancel();
     _controller?.dispose();
     // Reset orientation when leaving
     SystemChrome.setPreferredOrientations([
