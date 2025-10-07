@@ -30,7 +30,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   double _minZoom = 1.0;
   double _maxZoom = 5.0;
   
-  // Zoom throttling with repeating timer (25ms for ultra-fast response)
+  // Zoom throttling with repeating timer (16ms for 60fps response)
   Timer? _zoomUpdateTimer;
   double? _pendingZoom;
 
@@ -316,8 +316,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     // Only start if not already running
     if (_zoomUpdateTimer != null && _zoomUpdateTimer!.isActive) return;
     
-    // Repeating timer fires every 25ms for ultra-fast zoom response
-    _zoomUpdateTimer = Timer.periodic(const Duration(milliseconds: 25), (timer) {
+    // Repeating timer fires every 16ms for 60fps zoom response
+    _zoomUpdateTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (_pendingZoom != null && mounted) {
         final zoomToApply = _pendingZoom!;
         _pendingZoom = null; // Clear immediately to avoid re-applying
@@ -544,7 +544,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             _currentZoom = newZoom;
           });
           
-          // Queue zoom for next timer tick (every 25ms for ultra-fast response)
+          // Queue zoom for next timer tick (every 16ms for 60fps response)
           _pendingZoom = newZoom;
         }
       },
@@ -557,7 +557,9 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
           scale: scale,
           child: AspectRatio(
             aspectRatio: _controller!.value.aspectRatio,
-            child: CameraPreview(_controller!),
+            child: RepaintBoundary(
+              child: CameraPreview(_controller!),
+            ),
           ),
         ),
       ),
