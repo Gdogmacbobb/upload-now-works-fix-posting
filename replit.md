@@ -26,8 +26,8 @@ The application follows Flutter's standard architecture patterns:
       - **Stack+Positioned layout**: Controls positioned at exact coordinates (top: 12, left/right: 12/72) from safe area bounds
       - Back button (Positioned top:12, left:12) - Icons.arrow_back, **always visible** outside initialization guard for guaranteed navigation
       - Mute toggle (Positioned top:12, left:72) - Icons.mic/mic_off, conditional on camera ready, reconfigures controller
-      - Flash toggle (Positioned top:12, right:12) - Icons.flash_on/flash_off, **always visible** with 40% opacity when unsupported, success SnackBar feedback ("Flash enabled/disabled")
-      - Camera switch (Positioned top:12, right:72) - Icons.cameraswitch, preserves flash state, disabled during recording
+      - Flash toggle (Positioned top:12, right:12) - Icons.flash_on/flash_off, **always visible** with 40% opacity when unsupported, works before/during recording, auto-disables when recording stops, success SnackBar feedback ("Flash enabled/disabled")
+      - Camera switch (Positioned top:12, right:72) - Icons.cameraswitch, 200ms debounce, front↔back toggle only (collapsed from 7 cameras), disabled during recording
     - **Pinch-to-zoom**: 60fps-optimized zoom with 16ms throttling for maximum responsiveness
       - **Throttling architecture**: Single Timer.periodic(16ms) started in onScaleStart, stopped in onScaleEnd with trailing update flush
       - **Update flow**: onScaleUpdate queues latest zoom in _pendingZoom, timer applies every 16ms (62.5 updates/second) via Future.microtask
