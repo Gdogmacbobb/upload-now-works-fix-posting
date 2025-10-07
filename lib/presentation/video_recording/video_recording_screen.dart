@@ -23,6 +23,12 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   // Timer for recording
   Timer? _recordingTimer;
   int _recordingSeconds = 0;
+  
+  // Zoom variables
+  double _currentZoom = 1.0;
+  double _baseZoom = 1.0;
+  double _minZoom = 1.0;
+  double _maxZoom = 5.0;
 
   @override
   void initState() {
@@ -50,6 +56,21 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         enableAudio: !_isMuted,
       );
       await _controller!.initialize();
+      
+      // Get actual zoom limits from camera
+      try {
+        _minZoom = await _controller!.getMinZoomLevel();
+        _maxZoom = await _controller!.getMaxZoomLevel();
+        _currentZoom = _minZoom;
+        await _controller!.setZoomLevel(_currentZoom);
+      } catch (e) {
+        debugPrint('Failed to get zoom limits: $e');
+        // Fallback to safe defaults
+        _minZoom = 1.0;
+        _maxZoom = 1.0;
+        _currentZoom = 1.0;
+      }
+      
       if (!mounted) return;
       setState(() => _isInitialized = true);
     } catch (e) {
@@ -134,6 +155,21 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     await _controller!.initialize();
     
+    // Get zoom limits for new camera and reset zoom
+    try {
+      _minZoom = await _controller!.getMinZoomLevel();
+      _maxZoom = await _controller!.getMaxZoomLevel();
+      _currentZoom = _minZoom;
+      _baseZoom = _minZoom;
+      await _controller!.setZoomLevel(_currentZoom);
+    } catch (e) {
+      debugPrint('Failed to get zoom limits after camera switch: $e');
+      _minZoom = 1.0;
+      _maxZoom = 1.0;
+      _currentZoom = 1.0;
+      _baseZoom = 1.0;
+    }
+    
     // Apply flash mode if it was on
     if (_isFlashOn) {
       try {
@@ -199,6 +235,21 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     );
     
     await _controller!.initialize();
+    
+    // Refresh zoom limits for new controller
+    try {
+      _minZoom = await _controller!.getMinZoomLevel();
+      _maxZoom = await _controller!.getMaxZoomLevel();
+      _currentZoom = _minZoom;
+      _baseZoom = _minZoom;
+      await _controller!.setZoomLevel(_currentZoom);
+    } catch (e) {
+      debugPrint('Failed to get zoom limits after mute toggle: $e');
+      _minZoom = 1.0;
+      _maxZoom = 1.0;
+      _currentZoom = 1.0;
+      _baseZoom = 1.0;
+    }
     
     // Reapply flash if it was on
     if (_isFlashOn) {
@@ -373,12 +424,41 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     if (scale < 1) scale = 1 / scale;
 
-    return Center(
-      child: Transform.scale(
-        scale: scale,
-        child: AspectRatio(
-          aspectRatio: _controller!.value.aspectRatio,
-          child: CameraPreview(_controller!),
+    return GestureDetector(
+      onScaleStart: (details) {
+        _baseZoom = _currentZoom;
+      },
+      onScaleUpdate: (details) async {
+        // Calculate new zoom level
+        final newZoom = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
+        
+        if (newZoom != _currentZoom && _controller != null) {
+          try {
+            await _controller!.setZoomLevel(newZoom);
+            setState(() {
+              _currentZoom = newZoom;
+            });
+          } catch (e) {
+            debugPrint('Failed to set zoom: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Zoom adjustment failed'),
+                  backgroundColor: Colors.orange.shade900,
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            }
+          }
+        }
+      },
+      child: Center(
+        child: Transform.scale(
+          scale: scale,
+          child: AspectRatio(
+            aspectRatio: _controller!.value.aspectRatio,
+            child: CameraPreview(_controller!),
+          ),
         ),
       ),
     );
