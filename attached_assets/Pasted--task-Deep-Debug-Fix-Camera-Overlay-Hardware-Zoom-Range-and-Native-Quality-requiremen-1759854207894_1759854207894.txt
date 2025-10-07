@@ -1,0 +1,127 @@
+{
+  "task": "Deep Debug: Fix Camera Overlay, Hardware Zoom Range, and Native Quality",
+  "requirements": {
+    "scope": "VideoRecordingScreen (camera_recording.dart) + camera init code",
+    "goals": [
+      "Icons MUST render (flash + cameraswitch) as a persistent overlay",
+      "Zoom MUST use device hardware range (not app hardcodes) and default to WIDEST view",
+      "Preview/recording quality SHOULD match phone-native capabilities (resolution/fps/bitrate)",
+      "Eliminate lag/jank during pinch-zoom"
+    ],
+    "actions": [
+      {
+        "overlay_fix": {
+          "render_layer": "Use OverlayEntry added in initState() above CameraPreview (NOT inside same tree).",
+          "widgets": [
+            {
+              "type": "IconButton",
+              "id": "flashBtn",
+              "icon_on": "Icons.flash_on",
+              "icon_off": "Icons.flash_off",
+              "size": 32,
+              "color": "#FFFFFFFF",
+              "position": {"top": 12, "right": 12},
+              "always_visible": true,
+              "disabled_opacity": 0.4,
+              "onTap": "toggleFlash()"
+            },
+            {
+              "type": "IconButton",
+              "id": "switchBtn",
+              "icon": "Icons.cameraswitch",
+              "size": 32,
+              "color": "#FFFFFFFF",
+              "position": {"top": 12, "right": 72},
+              "always_visible": true,
+              "onTap": "switchCamera()"
+            }
+          ],
+          "safe_area": true,
+          "lifecycle": "Create once in initState(), remove in dispose()."
+        }
+      },
+      {
+        "hardware_zoom": {
+          "query_limits_on_init": true,
+          "min_zoom": "await controller.getMinZoomLevel()",
+          "max_zoom": "await controller.getMaxZoomLevel()",
+          "default_zoom": "AFTER initialize(): setZoomLevel(min_zoom)  // fixes 'too zoomed in' start",
+          "pinch_handler": {
+            "onScaleStart": "baseZoom = currentZoom",
+            "onScaleUpdate": "queuedZoom = (baseZoom * scale).clamp(min_zoom, max_zoom)",
+            "apply_strategy": "Timer.periodic(16ms) while pinching → Future.microtask(() => controller.setZoomLevel(queuedZoom))",
+            "onScaleEnd": "flush queuedZoom and cancel timer"
+          }
+        }
+      },
+      {
+        "flash_enable": {
+          "rear_only": true,
+          "support_check": "if (controller.value.flashMode != null && controller.description.lensDirection == CameraLensDirection.back)",
+          "toggle": "FlashMode.off <-> FlashMode.torch",
+          "ui_sync": "setState() to swap flash_on/flash_off icon",
+          "feedback": "SnackBar: 'Flash enabled'/'Flash disabled'; if unsupported: 'Flash not supported on this camera'"
+        }
+      },
+      {
+        "native_quality": {
+          "controller_init": {
+            "resolution": "ResolutionPreset.max",
+            "enableAudio": true,
+            "imageFormatGroup": "bgra8888"
+          },
+          "platform_tuning": {
+            "ios": {
+              "preferedFrameRate": 60,
+              "videoStabilization": "standard"
+            },
+            "android": {
+              "fps": 60,
+              "bitrate_hint": "high"
+            }
+          },
+          "note": "Use highest supported fps/resolution negotiated by the plugin; fall back gracefully if 60fps unavailable."
+        }
+      },
+      {
+        "performance_guardrails": {
+          "preview_isolation": "Wrap CameraPreview in RepaintBoundary.",
+          "no_rebuilds": "CameraPreview must NOT be rebuilt on every scale update; overlay is independent.",
+          "controller_singleton": "Initialize controller once; reuse instance; guard with if(mounted)."
+        }
+      },
+      {
+        "diagnostics": {
+          "devtools_marks": true,
+          "logs": [
+            "camera_pkg_version",
+            "lensDirection, hasTorchGuess=(back lens), minZoom, maxZoom, startZoom",
+            "fps_negotiated, resolution_selected",
+            "overlay_attached=true"
+          ],
+          "on_screen_debug_toggle": "temporary text overlay in top-left showing zoom/current fps until verified"
+        }
+      }
+    ],
+    "do_not_change": [
+      "Record button layout/logic",
+      "Mute and Back buttons",
+      "App navigation",
+      "Any auth/database code"
+    ]
+  },
+  "verification": {
+    "ui": [
+      "Flash and Switch icons visibly overlay the preview at all times.",
+      "Rear camera: tapping flash physically toggles LED; front camera: icon stays visible but greyed."
+    ],
+    "zoom": [
+      "On app start, field of view is widest (min_zoom).",
+      "Pinch smoothly from min_zoom to hardware max_zoom with no jank/freeze for 10s."
+    ],
+    "quality": [
+      "Preview/record runs at highest supported fps/resolution; logs show negotiated fps/resolution.",
+      "No dropped frames spikes >16ms during pinch (check DevTools)."
+    ]
+  }
+}
