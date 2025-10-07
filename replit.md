@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **60FPS CAMERA PERFORMANCE** - Production camera system optimized for true 60fps response (Oct 7, 2025). Stack overlay architecture with SafeArea, 32px icons, always-visible back button. **Performance optimizations**: 16ms zoom throttling (62.5 updates/sec matches 60fps frame budget), RepaintBoundary isolates GPU rendering layer to prevent unnecessary texture uploads. Success SnackBar feedback for flash toggle. Flash icon dims to 40% opacity when unsupported. Timer.periodic architecture with Future.microtask offloading, stream safety, and trailing flush. App builds successfully for web (53-54s) with no LSP errors.
+**Current Status**: ✅ **MAXIMUM QUALITY WIDEST VIEW** - Production camera system with hardware-optimized defaults and comprehensive diagnostics (Oct 7, 2025). **Key features**: Starts at widest hardware view (minZoom, typically 0.6x), ResolutionPreset.max for highest quality, 16ms zoom throttling (60fps), RepaintBoundary GPU isolation. **Debug tools**: On-screen overlay showing live zoom/range/camera info, enhanced logging with visual separators displaying lens direction/flash/resolution/zoom capabilities. Stack+SafeArea overlay architecture, 32px icons, always-visible back button. Success SnackBar feedback for flash toggle. App builds successfully for web (5.5-60s) with no LSP errors.
 
 # User Preferences
 
@@ -16,9 +16,11 @@ The application follows Flutter's standard architecture patterns:
 - **Environment configuration**: Uses environment variables loaded from `env.json` files via `--dart-define-from-file` for secure configuration management
 - **Multi-platform deployment**: Supports both native mobile apps and web deployment with dedicated web build artifacts
 - **Video Recording & Upload**: Full camera-to-upload flow with TikTok/Reels-style UI and web compatibility
-  - **VideoRecordingScreen**: Polished vertical video recording interface
+  - **VideoRecordingScreen**: Polished vertical video recording interface with maximum quality settings
     - **Full-screen preview**: Transform.scale with aspect ratio calculation to fill entire screen without black bars
     - **Portrait lock**: SystemChrome locks orientation to portraitUp only, restored on dispose
+    - **Maximum Quality**: ResolutionPreset.max for highest available resolution and video quality
+    - **Widest View Start**: Defaults to hardware minZoom (typically 0.6x) instead of 1.0x for maximum field of view at startup
     - **Top controls**: Stack overlay architecture with SafeArea and Positioned widgets for guaranteed visibility (32px icons, 8px radius, black54 backgrounds)
       - **SafeArea wrapper**: Ensures all controls stay clear of notches/status bars with proper inset padding
       - **Stack+Positioned layout**: Controls positioned at exact coordinates (top: 12, left/right: 12/72) from safe area bounds
@@ -35,10 +37,24 @@ The application follows Flutter's standard architecture patterns:
       - **Stream safety**: Checks controller.value.isStreamingImages before applying zoom to avoid frame conflicts
       - Hardware-aware zoom limits: Queries actual camera min/max via getMinZoomLevel()/getMaxZoomLevel()
       - Dynamic range support: Clamps zoom within camera's full reported capabilities (preserves wide-angle support)
-      - Zoom reset: Resets to 1.0x (normal view) via setZoomLevel(1.0) when switching cameras or toggling mute
+      - Zoom defaults: Starts at minZoom (widest view), resets to minZoom when switching cameras or toggling mute
       - Full range access: Pinch-to-zoom works across entire hardware range (e.g., 0.6x wide to 10x tele if supported)
       - Error feedback: Silent debug logging for zoom failures (non-intrusive)
       - Base zoom tracking: onScaleStart stores current zoom, onScaleUpdate calculates delta
+    - **Debug Overlay**: On-screen diagnostic display (top-left, below controls) showing:
+      - Current zoom level with 2 decimal precision (e.g., "0.60x")
+      - Hardware zoom range (e.g., "Range: 0.60x - 10.00x")
+      - Camera type ("Back Camera" or "Front Camera")
+      - Resolution setting ("ResolutionPreset.max")
+      - Monospace font, semi-transparent styling, updates in real-time during zoom
+    - **Enhanced Logging**: Comprehensive camera initialization diagnostics with visual separators:
+      - Lens direction (Back/Front)
+      - Flash support status
+      - Hardware zoom range (min-max)
+      - Starting zoom level
+      - Resolution preset and preview size
+      - Audio state
+      - Camera switch and mute toggle events
     - **Record button**: Centered at bottom with orange ring (5px), changes from white circle to red square when recording
     - **Live timer**: MM:SS format above record button with red indicator dot, only visible during recording
     - **Error handling**: SnackBar feedback for all failures (recording start/stop, flash toggle, zoom, camera operations)
