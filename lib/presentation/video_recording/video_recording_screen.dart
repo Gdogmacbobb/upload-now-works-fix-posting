@@ -30,8 +30,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   double _minZoom = 1.0;
   double _maxZoom = 5.0;
   
-  // Zoom throttling
-  Timer? _zoomThrottleTimer;
+  // Zoom throttling with repeating timer
+  Timer? _zoomUpdateTimer;
   double? _pendingZoom;
 
   @override
@@ -177,8 +177,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       _baseZoom = 1.0;
     }
     
-    // Apply flash mode if it was on and supported
-    if (_isFlashOn && _controller!.value.hasFlash) {
+    // Apply flash mode if it was on and supported on new camera
+    if (_isFlashOn && _hasFlashSupport) {
       try {
         await _controller!.setFlashMode(FlashMode.torch);
       } catch (e) {
@@ -187,7 +187,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
           setState(() => _isFlashOn = false);
         }
       }
-    } else if (_isFlashOn && !_controller!.value.hasFlash) {
+    } else if (_isFlashOn && !_hasFlashSupport) {
       // Flash was on but new camera doesn't support it
       setState(() => _isFlashOn = false);
     }
@@ -198,7 +198,12 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   bool get _hasFlashSupport {
-    return _controller?.value.hasFlash ?? false;
+    // Check if camera has flash based on lens direction
+    // Back cameras typically have flash, front cameras don't
+    if (_cameras == null || _cameras!.isEmpty || _controller == null) {
+      return false;
+    }
+    return _cameras![_selectedCamera].lensDirection == CameraLensDirection.back;
   }
 
   Future<void> _toggleFlash() async {
@@ -276,7 +281,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     }
     
     // Reapply flash if it was on and supported
-    if (_isFlashOn && _controller!.value.hasFlash) {
+    if (_isFlashOn && _hasFlashSupport) {
       try {
         await _controller!.setFlashMode(FlashMode.torch);
       } catch (e) {
@@ -290,17 +295,15 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     }
   }
 
-  void _applyZoom(double zoom) {
-    // Cancel any pending zoom operation
-    _zoomThrottleTimer?.cancel();
+  void _startZoomUpdateTimer() {
+    // Only start if not already running
+    if (_zoomUpdateTimer != null && _zoomUpdateTimer!.isActive) return;
     
-    // Store the pending zoom level
-    _pendingZoom = zoom;
-    
-    // Throttle zoom updates to every 60ms
-    _zoomThrottleTimer = Timer(const Duration(milliseconds: 60), () {
-      if (_controller != null && mounted && _pendingZoom != null) {
-        final targetZoom = _pendingZoom!;
+    // Repeating timer fires every 60ms
+    _zoomUpdateTimer = Timer.periodic(const Duration(milliseconds: 60), (timer) {
+      if (_pendingZoom != null && mounted) {
+        final zoomToApply = _pendingZoom!;
+        _pendingZoom = null; // Clear immediately to avoid re-applying
         
         // Use Future.microtask to offload from UI thread
         Future.microtask(() async {
@@ -309,17 +312,41 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             if (_controller != null && 
                 _controller!.value.isInitialized &&
                 !_controller!.value.isStreamingImages) {
-              await _controller!.setZoomLevel(targetZoom);
-              debugPrint('Zoom applied: $targetZoom');
+              await _controller!.setZoomLevel(zoomToApply);
+              debugPrint('Zoom applied: $zoomToApply');
             }
           } catch (e) {
             debugPrint('Failed to set zoom: $e');
           }
         });
-        
-        _pendingZoom = null;
       }
     });
+  }
+  
+  void _stopZoomUpdateTimer() {
+    // Flush any pending zoom before stopping
+    if (_pendingZoom != null && mounted && _controller != null) {
+      final finalZoom = _pendingZoom!;
+      _pendingZoom = null;
+      
+      // Apply final zoom immediately
+      Future.microtask(() async {
+        try {
+          if (_controller != null && 
+              _controller!.value.isInitialized &&
+              !_controller!.value.isStreamingImages) {
+            await _controller!.setZoomLevel(finalZoom);
+            debugPrint('Final zoom applied: $finalZoom');
+          }
+        } catch (e) {
+          debugPrint('Failed to set final zoom: $e');
+        }
+      });
+    }
+    
+    _zoomUpdateTimer?.cancel();
+    _zoomUpdateTimer = null;
+    _pendingZoom = null;
   }
 
   String _formatTime(int seconds) {
@@ -484,6 +511,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     return GestureDetector(
       onScaleStart: (details) {
         _baseZoom = _currentZoom;
+        // Start repeating timer for smooth zoom updates
+        _startZoomUpdateTimer();
       },
       onScaleUpdate: (details) {
         // Calculate new zoom level
@@ -494,9 +523,13 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             _currentZoom = newZoom;
           });
           
-          // Apply zoom with throttling and microtask
-          _applyZoom(newZoom);
+          // Queue zoom for next timer tick (every 60ms)
+          _pendingZoom = newZoom;
         }
+      },
+      onScaleEnd: (details) {
+        // Stop repeating timer when gesture ends
+        _stopZoomUpdateTimer();
       },
       child: Center(
         child: Transform.scale(
@@ -535,7 +568,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   @override
   void dispose() {
     _recordingTimer?.cancel();
-    _zoomThrottleTimer?.cancel();
+    _zoomUpdateTimer?.cancel();
     _controller?.dispose();
     // Reset orientation when leaving
     SystemChrome.setPreferredOrientations([
