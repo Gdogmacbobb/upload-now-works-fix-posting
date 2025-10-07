@@ -231,6 +231,25 @@ class WebCameraController {
     }
   }
   
+  Future<void> setFlashMode(FlashMode flashMode) async {
+    if (!_isInitialized || _isDisposed) return;
+    if (!_currentState.torchSupported) {
+      debugPrint('[FLASH_STATE] Flash not supported on ${_currentState.lensDirection} camera');
+      return;
+    }
+    
+    try {
+      await _cameraController?.setFlashMode(flashMode);
+      _currentState = _currentState.copyWith(torchEnabled: flashMode == FlashMode.torch);
+      _stateController.add(_currentState);
+      
+      debugPrint('[FLASH_STATE] Flash mode set to $flashMode');
+    } catch (e) {
+      debugPrint('❌ [FLASH_STATE] Failed to set flash mode: $e');
+      rethrow;
+    }
+  }
+  
   Future<void> setZoom(double level) async {
     if (!_isInitialized || _isDisposed) return;
     

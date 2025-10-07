@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:camera/camera.dart' show CameraPreview;
+import 'package:camera/camera.dart' show CameraPreview, FlashMode;
 import '../../platform/platform_camera_controller.dart';
 import '../../theme/app_theme.dart';
 
@@ -145,11 +145,14 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         _recordingTimer?.cancel();
         final filePath = await _controller!.stopRecording();
         
-        // Auto-turn off torch when recording stops
+        // Auto-turn off flash when recording stops
         if (_isFlashOn && _hasFlashSupport) {
-          debugPrint('🔦 [RECORD_LIFECYCLE] Auto-disabling torch after recording stopped');
-          await _controller!.setTorch(false);
-          debugPrint('✅ [RECORD_LIFECYCLE] Torch auto-off completed');
+          debugPrint('🔦 [RECORD_LIFECYCLE] Auto-disabling flash after recording stopped');
+          await _controller!.setFlashMode(FlashMode.off);
+          setState(() {
+            _isFlashOn = false;
+          });
+          debugPrint('✅ [RECORD_LIFECYCLE] Flash auto-off completed');
         }
         
         setState(() {
@@ -173,8 +176,27 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _switchCamera() async {
-    if (!_isInitialized || _controller == null) return;
-    if (_isRecording) return; // Don't switch while recording
+    debugPrint('📷 [CAMERA_SWITCH] Button tapped! controller=${_controller != null}, initialized=$_isInitialized');
+    
+    // Show immediate tap feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Camera flip button tapped'),
+          backgroundColor: Colors.blue.shade900,
+          duration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
+    
+    if (!_isInitialized || _controller == null) {
+      debugPrint('⚠️ [CAMERA_SWITCH] Camera not ready');
+      return;
+    }
+    if (_isRecording) {
+      debugPrint('⚠️ [CAMERA_SWITCH] Cannot switch while recording');
+      return;
+    }
     
     // Debounce: Prevent rapid button presses
     final now = DateTime.now();
@@ -211,7 +233,23 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _toggleFlash() async {
-    if (_controller == null) return;
+    debugPrint('💡 [FLASH_TOGGLE] Button tapped! controller=${_controller != null}');
+    
+    // Show immediate tap feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Flash button tapped'),
+          backgroundColor: Colors.blue.shade900,
+          duration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
+    
+    if (_controller == null) {
+      debugPrint('⚠️ [FLASH_TOGGLE] Controller is null');
+      return;
+    }
     
     debugPrint('💡 [FLASH_TOGGLE] Attempting flash toggle...');
     debugPrint('   Current state: support=$_hasFlashSupport, on=$_isFlashOn, lens=$_lensDirection, recording=$_isRecording');
@@ -234,9 +272,15 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       final newFlashState = !_isFlashOn;
       debugPrint('🔦 [FLASH_STATE] User toggled flash: $_isFlashOn → $newFlashState');
       
-      await _controller!.setTorch(newFlashState);
+      // Use setFlashMode for web compatibility (setTorch doesn't work on web)
+      await _controller!.setFlashMode(newFlashState ? FlashMode.torch : FlashMode.off);
       
-      debugPrint('✅ [FLASH_STATE] Torch hardware synced successfully');
+      // Update local state immediately
+      setState(() {
+        _isFlashOn = newFlashState;
+      });
+      
+      debugPrint('✅ [FLASH_STATE] Flash mode set to ${newFlashState ? "torch" : "off"}');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -247,7 +291,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
           ),
         );
       }
-      // State will be updated via stateStream listener
     } catch (e) {
       debugPrint('❌ [FLASH_STATE] Flash toggle failed: $e');
       if (mounted) {
@@ -342,53 +385,68 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             ),
 
           // Top controls overlay (Stack with Positioned for guaranteed visibility)
-          SafeArea(
-            child: Stack(
-              children: [
-                // Back button - always visible for navigation
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: _overlayIconButton(
-                    icon: Icons.arrow_back,
-                    onPressed: () => Navigator.pop(context),
-                  ),
+          Builder(
+            builder: (context) {
+              debugPrint('🎨 [UI_OVERLAY] Building overlay - Flash: ${_isFlashOn ? "ON" : "OFF"}, Camera: $_lensDirection');
+              return SafeArea(
+                child: Stack(
+                  children: [
+                    // Back button - always visible for navigation
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: _overlayIconButton(
+                        icon: Icons.arrow_back,
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                    
+                    // Mute button - always visible, disabled when not ready
+                    Positioned(
+                      top: 12,
+                      left: 72,
+                      child: _overlayIconButton(
+                        icon: _isMuted ? Icons.mic_off : Icons.mic,
+                        onPressed: _toggleMute,
+                        isDisabled: !_isInitialized,
+                      ),
+                    ),
+                    
+                    // Flash button - always visible, 40% opacity when unsupported
+                    Builder(
+                      builder: (context) {
+                        debugPrint('🔦 [UI_OVERLAY] Flash icon rendering: support=$_hasFlashSupport, on=$_isFlashOn');
+                        return Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _overlayIconButton(
+                            icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                            onPressed: _toggleFlash,
+                            isDisabled: !_hasFlashSupport,
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    // Camera switch button - always visible, disabled when not ready
+                    Builder(
+                      builder: (context) {
+                        debugPrint('📷 [UI_OVERLAY] Camera flip icon rendering: initialized=$_isInitialized');
+                        return Positioned(
+                          top: 12,
+                          right: 72,
+                          child: _overlayIconButton(
+                            icon: Icons.cameraswitch,
+                            onPressed: _switchCamera,
+                            isDisabled: !_isInitialized,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                
-                // Mute button - always visible, disabled when not ready
-                Positioned(
-                  top: 12,
-                  left: 72,
-                  child: _overlayIconButton(
-                    icon: _isMuted ? Icons.mic_off : Icons.mic,
-                    onPressed: _toggleMute,
-                    isDisabled: !_isInitialized,
-                  ),
-                ),
-                
-                // Flash button - always visible, 40% opacity when unsupported
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: _overlayIconButton(
-                    icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                    onPressed: _toggleFlash,
-                    isDisabled: !_hasFlashSupport,
-                  ),
-                ),
-                
-                // Camera switch button - always visible, disabled when not ready
-                Positioned(
-                  top: 12,
-                  right: 72,
-                  child: _overlayIconButton(
-                    icon: Icons.cameraswitch,
-                    onPressed: _switchCamera,
-                    isDisabled: !_isInitialized,
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
 
           // Bottom controls
@@ -535,17 +593,28 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.black54,
+          color: Colors.black87,
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.orange.withOpacity(0.3),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 8,
+              spreadRadius: 2,
+            ),
+          ],
         ),
         child: Opacity(
           opacity: isDisabled ? 0.4 : 1.0,
           child: Icon(
             icon,
             color: Colors.white,
-            size: 32,
+            size: 40,
           ),
         ),
       ),

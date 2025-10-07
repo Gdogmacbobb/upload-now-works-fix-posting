@@ -209,6 +209,20 @@ class PlatformCameraController {
     }
   }
   
+  Future<void> setFlashMode(dynamic flashMode) async {
+    // For web, delegate to web controller which handles FlashMode
+    if (_isWebMode) {
+      return await _webController!.setFlashMode(flashMode);
+    }
+    
+    // For native, convert FlashMode to boolean and use setTorch
+    // FlashMode.torch = true, FlashMode.off = false
+    if (!_isInitialized || _isDisposed) return;
+    
+    bool enabled = flashMode.toString() == 'FlashMode.torch';
+    return await setTorch(enabled);
+  }
+  
   Future<void> setZoom(double level) async {
     if (_isWebMode) {
       return await _webController!.setZoom(level);
