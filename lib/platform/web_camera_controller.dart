@@ -51,11 +51,23 @@ class WebCameraController {
       debugPrint('Target FPS: $targetFps (web may limit to 30fps)');
       debugPrint('Quality: $quality');
       
-      _cameras = await availableCameras();
+      final allCameras = await availableCameras();
       
-      if (_cameras.isEmpty) {
+      if (allCameras.isEmpty) {
         throw Exception('No cameras available');
       }
+      
+      // Filter to only front and back cameras (ignore ultra-wide, telephoto, etc)
+      _cameras = allCameras.where((cam) => 
+        cam.lensDirection == CameraLensDirection.front || 
+        cam.lensDirection == CameraLensDirection.back
+      ).toList();
+      
+      if (_cameras.isEmpty) {
+        throw Exception('No front or back cameras found');
+      }
+      
+      debugPrint('[CAMERA_SOURCE] Found ${allCameras.length} total cameras, filtered to ${_cameras.length} (front/back only)');
       
       _currentCameraIndex = cameraIndex.clamp(0, _cameras.length - 1);
       final camera = _cameras[_currentCameraIndex];
@@ -80,7 +92,7 @@ class WebCameraController {
         minZoom: minZoom,
         maxZoom: maxZoom,
         torchEnabled: false,
-        torchSupported: camera.lensDirection == CameraLensDirection.back && !kIsWeb,
+        torchSupported: camera.lensDirection == CameraLensDirection.back,
         lensDirection: camera.lensDirection == CameraLensDirection.back ? 'back' : 'front',
         resolution: Size(
           _cameraController!.value.previewSize?.width ?? 1280,
@@ -97,7 +109,7 @@ class WebCameraController {
       debugPrint('Lens Direction: ${_currentState.lensDirection}');
       debugPrint('Zoom Range: ${_currentState.minZoom.toStringAsFixed(2)}x - ${_currentState.maxZoom.toStringAsFixed(2)}x');
       debugPrint('Resolution: ${_currentState.resolution.width.toInt()}x${_currentState.resolution.height.toInt()}');
-      debugPrint('Torch Support: ${_currentState.torchSupported} (disabled on web)');
+      debugPrint('[FLASH_STATE] torchSupported:${_currentState.torchSupported}, lens:${_currentState.lensDirection}');
       debugPrint('═══════════════════════════════════════');
       
     } catch (e) {
@@ -121,13 +133,18 @@ class WebCameraController {
     if (!_isInitialized || _isDisposed || _cameras.length < 2) return;
     
     try {
-      debugPrint('[CAMERA_SWITCH] Switching camera...');
+      debugPrint('[CAMERA_SWITCH] Starting switch...');
       
+      // Store old controller to dispose AFTER new one is ready
+      final oldController = _cameraController;
+      
+      // Toggle between front and back (0 and 1 since we filtered to 2 cameras)
       _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
       final camera = _cameras[_currentCameraIndex];
       
-      await _cameraController?.dispose();
+      debugPrint('[CAMERA_LIFECYCLE] Creating new controller for ${camera.lensDirection}');
       
+      // Create and initialize NEW controller FIRST
       _cameraController = CameraController(
         camera,
         ResolutionPreset.high,
@@ -136,6 +153,12 @@ class WebCameraController {
       );
       
       await _cameraController!.initialize();
+      
+      debugPrint('[CAMERA_SWITCH] controllerReinit:success');
+      
+      // NOW safely dispose old controller
+      await oldController?.dispose();
+      debugPrint('[CAMERA_LIFECYCLE] disposeHandled:true');
       
       final minZoom = await _cameraController!.getMinZoomLevel();
       final maxZoom = await _cameraController!.getMaxZoomLevel();
@@ -148,7 +171,7 @@ class WebCameraController {
         minZoom: minZoom,
         maxZoom: maxZoom,
         torchEnabled: false,
-        torchSupported: camera.lensDirection == CameraLensDirection.back && !kIsWeb,
+        torchSupported: camera.lensDirection == CameraLensDirection.back,
         lensDirection: camera.lensDirection == CameraLensDirection.back ? 'back' : 'front',
         resolution: Size(
           _cameraController!.value.previewSize?.width ?? 1280,
@@ -159,18 +182,19 @@ class WebCameraController {
       
       _stateController.add(_currentState);
       
-      debugPrint('[CAMERA_SWITCH] Switched to: ${_currentState.lensDirection}');
+      debugPrint('[CAMERA_SWITCH] Switched to: ${_currentState.lensDirection}, flash:${_currentState.torchSupported}');
+      debugPrint('[ZOOM_EVENTS] resetAfterFlip:true (${minZoom.toStringAsFixed(2)}x)');
       
     } catch (e) {
-      debugPrint('Failed to switch camera: $e');
+      debugPrint('❌ [CAMERA_SWITCH] Failed to switch camera: $e');
       rethrow;
     }
   }
   
   Future<void> setTorch(bool enabled) async {
     if (!_isInitialized || _isDisposed) return;
-    if (!_currentState.torchSupported || kIsWeb) {
-      debugPrint('Torch not supported on web/this camera');
+    if (!_currentState.torchSupported) {
+      debugPrint('[FLASH_STATE] Torch not supported on ${_currentState.lensDirection} camera');
       return;
     }
     
@@ -179,9 +203,9 @@ class WebCameraController {
       _currentState = _currentState.copyWith(torchEnabled: enabled);
       _stateController.add(_currentState);
       
-      debugPrint('Torch ${enabled ? "enabled" : "disabled"}');
+      debugPrint('[FLASH_STATE] Torch ${enabled ? "enabled" : "disabled"}');
     } catch (e) {
-      debugPrint('Failed to set torch: $e');
+      debugPrint('❌ [FLASH_STATE] Failed to set torch: $e');
     }
   }
   
