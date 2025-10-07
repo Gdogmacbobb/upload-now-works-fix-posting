@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **CAMERA UI FIXES COMPLETE** - Fixed VideoRecordingScreen UI and zoom stability (Oct 7, 2025). Icon size increased to 26px for better visibility. Zoom behavior improved: queries hardware min/max limits (preserves wide-angle support), but resets to 1.0x when switching cameras or toggling mute. Full pinch-to-zoom support across entire hardware range with smooth scaling. Previous: Added pinch-to-zoom functionality with hardware-aware limits, polished TikTok/Reels-style vertical video interface with full-screen camera preview, portrait-only lock, four top controls (Back, Mute, Flash, Switch), centered orange record button with live timer, and comprehensive error handling. App builds successfully for web (52-59s) with no LSP errors.
+**Current Status**: ✅ **CAMERA CONTROLS DEBUGGED & OPTIMIZED** - Enhanced VideoRecordingScreen controls and performance (Oct 7, 2025). Icon size increased to 28px for optimal visibility. Flash toggle now includes proactive support check (front camera detection). Zoom gesture optimized with fire-and-forget pattern to prevent UI freeze during continuous pinch gestures. Enhanced camera initialization logging for better debugging. Previous: Fixed zoom stability with hardware-aware limits (preserves wide-angle support), resets to 1.0x when switching cameras or toggling mute, polished TikTok/Reels-style vertical video interface with full-screen camera preview, portrait-only lock, four top controls, centered orange record button with live timer, and comprehensive error handling. App builds successfully for web (55.5s) with no LSP errors.
 
 # User Preferences
 
@@ -19,17 +19,18 @@ The application follows Flutter's standard architecture patterns:
   - **VideoRecordingScreen**: Polished vertical video recording interface
     - **Full-screen preview**: Transform.scale with aspect ratio calculation to fill entire screen without black bars
     - **Portrait lock**: SystemChrome locks orientation to portraitUp only, restored on dispose
-    - **Top controls**: Four buttons with consistent dark rounded backgrounds (8px radius, black54, 26px icons)
+    - **Top controls**: Four buttons with consistent dark rounded backgrounds (8px radius, black54, 28px icons)
       - Back button (top-left) - Icons.arrow_back
       - Mute/Unmute toggle (top-left) - Icons.mic/mic_off, fully functional, reconfigures camera controller
-      - Flash on/off toggle (top-right) - Icons.flash_on/flash_off, with error handling for unsupported cameras
+      - Flash on/off toggle (top-right) - Icons.flash_on/flash_off, proactive support check (back camera detection), comprehensive error handling
       - Camera switch (top-right) - Icons.cameraswitch, preserves flash state, disabled during recording
-    - **Pinch-to-zoom**: GestureDetector with ScaleGestureRecognizer for smooth zoom control
+    - **Pinch-to-zoom**: GestureDetector with ScaleGestureRecognizer for smooth, freeze-free zoom control
       - Hardware-aware zoom limits: Queries actual camera min/max via getMinZoomLevel()/getMaxZoomLevel()
       - Dynamic range support: Clamps zoom within camera's full reported capabilities (preserves wide-angle support)
       - Zoom reset: Resets to 1.0x (normal view) via setZoomLevel(1.0) when switching cameras or toggling mute
       - Full range access: Pinch-to-zoom works across entire hardware range (e.g., 0.6x wide to 10x tele if supported)
-      - Error feedback: SnackBar notification if zoom adjustment fails
+      - UI thread optimization: Fire-and-forget pattern prevents blocking during continuous pinch gestures
+      - Error feedback: Silent catchError logging for zoom failures (non-intrusive)
       - Base zoom tracking: onScaleStart stores current zoom, onScaleUpdate applies delta
     - **Record button**: Centered at bottom with orange ring (5px), changes from white circle to red square when recording
     - **Live timer**: MM:SS format above record button with red indicator dot, only visible during recording
