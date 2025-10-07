@@ -30,7 +30,7 @@ class WebCameraController {
     fps: 30,
   );
   
-  int? get textureId => _cameraController?.textureId;
+  int? get textureId => null;
   bool get isInitialized => _isInitialized;
   CameraState get value => _currentState;
   Stream<CameraState> get stateStream => _stateController.stream;
