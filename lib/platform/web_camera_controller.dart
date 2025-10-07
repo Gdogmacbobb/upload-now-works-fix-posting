@@ -57,17 +57,39 @@ class WebCameraController {
         throw Exception('No cameras available');
       }
       
-      // Filter to only front and back cameras (ignore ultra-wide, telephoto, etc)
-      _cameras = allCameras.where((cam) => 
-        cam.lensDirection == CameraLensDirection.front || 
-        cam.lensDirection == CameraLensDirection.back
-      ).toList();
+      // Collapse to ONE camera per lens direction (front/back toggle only)
+      _cameras = [];
       
-      if (_cameras.isEmpty) {
-        throw Exception('No front or back cameras found');
+      final backCameras = allCameras.where((cam) => cam.lensDirection == CameraLensDirection.back).toList();
+      final frontCameras = allCameras.where((cam) => cam.lensDirection == CameraLensDirection.front).toList();
+      
+      if (backCameras.isNotEmpty) {
+        _cameras.add(backCameras.first);
+        debugPrint('[CAMERA_SOURCE] Back camera selected: ${backCameras.first.name}');
       }
       
-      debugPrint('[CAMERA_SOURCE] Found ${allCameras.length} total cameras, filtered to ${_cameras.length} (front/back only)');
+      if (frontCameras.isNotEmpty) {
+        _cameras.add(frontCameras.first);
+        debugPrint('[CAMERA_SOURCE] Front camera selected: ${frontCameras.first.name}');
+      }
+      
+      // Fallback: If no front/back cameras, use any available camera (external webcams, etc)
+      if (_cameras.isEmpty && allCameras.isNotEmpty) {
+        _cameras.add(allCameras.first);
+        debugPrint('⚠️ [CAMERA_SOURCE] No front/back cameras found, using fallback: ${allCameras.first.name} (${allCameras.first.lensDirection})');
+      }
+      
+      if (_cameras.isEmpty) {
+        debugPrint('❌ [CAMERA_SOURCE] No cameras available - SDK reported ${allCameras.length} cameras');
+        throw Exception('No cameras available on this device');
+      }
+      
+      debugPrint('[CAMERA_SOURCE] Found ${allCameras.length} total cameras, collapsed to ${_cameras.length} (back:${backCameras.isNotEmpty}, front:${frontCameras.isNotEmpty})');
+      
+      // Defensive assertion
+      if (_cameras.length > 2) {
+        debugPrint('⚠️ [CAMERA_SOURCE] WARNING: More than 2 cameras after filtering! Count: ${_cameras.length}');
+      }
       
       _currentCameraIndex = cameraIndex.clamp(0, _cameras.length - 1);
       final camera = _cameras[_currentCameraIndex];
