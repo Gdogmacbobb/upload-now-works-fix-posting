@@ -1,0 +1,58 @@
+{
+  "task": "Deep Debug & Structural Fix for Camera UI + Navigation",
+  "issues": [
+    "Splash navigation auto-skips correctly but breaks route stack",
+    "Flash and camera flip icons invisible (not underlay issue)",
+    "Flash functionality untested due to web bridge",
+    "Camera switch error on uninitialized controller"
+  ],
+  "required_actions": [
+    {
+      "navigation_fix": {
+        "description": "Ensure DEV_SKIP_GEO_AUTH bypass uses Navigator.pushReplacementNamed inside addPostFrameCallback",
+        "expected": "Splash flow remains intact; bypass only triggers after widget build"
+      }
+    },
+    {
+      "icon_render_fix": {
+        "description": "Force overlay icons to render above camera preview",
+        "implementation": [
+          "Wrap CameraPreview in RepaintBoundary + Positioned.fill",
+          "Add Material(elevation: 10, color: Colors.transparent)",
+          "Ensure overlay children are not wrapped by IgnorePointer(true)"
+        ],
+        "web_override": "For web builds, ensure camera preview <video> element uses z-index < 1 via JS interop or HTML CSS injection"
+      }
+    },
+    {
+      "flash_dev_mode_mock": {
+        "description": "Simulate flash toggle for web preview",
+        "expected": "Flash button toggles icon state visually, logs event, no hardware call"
+      }
+    },
+    {
+      "camera_switch_guard": {
+        "description": "Ensure new controller initializes fully before disposing old one",
+        "fix": "await _initCamera(newCamera); only dispose old after success"
+      }
+    },
+    {
+      "diagnostic_logging": {
+        "description": "Enable detailed logs to trace overlay build, stack order, and controller state",
+        "events": [
+          "[UI_RENDER] overlay z-index",
+          "[CAMERA_STACK] children count",
+          "[FLASH_UI] visible:true/false",
+          "[NAV_STATE] splash->camera route"
+        ]
+      }
+    }
+  ],
+  "expected_outcome": {
+    "splash_behavior": "Bypass runs only once post-frame; route flow intact",
+    "ui_overlay": "Icons visible and clickable on Replit web preview",
+    "flash_toggle": "Visual on/off before and during recording",
+    "camera_switch": "No uninitialized controller exceptions"
+  },
+  "note": "Replit web preview may still not show icons if camera <video> HTML layer overrides z-index; if so, use dev mock overlay."
+}
