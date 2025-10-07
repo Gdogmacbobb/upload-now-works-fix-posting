@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:ynfny/utils/responsive_scale.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -13,6 +14,9 @@ import './widgets/animated_logo_widget.dart';
 import './widgets/gradient_background_widget.dart';
 import './widgets/loading_indicator_widget.dart';
 import './widgets/retry_connection_widget.dart';
+
+// DEV MODE: Set to true to skip auth/geo checks and go straight to camera screen
+const bool DEV_SKIP_GEO_AUTH = true;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -170,7 +174,11 @@ class _SplashScreenState extends State<SplashScreen> {
     // Navigation logic based on real authentication status
     String nextRoute;
 
-    if (_supabaseService.isAuthenticated) {
+    // DEV MODE: Skip auth/geo and go straight to camera for testing
+    if (kDebugMode && DEV_SKIP_GEO_AUTH) {
+      print('DEBUG: [DEV_MODE] Bypassing auth/geo checks - navigating to /video-recording');
+      nextRoute = '/video-recording';
+    } else if (_supabaseService.isAuthenticated) {
       print('DEBUG: User authenticated, navigating to /discovery-feed');
       // Authenticated users go to Discovery Feed
       nextRoute = '/discovery-feed';

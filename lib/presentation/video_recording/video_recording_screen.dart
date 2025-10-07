@@ -590,31 +590,24 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     required VoidCallback onPressed,
     bool isDisabled = false,
   }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.black87,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.orange.withOpacity(0.3),
-            width: 2,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(8),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.5),
-              blurRadius: 8,
-              spreadRadius: 2,
+          child: Opacity(
+            opacity: isDisabled ? 0.4 : 1.0,
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 32,
             ),
-          ],
-        ),
-        child: Opacity(
-          opacity: isDisabled ? 0.4 : 1.0,
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 40,
           ),
         ),
       ),
