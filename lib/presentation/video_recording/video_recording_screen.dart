@@ -57,12 +57,12 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       );
       await _controller!.initialize();
       
-      // Get actual zoom limits from camera
+      // Get actual zoom limits from camera, but reset to 1.0
       try {
         _minZoom = await _controller!.getMinZoomLevel();
         _maxZoom = await _controller!.getMaxZoomLevel();
-        _currentZoom = _minZoom;
-        await _controller!.setZoomLevel(_currentZoom);
+        _currentZoom = 1.0;
+        await _controller!.setZoomLevel(1.0);
       } catch (e) {
         debugPrint('Failed to get zoom limits: $e');
         // Fallback to safe defaults
@@ -155,13 +155,13 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     await _controller!.initialize();
     
-    // Get zoom limits for new camera and reset zoom
+    // Get zoom limits for new camera and reset zoom to 1.0
     try {
       _minZoom = await _controller!.getMinZoomLevel();
       _maxZoom = await _controller!.getMaxZoomLevel();
-      _currentZoom = _minZoom;
-      _baseZoom = _minZoom;
-      await _controller!.setZoomLevel(_currentZoom);
+      _currentZoom = 1.0;
+      _baseZoom = 1.0;
+      await _controller!.setZoomLevel(1.0);
     } catch (e) {
       debugPrint('Failed to get zoom limits after camera switch: $e');
       _minZoom = 1.0;
@@ -236,13 +236,13 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     await _controller!.initialize();
     
-    // Refresh zoom limits for new controller
+    // Refresh zoom limits for new controller, reset to 1.0
     try {
       _minZoom = await _controller!.getMinZoomLevel();
       _maxZoom = await _controller!.getMaxZoomLevel();
-      _currentZoom = _minZoom;
-      _baseZoom = _minZoom;
-      await _controller!.setZoomLevel(_currentZoom);
+      _currentZoom = 1.0;
+      _baseZoom = 1.0;
+      await _controller!.setZoomLevel(1.0);
     } catch (e) {
       debugPrint('Failed to get zoom limits after mute toggle: $e');
       _minZoom = 1.0;
@@ -479,7 +479,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         child: Icon(
           icon,
           color: Colors.white,
-          size: 24,
+          size: 26,
         ),
       ),
     );
