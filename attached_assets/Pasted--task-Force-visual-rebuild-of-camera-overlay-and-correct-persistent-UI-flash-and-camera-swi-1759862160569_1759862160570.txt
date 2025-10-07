@@ -1,0 +1,123 @@
+{
+  "task": "Force visual rebuild of camera overlay and correct persistent UI, flash, and camera-switch issues",
+  "requirements": {
+    "scope": "Flutter UI overlay and native controller bindings",
+    "goals": [
+      "Permanently remove black diagnostic overlay box on the left",
+      "Ensure flash and camera-switch icons render visibly and stay interactive at all times",
+      "Fix flash toggle logic so it never shows 'Flash not supported' when rear camera supports it",
+      "Fix camera rotation toggle so it cycles front ⇄ back smoothly with full reset",
+      "Verify zoom responsiveness and UI independence from camera preview rebuilds"
+    ]
+  },
+  "fixes": [
+    {
+      "remove_diagnostics": {
+        "description": "Remove any leftover debug Container/Text widgets used for zoom or diagnostic info.",
+        "selectors": [
+          "Positioned(left:0)",
+          "Container(color:Colors.black54)",
+          "Text('Zoom')",
+          "Text('Range')",
+          "Text('ResolutionPreset')"
+        ],
+        "confirm": "No diagnostic overlays visible on screen after rebuild."
+      }
+    },
+    {
+      "overlay_rebuild": {
+        "architecture": "Recreate Stack + SafeArea overlay outside CameraPreview build tree.",
+        "structure": [
+          {
+            "type": "Positioned",
+            "widget": "IconButton",
+            "id": "flashBtn",
+            "icon_on": "Icons.flash_on",
+            "icon_off": "Icons.flash_off",
+            "size": 32,
+            "color": "#FFFFFFFF",
+            "top": 12,
+            "right": 12,
+            "always_visible": true,
+            "opacity_front_camera": 0.4,
+            "onTap": "toggleFlash()"
+          },
+          {
+            "type": "Positioned",
+            "widget": "IconButton",
+            "id": "switchBtn",
+            "icon": "Icons.cameraswitch",
+            "size": 32,
+            "color": "#FFFFFFFF",
+            "top": 12,
+            "right": 72,
+            "always_visible": true,
+            "onTap": "cycleCamera()"
+          }
+        ],
+        "lifecycle": {
+          "init": "overlay builds once controller.isInitialized == true",
+          "rebuild_triggers": ["cameraIndexChange", "flashModeChange"],
+          "ensure_zIndex": "overlay above all children of CameraPreview"
+        }
+      }
+    },
+    {
+      "flash_fix": {
+        "android": {
+          "detection": "camera.characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE)",
+          "toggle": "cameraControl.enableTorch(state)",
+          "delay": "none (instant action on Dispatchers.Main)",
+          "error_handling": "if false, show greyed icon but no snackbar"
+        },
+        "ios": {
+          "detection": "AVCaptureDevice.hasTorch",
+          "toggle": "device.torchMode = .on/.off (with configuration lock)",
+          "ensure_thread": "DispatchQueue.main.async"
+        },
+        "post_toggle_ui": "update flashBtn icon and brightness via setState()"
+      }
+    },
+    {
+      "camera_switch_fix": {
+        "cycle_logic": "(_cameraIndex + 1) % availableCameras.length",
+        "bidirectional_toggle": "true (front → back → front)",
+        "debounce_ms": 200,
+        "controller_reinit": "dispose old controller, await init new one, rebuild overlay immediately",
+        "reset_zoom": "on switch, setZoom(minZoom)"
+      }
+    },
+    {
+      "zoom_performance_fix": {
+        "background_thread": "Dispatchers.IO (Android) / background DispatchQueue (iOS)",
+        "gesture_throttle_ms": 16,
+        "drop_queued_updates": "if more than 2 pending",
+        "ui_smoothness_check": "ensure pinch gesture never freezes preview"
+      }
+    }
+  ],
+  "verification": {
+    "ui_visual": [
+      "No black boxes or text overlays visible",
+      "Flash and camera-switch icons clearly visible top-right",
+      "Icons responsive immediately on tap"
+    ],
+    "functionality": [
+      "Rear camera flash toggles LED on/off instantly",
+      "Front camera greys out flash icon but does not trigger error message",
+      "Camera flip cycles front ↔ back within 1 second latency",
+      "Zoom pinch gesture smooth (<16ms update, no freeze)"
+    ],
+    "logs": [
+      "Overlay rebuild confirmed (UI_RENDER=true)",
+      "flashSupported:true/false from native query",
+      "zoomLatency:<16ms",
+      "cameraSwitchCycle:success"
+    ]
+  },
+  "notes": [
+    "Do not skip overlay rebuild step — it ensures icons physically render above preview.",
+    "Disable all diagnostic overlays permanently.",
+    "Validate this build only on real devices (Android/iOS)."
+  ]
+}
