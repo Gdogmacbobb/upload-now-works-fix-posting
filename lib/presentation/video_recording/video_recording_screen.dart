@@ -29,6 +29,10 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   double _baseZoom = 1.0;
   double _minZoom = 1.0;
   double _maxZoom = 5.0;
+  
+  // Zoom throttling
+  Timer? _zoomThrottleTimer;
+  double? _pendingZoom;
 
   @override
   void initState() {
@@ -173,22 +177,19 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       _baseZoom = 1.0;
     }
     
-    // Apply flash mode if it was on
-    if (_isFlashOn) {
+    // Apply flash mode if it was on and supported
+    if (_isFlashOn && _controller!.value.hasFlash) {
       try {
         await _controller!.setFlashMode(FlashMode.torch);
       } catch (e) {
         debugPrint('Failed to reapply flash: $e');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Flash not available on this camera'),
-              backgroundColor: Colors.orange.shade900,
-            ),
-          );
           setState(() => _isFlashOn = false);
         }
       }
+    } else if (_isFlashOn && !_controller!.value.hasFlash) {
+      // Flash was on but new camera doesn't support it
+      setState(() => _isFlashOn = false);
     }
     
     if (mounted) {
@@ -196,23 +197,24 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     }
   }
 
+  bool get _hasFlashSupport {
+    return _controller?.value.hasFlash ?? false;
+  }
+
   Future<void> _toggleFlash() async {
     if (!_isInitialized || _controller == null) return;
     
-    // Check if flash is supported
-    if (_cameras != null && _cameras!.isNotEmpty) {
-      final hasFlash = _cameras![_selectedCamera].lensDirection == CameraLensDirection.back;
-      if (!hasFlash && !_isFlashOn) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Flash not supported on this camera'),
-              backgroundColor: Colors.orange.shade900,
-            ),
-          );
-        }
-        return;
+    // Check if flash is supported using controller.value.hasFlash
+    if (!_hasFlashSupport) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Flash not supported on this camera'),
+            backgroundColor: Colors.orange.shade900,
+          ),
+        );
       }
+      return;
     }
     
     try {
@@ -221,7 +223,10 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       } else {
         await _controller!.setFlashMode(FlashMode.torch);
       }
-      setState(() => _isFlashOn = !_isFlashOn);
+      if (mounted) {
+        setState(() => _isFlashOn = !_isFlashOn);
+        debugPrint('Flash toggled');
+      }
     } catch (e) {
       debugPrint('Flash toggle failed: $e');
       if (mounted) {
@@ -270,8 +275,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       _baseZoom = 1.0;
     }
     
-    // Reapply flash if it was on
-    if (_isFlashOn) {
+    // Reapply flash if it was on and supported
+    if (_isFlashOn && _controller!.value.hasFlash) {
       try {
         await _controller!.setFlashMode(FlashMode.torch);
       } catch (e) {
@@ -283,6 +288,38 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     if (mounted) {
       setState(() => _isInitialized = true);
     }
+  }
+
+  void _applyZoom(double zoom) {
+    // Cancel any pending zoom operation
+    _zoomThrottleTimer?.cancel();
+    
+    // Store the pending zoom level
+    _pendingZoom = zoom;
+    
+    // Throttle zoom updates to every 60ms
+    _zoomThrottleTimer = Timer(const Duration(milliseconds: 60), () {
+      if (_controller != null && mounted && _pendingZoom != null) {
+        final targetZoom = _pendingZoom!;
+        
+        // Use Future.microtask to offload from UI thread
+        Future.microtask(() async {
+          try {
+            // Safety check: only apply zoom if not currently streaming
+            if (_controller != null && 
+                _controller!.value.isInitialized &&
+                !_controller!.value.isStreamingImages) {
+              await _controller!.setZoomLevel(targetZoom);
+              debugPrint('Zoom applied: $targetZoom');
+            }
+          } catch (e) {
+            debugPrint('Failed to set zoom: $e');
+          }
+        });
+        
+        _pendingZoom = null;
+      }
+    });
   }
 
   String _formatTime(int seconds) {
@@ -339,6 +376,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                           _iconButton(
                             icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
                             onPressed: _toggleFlash,
+                            isDisabled: !_hasFlashSupport,
                           ),
                           const SizedBox(width: 12),
                           _iconButton(
@@ -452,14 +490,12 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         final newZoom = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
         
         if (newZoom != _currentZoom && _controller != null && mounted) {
-          // Fire-and-forget to prevent blocking UI thread
-          _controller!.setZoomLevel(newZoom).catchError((e) {
-            debugPrint('Failed to set zoom: $e');
-          });
-          
           setState(() {
             _currentZoom = newZoom;
           });
+          
+          // Apply zoom with throttling and microtask
+          _applyZoom(newZoom);
         }
       },
       child: Center(
@@ -477,6 +513,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   Widget _iconButton({
     required IconData icon,
     required VoidCallback onPressed,
+    bool isDisabled = false,
   }) {
     return GestureDetector(
       onTap: onPressed,
@@ -488,8 +525,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         ),
         child: Icon(
           icon,
-          color: Colors.white,
-          size: 28,
+          color: isDisabled ? Colors.grey : Colors.white,
+          size: 30,
         ),
       ),
     );
@@ -498,6 +535,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   @override
   void dispose() {
     _recordingTimer?.cancel();
+    _zoomThrottleTimer?.cancel();
     _controller?.dispose();
     // Reset orientation when leaving
     SystemChrome.setPreferredOrientations([
