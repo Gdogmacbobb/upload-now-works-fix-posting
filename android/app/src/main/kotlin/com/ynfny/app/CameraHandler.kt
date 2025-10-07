@@ -271,15 +271,22 @@ class CameraHandler(
     private fun switchCamera(result: MethodChannel.Result) {
         ensureScope().launch {
             try {
-                Log.d(TAG, "Switching camera...")
+                val startTime = System.currentTimeMillis()
+                Log.d(TAG, "🔄 [CAMERA_SWITCH] Starting camera switch...")
+                Log.d(TAG, "   Current index: $currentCameraIndex")
+                Log.d(TAG, "   Available cameras: ${availableSelectors.size}")
                 
                 currentCameraIndex = (currentCameraIndex + 1) % availableSelectors.size
+                Log.d(TAG, "   New index: $currentCameraIndex")
                 
                 cameraProvider?.unbindAll()
                 startCamera(60, "max", result)
                 
+                val latency = System.currentTimeMillis() - startTime
+                Log.d(TAG, "✅ [CAMERA_SWITCH] Switch completed in ${latency}ms")
+                
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to switch camera", e)
+                Log.e(TAG, "❌ [CAMERA_SWITCH] Failed to switch camera", e)
                 withContext(Dispatchers.Main) {
                     result.error("SWITCH_ERROR", "Failed to switch camera: ${e.message}", null)
                 }
@@ -291,11 +298,22 @@ class CameraHandler(
         val enabled = call.argument<Boolean>("enabled") ?: false
         
         try {
+            val hasFlash = camera?.cameraInfo?.hasFlashUnit() ?: false
+            Log.d(TAG, "💡 [FLASH_TOGGLE] Torch toggle request: enabled=$enabled")
+            Log.d(TAG, "   Camera has flash unit: $hasFlash")
+            Log.d(TAG, "   Current camera index: $currentCameraIndex")
+            
+            if (!hasFlash) {
+                Log.w(TAG, "⚠️ [FLASH_TOGGLE] Flash not supported on this camera")
+                result.error("TORCH_NOT_SUPPORTED", "Flash not supported on this camera", null)
+                return
+            }
+            
             camera?.cameraControl?.enableTorch(enabled)
-            Log.d(TAG, "Torch ${if (enabled) "enabled" else "disabled"}")
+            Log.d(TAG, "✅ [FLASH_TOGGLE] Torch ${if (enabled) "enabled" else "disabled"} successfully")
             result.success(null)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to set torch", e)
+            Log.e(TAG, "❌ [FLASH_TOGGLE] Failed to set torch", e)
             result.error("TORCH_ERROR", e.message, null)
         }
     }
@@ -303,12 +321,28 @@ class CameraHandler(
     private fun setZoom(call: MethodCall, result: MethodChannel.Result) {
         val level = call.argument<Double>("level")?.toFloat() ?: 1.0f
         
-        try {
-            camera?.cameraControl?.setZoomRatio(level)
-            result.success(null)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to set zoom", e)
-            result.error("ZOOM_ERROR", e.message, null)
+        // Move to background thread to prevent UI lag
+        ensureScope().launch(Dispatchers.IO) {
+            try {
+                val startTime = System.currentTimeMillis()
+                
+                // Execute zoom on background thread
+                camera?.cameraControl?.setZoomRatio(level)?.addListener({
+                    val latency = System.currentTimeMillis() - startTime
+                    if (latency > 16) {
+                        Log.w(TAG, "⏱️ [ZOOM_EVENTS] Zoom latency: ${latency}ms for ${String.format("%.2f", level)}x")
+                    }
+                }, executor)
+                
+                withContext(Dispatchers.Main) {
+                    result.success(null)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ [ZOOM_EVENTS] Failed to set zoom", e)
+                withContext(Dispatchers.Main) {
+                    result.error("ZOOM_ERROR", e.message, null)
+                }
+            }
         }
     }
     

@@ -39,6 +39,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🎬 [UI_RENDER] VideoRecordingScreen initState - starting orientation lock and camera init');
     _lockOrientation();
     _initializeCamera();
   }
@@ -56,6 +57,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       // Listen to state stream for updates
       _stateSubscription = _controller!.stateStream.listen((state) {
         if (mounted) {
+          debugPrint('🔄 [CAMERA_STATE] State update: lens=${state.lensDirection}, flash=${state.torchSupported}, zoom=${state.zoomLevel.toStringAsFixed(2)}x');
           setState(() {
             _currentZoom = state.zoomLevel;
             _minZoom = state.minZoom;
@@ -65,6 +67,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             _hasFlashSupport = state.torchSupported;
             _lensDirection = state.lensDirection;
           });
+          debugPrint('✅ [FLASH_STATE] Flash support: $_hasFlashSupport, Flash on: $_isFlashOn');
         }
       });
       
@@ -88,6 +91,9 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         _hasFlashSupport = state.torchSupported;
         _lensDirection = state.lensDirection;
       });
+      
+      debugPrint('✅ [UI_RENDER] Camera initialized - overlay should be attached');
+      debugPrint('📊 [FLASH_STATE] Initial flash support: $_hasFlashSupport on ${_lensDirection} camera');
     } catch (e) {
       debugPrint('Camera initialization failed: $e');
       if (mounted) {
@@ -158,10 +164,17 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     if (_isRecording) return; // Don't switch while recording
     
     try {
+      final startTime = DateTime.now();
+      debugPrint('🔄 [CAMERA_SWITCH] Starting camera switch from $_lensDirection...');
+      
       await _controller!.switchCamera();
+      
+      final latency = DateTime.now().difference(startTime).inMilliseconds;
+      debugPrint('✅ [CAMERA_SWITCH] Switch completed in ${latency}ms');
+      
       // State will be updated via stateStream listener
     } catch (e) {
-      debugPrint('Failed to switch camera: $e');
+      debugPrint('❌ [CAMERA_SWITCH] Failed to switch camera: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -176,8 +189,12 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   Future<void> _toggleFlash() async {
     if (!_isInitialized || _controller == null) return;
     
+    debugPrint('💡 [FLASH_TOGGLE] Attempting flash toggle...');
+    debugPrint('   Current state: support=$_hasFlashSupport, on=$_isFlashOn, lens=$_lensDirection');
+    
     // Check if flash is supported
     if (!_hasFlashSupport) {
+      debugPrint('⚠️ [FLASH_TOGGLE] Flash not supported - showing error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -191,7 +208,11 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     try {
       final newFlashState = !_isFlashOn;
+      debugPrint('🔦 [FLASH_TOGGLE] Calling setTorch($newFlashState)...');
+      
       await _controller!.setTorch(newFlashState);
+      
+      debugPrint('✅ [FLASH_TOGGLE] Torch command sent successfully');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -204,7 +225,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       }
       // State will be updated via stateStream listener
     } catch (e) {
-      debugPrint('Flash toggle failed: $e');
+      debugPrint('❌ [FLASH_TOGGLE] Flash toggle failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -280,6 +301,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🎨 [UI_RENDER] Building UI - initialized=$_isInitialized, flash=$_hasFlashSupport');
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -309,39 +331,38 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                   ),
                 ),
                 
-                // Camera controls - only when initialized
-                if (_isInitialized && _controller != null) ...[
-                  // Mute button
-                  Positioned(
-                    top: 12,
-                    left: 72,
-                    child: _overlayIconButton(
-                      icon: _isMuted ? Icons.mic_off : Icons.mic,
-                      onPressed: _toggleMute,
-                    ),
+                // Mute button - always visible, disabled when not ready
+                Positioned(
+                  top: 12,
+                  left: 72,
+                  child: _overlayIconButton(
+                    icon: _isMuted ? Icons.mic_off : Icons.mic,
+                    onPressed: _toggleMute,
+                    isDisabled: !_isInitialized,
                   ),
-                  
-                  // Flash button
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: _overlayIconButton(
-                      icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                      onPressed: _toggleFlash,
-                      isDisabled: !_hasFlashSupport,
-                    ),
+                ),
+                
+                // Flash button - always visible
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _overlayIconButton(
+                    icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                    onPressed: _toggleFlash,
+                    isDisabled: !_isInitialized || !_hasFlashSupport,
                   ),
-                  
-                  // Camera switch button
-                  Positioned(
-                    top: 12,
-                    right: 72,
-                    child: _overlayIconButton(
-                      icon: Icons.cameraswitch,
-                      onPressed: _switchCamera,
-                    ),
+                ),
+                
+                // Camera switch button - always visible, disabled when not ready
+                Positioned(
+                  top: 12,
+                  right: 72,
+                  child: _overlayIconButton(
+                    icon: Icons.cameraswitch,
+                    onPressed: _switchCamera,
+                    isDisabled: !_isInitialized,
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -434,6 +455,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     return GestureDetector(
       onScaleStart: (details) {
         _baseZoom = _currentZoom;
+        debugPrint('🔍 [ZOOM_EVENTS] Zoom gesture started at ${_currentZoom.toStringAsFixed(2)}x');
         // Start repeating timer for smooth zoom updates
         _startZoomUpdateTimer();
       },
@@ -442,15 +464,22 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         final newZoom = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
         
         if (newZoom != _currentZoom && _controller != null && mounted) {
+          final updateStart = DateTime.now();
           setState(() {
             _currentZoom = newZoom;
           });
           
           // Queue zoom for next timer tick (every 16ms for 60fps response)
           _pendingZoom = newZoom;
+          
+          final latency = DateTime.now().difference(updateStart).inMilliseconds;
+          if (latency > 5) {
+            debugPrint('⏱️ [ZOOM_EVENTS] UI update latency: ${latency}ms for ${newZoom.toStringAsFixed(2)}x');
+          }
         }
       },
       onScaleEnd: (details) {
+        debugPrint('✅ [ZOOM_EVENTS] Zoom gesture ended at ${_currentZoom.toStringAsFixed(2)}x');
         // Stop repeating timer when gesture ends
         _stopZoomUpdateTimer();
       },
