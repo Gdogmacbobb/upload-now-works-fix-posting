@@ -30,7 +30,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   double _minZoom = 1.0;
   double _maxZoom = 5.0;
   
-  // Zoom throttling with repeating timer
+  // Zoom throttling with repeating timer (25ms for ultra-fast response)
   Timer? _zoomUpdateTimer;
   double? _pendingZoom;
 
@@ -209,7 +209,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   Future<void> _toggleFlash() async {
     if (!_isInitialized || _controller == null) return;
     
-    // Check if flash is supported using controller.value.hasFlash
+    // Check if flash is supported
     if (!_hasFlashSupport) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -225,13 +225,30 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     try {
       if (_isFlashOn) {
         await _controller!.setFlashMode(FlashMode.off);
+        if (mounted) {
+          setState(() => _isFlashOn = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Flash disabled'),
+              backgroundColor: Colors.green.shade900,
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
       } else {
         await _controller!.setFlashMode(FlashMode.torch);
+        if (mounted) {
+          setState(() => _isFlashOn = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Flash enabled'),
+              backgroundColor: Colors.green.shade900,
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
       }
-      if (mounted) {
-        setState(() => _isFlashOn = !_isFlashOn);
-        debugPrint('Flash toggled');
-      }
+      debugPrint('Flash toggled: $_isFlashOn');
     } catch (e) {
       debugPrint('Flash toggle failed: $e');
       if (mounted) {
@@ -299,8 +316,8 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     // Only start if not already running
     if (_zoomUpdateTimer != null && _zoomUpdateTimer!.isActive) return;
     
-    // Repeating timer fires every 60ms
-    _zoomUpdateTimer = Timer.periodic(const Duration(milliseconds: 60), (timer) {
+    // Repeating timer fires every 25ms for ultra-fast zoom response
+    _zoomUpdateTimer = Timer.periodic(const Duration(milliseconds: 25), (timer) {
       if (_pendingZoom != null && mounted) {
         final zoomToApply = _pendingZoom!;
         _pendingZoom = null; // Clear immediately to avoid re-applying
@@ -372,50 +389,54 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               ),
             ),
 
-          // Top controls
+          // Top controls overlay (Stack with Positioned for guaranteed visibility)
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // Top row with all controls
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Left side: Back and Mute
-                      Row(
-                        children: [
-                          _iconButton(
-                            icon: Icons.arrow_back,
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          const SizedBox(width: 12),
-                          _iconButton(
-                            icon: _isMuted ? Icons.mic_off : Icons.mic,
-                            onPressed: _toggleMute,
-                          ),
-                        ],
-                      ),
-                      
-                      // Right side: Flash and Switch Camera
-                      Row(
-                        children: [
-                          _iconButton(
-                            icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                            onPressed: _toggleFlash,
-                            isDisabled: !_hasFlashSupport,
-                          ),
-                          const SizedBox(width: 12),
-                          _iconButton(
-                            icon: Icons.cameraswitch,
-                            onPressed: _switchCamera,
-                          ),
-                        ],
-                      ),
-                    ],
+            child: Stack(
+              children: [
+                // Back button - always visible for navigation
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: _overlayIconButton(
+                    icon: Icons.arrow_back,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                
+                // Camera controls - only when initialized
+                if (_isInitialized && _controller != null) ...[
+                  // Mute button
+                  Positioned(
+                    top: 12,
+                    left: 72,
+                    child: _overlayIconButton(
+                      icon: _isMuted ? Icons.mic_off : Icons.mic,
+                      onPressed: _toggleMute,
+                    ),
+                  ),
+                  
+                  // Flash button
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: _overlayIconButton(
+                      icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                      onPressed: _toggleFlash,
+                      isDisabled: !_hasFlashSupport,
+                    ),
+                  ),
+                  
+                  // Camera switch button
+                  Positioned(
+                    top: 12,
+                    right: 72,
+                    child: _overlayIconButton(
+                      icon: Icons.cameraswitch,
+                      onPressed: _switchCamera,
+                    ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
 
@@ -523,7 +544,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             _currentZoom = newZoom;
           });
           
-          // Queue zoom for next timer tick (every 60ms)
+          // Queue zoom for next timer tick (every 25ms for ultra-fast response)
           _pendingZoom = newZoom;
         }
       },
@@ -543,7 +564,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     );
   }
 
-  Widget _iconButton({
+  Widget _overlayIconButton({
     required IconData icon,
     required VoidCallback onPressed,
     bool isDisabled = false,
@@ -556,10 +577,13 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
           color: Colors.black54,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          color: isDisabled ? Colors.grey : Colors.white,
-          size: 30,
+        child: Opacity(
+          opacity: isDisabled ? 0.4 : 1.0,
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 32,
+          ),
         ),
       ),
     );
