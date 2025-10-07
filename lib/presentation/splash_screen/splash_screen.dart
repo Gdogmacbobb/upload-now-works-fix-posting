@@ -176,20 +176,26 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // DEV MODE: Skip auth/geo and go straight to camera for testing (check FIRST)
     if (DEV_SKIP_GEO_AUTH) {
-      print('DEBUG: [DEV_MODE] Bypassing auth/geo checks - navigating to /video-recording');
+      print('[NAV_STATE] DEV_SKIP_GEO_AUTH=true - bypassing auth/geo checks');
       nextRoute = '/video-recording';
     } else if (_supabaseService.isAuthenticated) {
-      print('DEBUG: User authenticated, navigating to /discovery-feed');
+      print('[NAV_STATE] User authenticated - routing to discovery feed');
       // Authenticated users go to Discovery Feed
       nextRoute = '/discovery-feed';
     } else {
-      print('DEBUG: No user session found, navigating to /login-screen');
+      print('[NAV_STATE] No session - routing to login');
       // Non-authenticated users go directly to login screen
       nextRoute = '/login-screen';
     }
 
-    print('DEBUG: Pushing route: $nextRoute');
-    Navigator.pushReplacementNamed(context, nextRoute);
+    // Use addPostFrameCallback to ensure navigation happens after widget build completes
+    // This prevents route stack corruption
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        print('[NAV_STATE] Post-frame navigation to: $nextRoute');
+        Navigator.pushReplacementNamed(context, nextRoute);
+      }
+    });
   }
 
   void _retryInitialization() {

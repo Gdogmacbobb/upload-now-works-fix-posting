@@ -235,17 +235,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   Future<void> _toggleFlash() async {
     debugPrint('💡 [FLASH_TOGGLE] Button tapped! controller=${_controller != null}');
     
-    // Show immediate tap feedback
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Flash button tapped'),
-          backgroundColor: Colors.blue.shade900,
-          duration: const Duration(milliseconds: 500),
-        ),
-      );
-    }
-    
     if (_controller == null) {
       debugPrint('⚠️ [FLASH_TOGGLE] Controller is null');
       return;
@@ -254,6 +243,29 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     debugPrint('💡 [FLASH_TOGGLE] Attempting flash toggle...');
     debugPrint('   Current state: support=$_hasFlashSupport, on=$_isFlashOn, lens=$_lensDirection, recording=$_isRecording');
     
+    // WEB MOCK: Visual-only flash toggle (browsers don't support torch/flash control)
+    if (kIsWeb) {
+      final newFlashState = !_isFlashOn;
+      debugPrint('🌐 [FLASH_UI] WEB MOCK: Visual flash toggle $_isFlashOn → $newFlashState (no hardware call)');
+      
+      setState(() {
+        _isFlashOn = newFlashState;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(newFlashState ? 'Flash icon ON (web preview)' : 'Flash icon OFF (web preview)'),
+            backgroundColor: Colors.blue.shade900,
+            duration: const Duration(milliseconds: 800),
+          ),
+        );
+      }
+      debugPrint('✅ [FLASH_UI] Web mock complete - icon state updated visually');
+      return;
+    }
+    
+    // NATIVE: Real hardware flash control
     // Check if flash is supported
     if (!_hasFlashSupport) {
       debugPrint('⚠️ [FLASH_TOGGLE] Flash not supported - showing error');
@@ -272,7 +284,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       final newFlashState = !_isFlashOn;
       debugPrint('🔦 [FLASH_STATE] User toggled flash: $_isFlashOn → $newFlashState');
       
-      // Use setFlashMode for web compatibility (setTorch doesn't work on web)
+      // Use setFlashMode for native platforms
       await _controller!.setFlashMode(newFlashState ? FlashMode.torch : FlashMode.off);
       
       // Update local state immediately
@@ -374,9 +386,13 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Full-screen camera preview
+          // Full-screen camera preview with RepaintBoundary for z-index isolation
           if (_isInitialized && _controller != null)
-            _buildCameraPreview()
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: _buildCameraPreview(),
+              ),
+            )
           else
             const Center(
               child: CircularProgressIndicator(
@@ -384,13 +400,18 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
               ),
             ),
 
-          // Top controls overlay (Stack with Positioned for guaranteed visibility)
+          // Top controls overlay with Material elevation to force above camera preview
           Builder(
             builder: (context) {
               debugPrint('🎨 [UI_OVERLAY] Building overlay - Flash: ${_isFlashOn ? "ON" : "OFF"}, Camera: $_lensDirection');
-              return SafeArea(
-                child: Stack(
-                  children: [
+              final childrenCount = 4; // Back, Mute, Flash, Camera switch
+              debugPrint('📊 [CAMERA_STACK] Rendering $childrenCount overlay children');
+              return Material(
+                color: Colors.transparent,
+                elevation: 10, // Force overlay above camera preview
+                child: SafeArea(
+                  child: Stack(
+                    children: [
                     // Back button - always visible for navigation
                     Positioned(
                       top: 12,
@@ -445,9 +466,10 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                     ),
                   ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
+        ),
 
           // Bottom controls
           Positioned(
