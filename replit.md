@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **REPLIT ENVIRONMENT SETUP COMPLETE** - Successfully imported GitHub repository and configured for Replit deployment (Oct 7, 2025). Resolved all Git merge conflicts (70+ files), installed Flutter 3.32.0 via Nix, built production web assets, configured Node.js Express server on port 5000, and set up autoscale deployment. App is fully functional with splash screen loading correctly and Supabase connection established. Previous: Registration flow fixed with UPDATE pattern for trigger-created profiles; Username availability checking with real-time validation; Performance types simplified to 6 categories.
+**Current Status**: ✅ **VIDEO RECORDING & UPLOAD INTEGRATION COMPLETE** - Successfully integrated legacy video recording and upload screens with full web compatibility (Oct 7, 2025). Implemented conditional import pattern for platform-specific code (lib/platform/), fixed critical null safety issues with camera initialization error handling, and resolved dart:io import conflicts for web builds. App builds successfully for web (59.5s) with no LSP errors. Previous: Resolved all Git merge conflicts (70+ files), installed Flutter 3.32.0 via Nix, built production web assets, configured Node.js Express server on port 5000, and set up autoscale deployment. App is fully functional with splash screen loading correctly and Supabase connection established.
 
 # User Preferences
 
@@ -15,6 +15,17 @@ The application follows Flutter's standard architecture patterns:
 - **Cross-platform approach**: Single codebase targeting mobile and web platforms using Flutter SDK 3.29.2+
 - **Environment configuration**: Uses environment variables loaded from `env.json` files via `--dart-define-from-file` for secure configuration management
 - **Multi-platform deployment**: Supports both native mobile apps and web deployment with dedicated web build artifacts
+- **Video Recording & Upload**: Full camera-to-upload flow integrated with web compatibility
+  - **VideoRecordingScreen**: Camera preview with record/pause/stop controls, front/back camera switching, timer display
+  - **VideoUploadScreen**: Video preview with playback controls, caption input, performance type selection, location tagging, privacy settings
+  - **Navigation flow**: Feed → Camera button → Video Recording → Video Upload with file path passing
+  - **Web Compatibility**: Conditional import pattern (lib/platform/) for platform-specific code
+    - `video_controller_factory.dart`: Export with dart.library.io/html conditions
+    - `video_controller_mobile.dart`: Uses dart:io File for mobile platforms
+    - `video_controller_web.dart`: Uses networkUrl for web blob URLs
+    - `video_controller_stub.dart`: Fallback UnimplementedError
+  - **Error Handling**: Camera initialization wrapped in try-catch with null/empty camera list checks, displays error SnackBars, disables controls until initialization succeeds
+  - **Null Safety**: All camera/video controllers nullable with _isInitialized flags, mounted checks before setState
 
 ## Backend Architecture
 The system uses a serverless architecture with external services:

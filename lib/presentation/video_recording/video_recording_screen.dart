@@ -24,14 +24,29 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    _cameras = await availableCameras();
-    _controller = CameraController(_cameras![_selectedCamera], ResolutionPreset.high);
-    await _controller!.initialize();
-    if (!mounted) return;
-    setState(() => _isInitialized = true);
+    try {
+      _cameras = await availableCameras();
+      if (_cameras == null || _cameras!.isEmpty) {
+        debugPrint('No cameras available');
+        return;
+      }
+      _controller = CameraController(_cameras![_selectedCamera], ResolutionPreset.high);
+      await _controller!.initialize();
+      if (!mounted) return;
+      setState(() => _isInitialized = true);
+    } catch (e) {
+      debugPrint('Camera initialization failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Camera not available: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _toggleRecord() async {
+    if (!_isInitialized || _controller == null) return;
+    
     if (!_isRecording) {
       await _controller!.startVideoRecording();
       setState(() => _isRecording = true);
@@ -44,11 +59,15 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   void _switchCamera() async {
+    if (_cameras == null || _cameras!.isEmpty) return;
+    
     _selectedCamera = (_selectedCamera + 1) % _cameras!.length;
     await _controller?.dispose();
     _controller = CameraController(_cameras![_selectedCamera], ResolutionPreset.high);
     await _controller!.initialize();
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -101,14 +120,17 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                   ),
                 const SizedBox(height: 12),
                 GestureDetector(
-                  onTap: _toggleRecord,
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.primaryOrange, width: 4),
-                      color: _isRecording ? Colors.red : Colors.white,
+                  onTap: _isInitialized ? _toggleRecord : null,
+                  child: Opacity(
+                    opacity: _isInitialized ? 1.0 : 0.5,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.primaryOrange, width: 4),
+                        color: _isRecording ? Colors.red : Colors.white,
+                      ),
                     ),
                   ),
                 ),

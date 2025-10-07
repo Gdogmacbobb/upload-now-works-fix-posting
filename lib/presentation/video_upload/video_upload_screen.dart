@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'package:video_player/video_player.dart';
-import 'dart:io';
+import '../../platform/video_controller_factory.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -11,19 +11,38 @@ class VideoUploadScreen extends StatefulWidget {
 }
 
 class _VideoUploadScreenState extends State<VideoUploadScreen> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   bool _isPlaying = false;
   String? _caption;
   String _performanceType = 'Music';
   String _location = 'Washington Square Park';
   String _privacy = 'Public';
+  bool _isInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final videoPath = ModalRoute.of(context)!.settings.arguments as String?;
-    _controller = VideoPlayerController.file(File(videoPath!))
-      ..initialize().then((_) => setState(() {}));
+    if (videoPath != null) {
+      try {
+        // Use platform-appropriate controller via conditional imports
+        _controller = createVideoController(videoPath);
+        _controller!.initialize().then((_) {
+          if (mounted) {
+            setState(() => _isInitialized = true);
+          }
+        }).catchError((error) {
+          debugPrint('Video player initialization failed: $error');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to load video')),
+            );
+          }
+        });
+      } catch (e) {
+        debugPrint('Video controller creation failed: $e');
+      }
+    }
   }
 
   @override
@@ -48,12 +67,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Video thumbnail preview
-            if (_controller.value.isInitialized)
+            if (_isInitialized && _controller != null)
               AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
+                aspectRatio: _controller!.value.aspectRatio,
                 child: Stack(
                   children: [
-                    VideoPlayer(_controller),
+                    VideoPlayer(_controller!),
                     Center(
                       child: IconButton(
                         icon: Icon(
@@ -63,7 +82,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                         ),
                         onPressed: () {
                           setState(() {
-                            _isPlaying ? _controller.pause() : _controller.play();
+                            _isPlaying ? _controller!.pause() : _controller!.play();
                             _isPlaying = !_isPlaying;
                           });
                         },
@@ -231,7 +250,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 }
