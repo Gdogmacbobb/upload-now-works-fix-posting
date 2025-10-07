@@ -11,8 +11,8 @@ import '../presentation/performer_profile/performer_profile.dart';
 import '../presentation/registration_screen/registration_screen.dart';
 import '../presentation/splash_screen/splash_screen.dart';
 import '../presentation/user_profile/user_profile.dart';
-import '../presentation/video_recording/video_recording.dart';
-import '../presentation/video_upload/video_upload.dart';
+import '../presentation/video_recording/video_recording_screen.dart';
+import '../presentation/video_upload/video_upload_screen.dart';
 
 class AppRoutes {
   // TODO: Add your routes here
@@ -38,9 +38,9 @@ class AppRoutes {
     accountTypeSelection: (context) => const AccountTypeSelection(),
     loginScreen: (context) => const LoginScreen(),
     splashScreen: (context) => const SplashScreen(),
-    videoRecording: (context) => const VideoRecording(),
+    videoRecording: (context) => const VideoRecordingScreen(),
     followingFeed: (context) => const FollowingFeed(),
-    videoUpload: (context) => const VideoUpload(),
+    videoUpload: (context) => const VideoUploadScreen(),
     discoveryFeed: (context) => const DiscoveryFeed(),
     discovery: (context) => const DiscoveryFeed(), // Alias for discoveryFeed
     registrationScreen: (context) => const RegistrationScreen(),
