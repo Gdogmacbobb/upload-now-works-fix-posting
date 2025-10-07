@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **VIDEO RECORDING & UPLOAD INTEGRATION COMPLETE** - Successfully integrated legacy video recording and upload screens with full web compatibility (Oct 7, 2025). Implemented conditional import pattern for platform-specific code (lib/platform/), fixed critical null safety issues with camera initialization error handling, and resolved dart:io import conflicts for web builds. App builds successfully for web (59.5s) with no LSP errors. Previous: Resolved all Git merge conflicts (70+ files), installed Flutter 3.32.0 via Nix, built production web assets, configured Node.js Express server on port 5000, and set up autoscale deployment. App is fully functional with splash screen loading correctly and Supabase connection established.
+**Current Status**: ✅ **TIKTOK-STYLE VIDEO RECORDING UI COMPLETE** - Successfully polished VideoRecordingScreen with TikTok/Reels-style vertical video interface (Oct 7, 2025). Full-screen camera preview with portrait-only lock, four top controls (Back, Mute, Flash, Switch), centered orange record button with live timer, and comprehensive error handling with user feedback. All controls fully functional with proper camera reconfiguration for mute toggle and flash state preservation. Previous: Integrated legacy video recording screens with web compatibility, implemented conditional import pattern (lib/platform/), fixed null safety issues, resolved dart:io conflicts. App builds successfully for web (55.5s) with no LSP errors.
 
 # User Preferences
 
@@ -15,8 +15,19 @@ The application follows Flutter's standard architecture patterns:
 - **Cross-platform approach**: Single codebase targeting mobile and web platforms using Flutter SDK 3.29.2+
 - **Environment configuration**: Uses environment variables loaded from `env.json` files via `--dart-define-from-file` for secure configuration management
 - **Multi-platform deployment**: Supports both native mobile apps and web deployment with dedicated web build artifacts
-- **Video Recording & Upload**: Full camera-to-upload flow integrated with web compatibility
-  - **VideoRecordingScreen**: Camera preview with record/pause/stop controls, front/back camera switching, timer display
+- **Video Recording & Upload**: Full camera-to-upload flow with TikTok/Reels-style UI and web compatibility
+  - **VideoRecordingScreen**: Polished vertical video recording interface
+    - **Full-screen preview**: Transform.scale with aspect ratio calculation to fill entire screen without black bars
+    - **Portrait lock**: SystemChrome locks orientation to portraitUp only, restored on dispose
+    - **Top controls**: Four buttons with consistent dark rounded backgrounds (8px radius, black54)
+      - Back button (top-left)
+      - Mute/Unmute toggle (top-left) - fully functional, reconfigures camera controller
+      - Flash on/off toggle (top-right) - with error handling for unsupported cameras
+      - Camera switch (top-right) - preserves flash state, disabled during recording
+    - **Record button**: Centered at bottom with orange ring (5px), changes from white circle to red square when recording
+    - **Live timer**: MM:SS format above record button with red indicator dot, only visible during recording
+    - **Error handling**: SnackBar feedback for all failures (recording start/stop, flash toggle, camera operations)
+    - **Navigation**: Stops recording and navigates to '/video-upload' with file path
   - **VideoUploadScreen**: Video preview with playback controls, caption input, performance type selection, location tagging, privacy settings
   - **Navigation flow**: Feed → Camera button → Video Recording → Video Upload with file path passing
   - **Web Compatibility**: Conditional import pattern (lib/platform/) for platform-specific code
@@ -24,7 +35,6 @@ The application follows Flutter's standard architecture patterns:
     - `video_controller_mobile.dart`: Uses dart:io File for mobile platforms
     - `video_controller_web.dart`: Uses networkUrl for web blob URLs
     - `video_controller_stub.dart`: Fallback UnimplementedError
-  - **Error Handling**: Camera initialization wrapped in try-catch with null/empty camera list checks, displays error SnackBars, disables controls until initialization succeeds
   - **Null Safety**: All camera/video controllers nullable with _isInitialized flags, mounted checks before setState
 
 ## Backend Architecture
