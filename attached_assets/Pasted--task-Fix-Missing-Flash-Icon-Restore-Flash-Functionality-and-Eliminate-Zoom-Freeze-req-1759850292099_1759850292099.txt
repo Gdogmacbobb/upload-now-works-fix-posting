@@ -1,0 +1,84 @@
+{
+  "task": "Fix Missing Flash Icon, Restore Flash Functionality, and Eliminate Zoom Freeze",
+  "requirements": {
+    "scope": "VideoRecordingScreen (camera_recording.dart)",
+    "objectives": [
+      "Flash icon must be visible and functional on supported cameras",
+      "Camera switch icon must render consistently and remain functional",
+      "Pinch-to-zoom should never freeze the video feed or lock the UI"
+    ],
+    "fixes": [
+      {
+        "ui_rendering": {
+          "force_icon_rendering": true,
+          "icons": [
+            {
+              "name": "Icons.flash_on / Icons.flash_off",
+              "position": "topRightBox1",
+              "color": "#FFFFFFFF",
+              "size": 30,
+              "always_render": true,
+              "conditional_visibility": "based_on_camera_support_only"
+            },
+            {
+              "name": "Icons.cameraswitch",
+              "position": "topRightBox2",
+              "color": "#FFFFFFFF",
+              "size": 30,
+              "always_render": true
+            }
+          ],
+          "note": "Remove conditional checks that prevent rendering if flash is unsupported; show disabled state instead."
+        }
+      },
+      {
+        "flash_functionality": {
+          "implementation": "use cameraController.setFlashMode(FlashMode.torch / FlashMode.off)",
+          "bug_fix": "ensure flash toggle runs only after controller.isInitialized == true and mounted == true",
+          "safe_handling": {
+            "unsupported_flash": "display disabled flash icon + snackbar 'Flash not supported on this camera'",
+            "supported_flash": "toggle torch/off states instantly"
+          },
+          "ui_state_sync": "call setState() after each toggle to refresh icon"
+        }
+      },
+      {
+        "zoom_freeze_fix": {
+          "implementation": "run cameraController.setZoomLevel() in compute() isolate or Future.microtask() to prevent UI thread blocking",
+          "gesture_logic": {
+            "onScaleStart": "store currentZoomLevel",
+            "onScaleUpdate": "calculate newZoomLevel and update asynchronously",
+            "onScaleEnd": "stabilize zoom by reapplying last known value"
+          },
+          "frame_safety": "ensure preview texture rebuilds correctly by verifying controller.value.isStreamingImages == false before update"
+        }
+      },
+      {
+        "camera_rebuild_logic": {
+          "controller_lifecycle": "dispose old controller before initializing new one",
+          "mounted_check": "guard all async camera actions with if (mounted)",
+          "ui_refresh": "call setState() after controller initialization completes"
+        }
+      }
+    ],
+    "unchanged": [
+      "Back button layout",
+      "Mute toggle",
+      "Record button functionality",
+      "Portrait orientation lock"
+    ]
+  },
+  "verification": {
+    "ui_check": [
+      "All four icons visible (back, mute, flash, switch)",
+      "Flash button toggles light on/off instantly when using rear camera",
+      "Flash icon remains visible even if disabled on front camera (greyed out)",
+      "Pinch-to-zoom in/out no longer freezes the video preview"
+    ],
+    "debug_tests": [
+      "Run on both iOS and Android simulators",
+      "Check console logs for 'Flash toggled' confirmation message",
+      "Perform pinch gesture for 10 seconds – verify smooth zoom motion and live preview continuity"
+    ]
+  }
+}
