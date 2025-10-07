@@ -47,15 +47,18 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     try {
       _cameras = await availableCameras();
       if (_cameras == null || _cameras!.isEmpty) {
-        debugPrint('No cameras available');
+        debugPrint('Camera initialization error: No cameras available');
         return;
       }
+      debugPrint('Camera initialization: Found ${_cameras!.length} camera(s)');
+      
       _controller = CameraController(
         _cameras![_selectedCamera],
         ResolutionPreset.high,
         enableAudio: !_isMuted,
       );
       await _controller!.initialize();
+      debugPrint('Camera initialization: Controller initialized successfully');
       
       // Get actual zoom limits from camera, but reset to 1.0
       try {
@@ -195,6 +198,22 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
 
   Future<void> _toggleFlash() async {
     if (!_isInitialized || _controller == null) return;
+    
+    // Check if flash is supported
+    if (_cameras != null && _cameras!.isNotEmpty) {
+      final hasFlash = _cameras![_selectedCamera].lensDirection == CameraLensDirection.back;
+      if (!hasFlash && !_isFlashOn) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Flash not supported on this camera'),
+              backgroundColor: Colors.orange.shade900,
+            ),
+          );
+        }
+        return;
+      }
+    }
     
     try {
       if (_isFlashOn) {
@@ -428,28 +447,19 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       onScaleStart: (details) {
         _baseZoom = _currentZoom;
       },
-      onScaleUpdate: (details) async {
+      onScaleUpdate: (details) {
         // Calculate new zoom level
         final newZoom = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
         
-        if (newZoom != _currentZoom && _controller != null) {
-          try {
-            await _controller!.setZoomLevel(newZoom);
-            setState(() {
-              _currentZoom = newZoom;
-            });
-          } catch (e) {
+        if (newZoom != _currentZoom && _controller != null && mounted) {
+          // Fire-and-forget to prevent blocking UI thread
+          _controller!.setZoomLevel(newZoom).catchError((e) {
             debugPrint('Failed to set zoom: $e');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Zoom adjustment failed'),
-                  backgroundColor: Colors.orange.shade900,
-                  duration: const Duration(seconds: 1),
-                ),
-              );
-            }
-          }
+          });
+          
+          setState(() {
+            _currentZoom = newZoom;
+          });
         }
       },
       child: Center(
@@ -479,7 +489,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         child: Icon(
           icon,
           color: Colors.white,
-          size: 26,
+          size: 28,
         ),
       ),
     );

@@ -1,0 +1,63 @@
+{
+  "task": "Debug and Restore Camera Controls (Flash + Switch) and Fix Zoom Freeze",
+  "requirements": {
+    "scope": "VideoRecordingScreen / camera_recording.dart",
+    "objectives": [
+      "Ensure all four control icons (Back, Mute, Flash, Switch Camera) render visibly on screen",
+      "Fix flash toggle functionality so that tapping correctly sets FlashMode.torch / off",
+      "Ensure camera switch correctly re-initializes CameraController without null errors or UI freeze",
+      "Fix zoom freeze during pinch gesture by rebuilding controller updates on main isolate"
+    ],
+    "debug_actions": [
+      {
+        "check_ui": {
+          "verify_icon_visibility": true,
+          "expected_icons": ["arrow_back", "mic_off", "flash_on / flash_off", "cameraswitch"],
+          "icon_color": "#FFFFFFFF",
+          "icon_size_px": 28,
+          "layout_position": "top bar"
+        }
+      },
+      {
+        "camera_controller": {
+          "rebuild_logic": "dispose old controller and await new CameraController.initialize() before setState()",
+          "safe_checks": ["controller.value.isInitialized", "controller.value.isStreamingImages"],
+          "error_logging": "print camera initialization exceptions to console"
+        }
+      },
+      {
+        "flash_functionality": {
+          "add_support_check": "if !controller.description.hasFlash, disable button and show snackbar 'Flash not supported'",
+          "toggle_behavior": "switch between FlashMode.off and FlashMode.torch"
+        }
+      },
+      {
+        "zoom_debug": {
+          "gesture_detector": "onScaleStart / onScaleUpdate",
+          "thread_fix": "wrap controller.setZoomLevel() inside if (mounted) setState((){})",
+          "hardware_limits": "query controller.getMinZoomLevel() and controller.getMaxZoomLevel()",
+          "stability_test": "record pinch-in/out for 10s; confirm no frame drops or freeze"
+        }
+      }
+    ],
+    "unchanged": [
+      "Record button layout and style",
+      "Mute button logic",
+      "Portrait orientation lock"
+    ]
+  },
+  "verification": {
+    "ui_check": [
+      "All four icons visible with proper color and alignment",
+      "Flash toggle updates icon instantly",
+      "Camera switch changes lens smoothly without crash or freeze",
+      "Pinch-to-zoom functions continuously (no frozen preview)"
+    ],
+    "test_cases": [
+      "Start app → verify icons render",
+      "Toggle flash on/off → preview remains live",
+      "Switch camera twice → controller rebuilds correctly",
+      "Pinch zoom in/out → confirm no frame drop"
+    ]
+  }
+}
