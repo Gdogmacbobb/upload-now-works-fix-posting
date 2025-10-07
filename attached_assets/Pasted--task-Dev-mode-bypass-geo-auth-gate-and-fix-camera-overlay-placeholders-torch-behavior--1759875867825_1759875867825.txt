@@ -1,0 +1,112 @@
+{
+  "task": "Dev-mode: bypass geo/auth gate and fix camera overlay placeholders + torch behavior",
+  "context": {
+    "goal": "Allow camera screen access in Replit for development and replace debug placeholder boxes with real flash + camera-switch icons; ensure torch toggles properly and auto-off on stop",
+    "environment": "Replit dev preview (kIsWeb true) and native builds (CameraX/AVFoundation)"
+  },
+  "actions": [
+    {
+      "bypass_geolocation_gate": {
+        "description": "Add a development flag and skip geolocation/auth checks in dev mode",
+        "flag": "DEV_SKIP_GEO_AUTH = true",
+        "code_changes": [
+          "Wrap existing geo/auth gate with: if (!kReleaseMode && DEV_SKIP_GEO_AUTH) { allowNavigationToCamera(); } else { run normal checks; }",
+          "Expose toggle in dev settings to enable/disable the gate without rebuild"
+        ],
+        "verify": "When DEV_SKIP_GEO_AUTH==true, user can navigate to camera screen in Replit without being blocked"
+      }
+    },
+    {
+      "replace_placeholder_boxes": {
+        "description": "Remove debug orange outlined placeholder boxes and instantiate actual IconButtons",
+        "ui_changes": [
+          "Remove any Positioned Container placeholders (big empty boxes) in overlay",
+          "Always include IconButton widgets for flash and cameraSwitch in Stack+SafeArea (no dependence on controller.isInitialized)",
+          "Icon definitions: flashBtn -> Icon(Icons.flash_on) / Icon(Icons.flash_off), switchBtn -> Icon(Icons.cameraswitch)",
+          "Wrap icons in Material/InkWell so they show tap feedback in web preview"
+        ],
+        "visual_debug": "Remove orange borders used for debugging (or make debug-border conditional on DEV_DEBUG_OVERLAY flag)"
+      }
+    },
+    {
+      "flash_torch_behavior": {
+        "description": "Ensure torch toggles and stays on during recording, and auto-off on stop",
+        "web": {
+          "method": "use setFlashMode(FlashMode.torch) / FlashMode.off via web camera plugin or WebCameraController",
+          "note": "Browsers may not support hardware torch; handle gracefully and log capability"
+        },
+        "android": {
+          "method": "CameraX -> cameraControl.enableTorch(true/false)",
+          "ensure": "call on background thread / coroutine and await success before updating UI state"
+        },
+        "ios": {
+          "method": "AVCaptureDevice lockForConfiguration + device.torchMode = .on/.off + unlockForConfiguration",
+          "ensure": "run on main thread when required, but hardware calls should not block UI"
+        },
+        "lifecycle": "If torch on when recording starts or toggled mid-recording, keep torch on until recording stops, then auto-disable.",
+        "ui_sync": "Update flash icon state only after hardware confirms success. If unsupported, show greyed icon but no error popup in dev preview."
+      }
+    },
+    {
+      "camera_switch_lifecycle": {
+        "description": "Ensure camera switch does not call getMinZoomLevel() on uninitialized/disposed controller",
+        "fixes": [
+          "Guard camera switch: await initializeNewController() BEFORE disposing old controller",
+          "Add debounce 200ms and set a 'isSwitching' flag to block repeated presses",
+          "After switch completes, query zoom limits and set default minZoom"
+        ],
+        "error_handling": "If an exception occurs, log full stack and restore previous controller if possible"
+      }
+    },
+    {
+      "dev_mode_bridge": {
+        "description": "Create a dev-mode camera bridge so Replit preview works but native performance remains for builds",
+        "behavior": [
+          "If kIsWeb OR DEV_SKIP_GEO_AUTH -> use WebCameraController (preview+record simulation) with same UI hooks",
+          "If native mobile target -> use PlatformCameraController (CameraX/AVFoundation)",
+          "Expose console logs: [ENV_MODE] WebDevBridge or NativeBridge"
+        ],
+        "note": "Web bridge should still render icons and run toggle handlers; hardware features may be no-op but must return capability false (no false 'supported' messages)"
+      }
+    },
+    {
+      "logging_and_verification": {
+        "description": "Add detailed logs for UI render and hardware state",
+        "log_events": [
+          "[UI_RENDER] overlay_present:true/false",
+          "[FLASH_STATE] supported:true/false",
+          "[FLASH_STATE] hardware_on:true/false",
+          "[CAMERA_SWITCH] start/complete/time_ms",
+          "[CAMERA_LIFECYCLE] init/dispose events",
+          "[ENV_MODE] DevBridge|Native"
+        ],
+        "dev_output": "Print to Replit console + write camera_debug.log for native builds"
+      }
+    }
+  ],
+  "verification_steps": [
+    {
+      "in_replit": [
+        "Set DEV_SKIP_GEO_AUTH=true and reload app",
+        "Open camera screen — must not be blocked by geolocation or auth",
+        "Confirm icons are visible (flash + camera switch) in top-right overlay and are clickable",
+        "Tap flash icon -> log [FLASH_STATE] toggle; if browser doesn't support torch, it should return supported:false but no error popup",
+        "Tap camera switch -> should switch cameras via dev bridge without getMinZoomLevel errors"
+      ]
+    },
+    {
+      "on_native_device": [
+        "Build and run on Android/iOS",
+        "Open camera screen (normal auth flow) and confirm controls render",
+        "Tap flash -> torch should turn on (hardware) and remain on until recording stops",
+        "Start recording with torch on -> after stop torch auto-turns-off",
+        "Flip camera front↔back -> no 'uninitialized/disposed controller' errors"
+      ]
+    }
+  ],
+  "notes": [
+    "The 'other one that is asking' you saw is likely the geolocation permission/geo-auth gate. DEV_SKIP_GEO_AUTH bypasses it during development.",
+    "Other runtime prompts you will see normally: Camera permission and Microphone permission — those must remain enabled to record.",
+    "Do not leave DEV_SKIP_GEO_AUTH enabled in production builds."
+  ]
+}
