@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:camera/camera.dart' show CameraPreview;
 import '../../platform/platform_camera_controller.dart';
 import '../../theme/app_theme.dart';
 
@@ -52,20 +53,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    // Check if running on web - camera not supported
-    if (kIsWeb) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Camera only available on mobile devices. Please use the iOS or Android app.'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-      return;
-    }
-    
     try {
       _controller = PlatformCameraController();
       
@@ -323,7 +310,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         fit: StackFit.expand,
         children: [
           // Full-screen camera preview
-          if (_isInitialized && _controller != null && _controller!.textureId != null)
+          if (_isInitialized && _controller != null)
             _buildCameraPreview()
           else
             const Center(
@@ -463,19 +450,15 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Widget _buildCameraPreview() {
-    // Get screen size
     final size = MediaQuery.of(context).size;
     
-    // Use Texture widget for preview
     return GestureDetector(
       onScaleStart: (details) {
         _baseZoom = _currentZoom;
         debugPrint('🔍 [ZOOM_EVENTS] Zoom gesture started at ${_currentZoom.toStringAsFixed(2)}x');
-        // Start repeating timer for smooth zoom updates
         _startZoomUpdateTimer();
       },
       onScaleUpdate: (details) {
-        // Calculate new zoom level
         final newZoom = (_baseZoom * details.scale).clamp(_minZoom, _maxZoom);
         
         if (newZoom != _currentZoom && _controller != null && mounted) {
@@ -484,7 +467,6 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
             _currentZoom = newZoom;
           });
           
-          // Queue zoom for next timer tick (every 16ms for 60fps response)
           _pendingZoom = newZoom;
           
           final latency = DateTime.now().difference(updateStart).inMilliseconds;
@@ -495,19 +477,31 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       },
       onScaleEnd: (details) {
         debugPrint('✅ [ZOOM_EVENTS] Zoom gesture ended at ${_currentZoom.toStringAsFixed(2)}x');
-        // Stop repeating timer when gesture ends
         _stopZoomUpdateTimer();
       },
-      child: SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: size.width,
-            height: size.height,
-            child: Texture(textureId: _controller!.textureId!),
-          ),
-        ),
-      ),
+      child: kIsWeb && _controller!.webCameraController != null
+          ? SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: size.width,
+                  height: size.height,
+                  child: CameraPreview(_controller!.webCameraController!),
+                ),
+              ),
+            )
+          : SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: size.width,
+                  height: size.height,
+                  child: _controller!.textureId != null
+                      ? Texture(textureId: _controller!.textureId!)
+                      : const SizedBox.shrink(),
+                ),
+              ),
+            ),
     );
   }
 
