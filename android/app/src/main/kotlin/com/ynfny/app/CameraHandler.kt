@@ -8,9 +8,12 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import android.hardware.camera2.CameraMetadata
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CaptureRequest
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.view.TextureRegistry
@@ -123,13 +126,6 @@ class CameraHandler(
             // Setup preview with frame rate target
             val previewBuilder = Preview.Builder()
             
-            // Use Camera2Interop to set target FPS range (60fps with graceful fallback)
-            val camera2Interop = Camera2Interop.Extender(previewBuilder)
-            camera2Interop.setCaptureRequestOption(
-                android.hardware.camera2.CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-                android.util.Range(targetFps, targetFps)
-            )
-            
             preview = previewBuilder.build()
             
             preview?.setSurfaceProvider { request ->
@@ -160,14 +156,57 @@ class CameraHandler(
             
             // Get camera info
             val cameraInfo = camera?.cameraInfo
-            val zoomState = cameraInfo?.zoomState?.value
+            
+            // Query hardware FPS capabilities using Camera2CameraInfo
+            val camera2CameraInfo = Camera2CameraInfo.from(cameraInfo!!)
+            val availableFpsRanges = camera2CameraInfo.getCameraCharacteristic(
+                CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES
+            ) ?: emptyArray()
+            
+            // Find the best supported FPS range
+            // First, try to find a range that includes target FPS (e.g., 60)
+            // If not available, fall back to highest available
+            val selectedRange = availableFpsRanges.firstOrNull { it.upper >= targetFps } 
+                ?: availableFpsRanges.maxByOrNull { it.upper } 
+                ?: android.util.Range(30, 30)
+            
+            // Apply the selected FPS range via Camera2Interop
+            val camera2Interop = Camera2Interop.Extender(previewBuilder)
+            camera2Interop.setCaptureRequestOption(
+                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                selectedRange
+            )
+            
+            // Rebuild preview with FPS range applied
+            preview = previewBuilder.build()
+            preview?.setSurfaceProvider { request ->
+                val resolution = request.resolution
+                surfaceTexture.setDefaultBufferSize(resolution.width, resolution.height)
+                val surface = Surface(surfaceTexture)
+                request.provideSurface(surface, executor) { }
+            }
+            
+            // Rebind with FPS configuration
+            cameraProvider?.unbindAll()
+            camera = cameraProvider?.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                preview,
+                videoCapture
+            )
+            
+            // Get actual FPS (lower bound of selected range)
+            val actualFps = selectedRange.lower
+            
+            // Get camera info again after rebinding
+            val zoomState = camera?.cameraInfo?.zoomState?.value
             val minZoom = zoomState?.minZoomRatio ?: 1.0f
             val maxZoom = zoomState?.maxZoomRatio ?: 1.0f
             
             // Set to minimum zoom (widest view)
             camera?.cameraControl?.setZoomRatio(minZoom)
             
-            val torchSupported = cameraInfo?.hasFlashUnit() ?: false
+            val torchSupported = camera?.cameraInfo?.hasFlashUnit() ?: false
             val lensDirection = if (currentCameraIndex == 0) "back" else "front"
             
             // Get resolution from camera
@@ -179,7 +218,9 @@ class CameraHandler(
             Log.d(TAG, "Zoom Range: %.2fx - %.2fx".format(minZoom, maxZoom))
             Log.d(TAG, "Starting Zoom: %.2fx (widest view)".format(minZoom))
             Log.d(TAG, "Resolution: ${resolution.width}x${resolution.height}")
-            Log.d(TAG, "Target FPS: $targetFps (with graceful fallback)")
+            Log.d(TAG, "Available FPS ranges: ${availableFpsRanges.joinToString { "[${it.lower},${it.upper}]" }}")
+            Log.d(TAG, "Target FPS: $targetFps, Actual: $actualFps (${if (actualFps >= targetFps) "achieved" else "graceful fallback"})")
+            Log.d(TAG, "Selected FPS range: [${selectedRange.lower},${selectedRange.upper}]")
             Log.d(TAG, "Torch Support: $torchSupported")
             Log.d(TAG, "═══════════════════════════════════════")
             
@@ -196,7 +237,7 @@ class CameraHandler(
                     "lensDirection" to lensDirection,
                     "width" to resolution.width,
                     "height" to resolution.height,
-                    "fps" to targetFps
+                    "fps" to actualFps
                 ))
             }
             

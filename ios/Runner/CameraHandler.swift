@@ -157,6 +157,12 @@ class CameraHandler: NSObject, FlutterMethodCallHandler {
         
         device.unlockForConfiguration()
         
+        // Capture actual achieved FPS after configuration
+        let actualFrameDuration = device.activeVideoMinFrameDuration
+        let actualFps = actualFrameDuration.seconds > 0 
+            ? Int(1.0 / actualFrameDuration.seconds) 
+            : targetFps
+        
         // Add video input
         let input = try AVCaptureDeviceInput(device: device)
         if session.canAddInput(input) {
@@ -210,6 +216,7 @@ class CameraHandler: NSObject, FlutterMethodCallHandler {
         print("Starting Zoom: \(String(format: "%.2f", minZoom))x (widest view)")
         print("Resolution: \(width)x\(height)")
         print("Torch Support: \(torchSupported)")
+        print("Target FPS: \(targetFps), Actual: \(actualFps)\(actualFps < targetFps ? " (graceful fallback)" : "")")
         print("═══════════════════════════════════════")
         
         // Create texture (mock for now - in production, you'd render the preview to a texture)
@@ -228,7 +235,7 @@ class CameraHandler: NSObject, FlutterMethodCallHandler {
             "lensDirection": lensDirection,
             "width": width,
             "height": height,
-            "fps": targetFps
+            "fps": actualFps
         ])
     }
     
