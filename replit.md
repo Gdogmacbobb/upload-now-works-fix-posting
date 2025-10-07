@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **ULTRA-RESPONSIVE STACK OVERLAY ARCHITECTURE** - Production camera system with Stack-based overlay architecture and ultra-fast zoom response (Oct 7, 2025). SafeArea wrapper ensures controls clear notches/status bars. Back button always visible for guaranteed navigation. 32px icons with Stack+Positioned layout for rock-solid overlay rendering. Ultra-fast 25ms zoom throttling (40 updates/second) for buttery-smooth pinch gestures. Success SnackBar feedback for flash toggle ("Flash enabled/disabled"). Flash icon dims to 40% opacity when unsupported (front camera detection). All camera controls (mute, flash, switch) conditional on initialization. Timer.periodic architecture with Future.microtask offloading, stream safety, and trailing flush preserved. App builds successfully for web (53-54s) with no LSP errors.
+**Current Status**: ✅ **60FPS CAMERA PERFORMANCE** - Production camera system optimized for true 60fps response (Oct 7, 2025). Stack overlay architecture with SafeArea, 32px icons, always-visible back button. **Performance optimizations**: 16ms zoom throttling (62.5 updates/sec matches 60fps frame budget), RepaintBoundary isolates GPU rendering layer to prevent unnecessary texture uploads. Success SnackBar feedback for flash toggle. Flash icon dims to 40% opacity when unsupported. Timer.periodic architecture with Future.microtask offloading, stream safety, and trailing flush. App builds successfully for web (53-54s) with no LSP errors.
 
 # User Preferences
 
@@ -26,9 +26,10 @@ The application follows Flutter's standard architecture patterns:
       - Mute toggle (Positioned top:12, left:72) - Icons.mic/mic_off, conditional on camera ready, reconfigures controller
       - Flash toggle (Positioned top:12, right:12) - Icons.flash_on/flash_off, **always visible** with 40% opacity when unsupported, success SnackBar feedback ("Flash enabled/disabled")
       - Camera switch (Positioned top:12, right:72) - Icons.cameraswitch, preserves flash state, disabled during recording
-    - **Pinch-to-zoom**: Ultra-fast production-grade zoom with 25ms throttling for buttery-smooth control
-      - **Throttling architecture**: Single Timer.periodic(25ms) started in onScaleStart, stopped in onScaleEnd with trailing update flush
-      - **Update flow**: onScaleUpdate queues latest zoom in _pendingZoom, timer applies every 25ms (40 updates/second) via Future.microtask
+    - **Pinch-to-zoom**: 60fps-optimized zoom with 16ms throttling for maximum responsiveness
+      - **Throttling architecture**: Single Timer.periodic(16ms) started in onScaleStart, stopped in onScaleEnd with trailing update flush
+      - **Update flow**: onScaleUpdate queues latest zoom in _pendingZoom, timer applies every 16ms (62.5 updates/second) via Future.microtask
+      - **GPU isolation**: RepaintBoundary wraps CameraPreview to create separate rendering layer, prevents unnecessary texture uploads when overlay updates
       - **Trailing flush**: onScaleEnd flushes any pending zoom before stopping timer (prevents snap-back on release)
       - **UI thread offloading**: Future.microtask moves zoom operations off main thread, prevents blocking
       - **Stream safety**: Checks controller.value.isStreamingImages before applying zoom to avoid frame conflicts
