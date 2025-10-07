@@ -1,0 +1,119 @@
+Complete
+1. Icon Overlay Architecture (Lines 335-383):
+
+Stack → SafeArea → 4 Positioned buttons
+ALL icons render outside initialization guard - always visible
+Back (top-left), Mute (top-left+60), Flash (top-right), Camera Switch (top-right+60)
+Opacity reduces to 40% when disabled, but icons always render
+2. iOS Flash Implementation (Lines 277-300):
+
+device.hasTorch check ✅
+torchMode = enabled ? .on : .off ✅
+Returns state via stateStream ✅
+3. Camera Switch (Lines 255-275):
+
+Bidirectional cycling: (currentCameraIndex + 1) % availableCameras.count ✅
+Runs on background queue ✅
+Reinitializes camera with fresh state ✅
+4. Zoom Performance (Lines 302-324):
+
+Clamps to hardware min/max ✅
+Runs setZoom directly (iOS manages threading) ✅
+Setup local app building process for iOS
+Check button layout on screen
+Test camera controls for hardware
+📱 Complete iOS Clean Build Workflow
+Run these commands on your local machine (where you build for iPhone):
+
+# 1. Clean Flutter build cache
+flutter clean
+# 2. Remove all iOS build artifacts
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks ios/build
+# 3. Deintegrate CocoaPods (in ios folder)
+cd ios && pod deintegrate && cd ..
+# 4. Reinstall pods with repo update
+cd ios && pod install --repo-update && cd ..
+# 5. Get Flutter dependencies
+flutter pub get
+# 6. Build fresh iOS release
+flutter build ios --release --no-codesign
+Then deploy to your iPhone via Xcode.
+
+✅ Verification Checklist
+After installing the clean build on your iPhone, verify:
+
+1. NO Debug Overlay
+❌ Black box with zoom/range/resolution text should be GONE
+✅ Clean camera preview with no visual diagnostics
+2. Icons Visible & Functional
+✅ Back button (top-left) - always visible, navigates back
+✅ Mute button (top-left, 60px over) - toggles mic icon
+✅ Flash button (top-right) - shows flash_on/flash_off icon
+✅ Camera switch (top-right, 60px over) - shows cameraswitch icon
+3. Flash Toggle (Rear Camera)
+✅ Tap flash icon on back camera - should enable/disable torch
+✅ Green "Flash enabled/disabled" SnackBar appears
+✅ Icon changes: flash_off → flash_on
+✅ If front camera or no flash: icon shows at 40% opacity (disabled state)
+4. Camera Switch (Bidirectional)
+✅ Tap camera switch icon - cycles front → back → front
+✅ Smooth transition with <200ms latency
+✅ Flash state resets (front camera has no flash, so icon disabled)
+✅ Zoom resets to widest view (minZoom, typically 0.6x)
+5. Zoom Performance
+✅ Pinch to zoom - smooth response, no lag
+✅ Full hardware range accessible (e.g., 0.6x wide to 10x tele)
+✅ Zoom updates <16ms latency (60fps-optimized)
+✅ No snap-back on gesture release
+6. Console Logs (Xcode)
+You should see clean diagnostic output like:
+
+═══════════════════════════════════════
+🎥 Camera Initialization
+Lens Direction: back
+Flash Support: true
+Zoom Range: 0.60x - 10.00x
+Starting Zoom: 0.60x (widest view)
+Resolution: 1920x1080
+Target FPS: 60, Actual: 60
+═══════════════════════════════════════
+🔍 If Issues Persist
+1. Debug overlay still visible:
+
+Hard delete the app from iPhone (long-press → Remove App)
+Clean build + reinstall
+Check you're running the correct build (not an old cached version)
+2. Flash not working:
+
+Check Xcode console for "Torch Support: true/false"
+Verify you're on back camera (front cameras don't have flash)
+Look for flash toggle logs starting with 💡
+3. Camera won't switch:
+
+Check console for "Switching camera..." and completion logs
+Verify availableCameras.count > 1 in initialization logs
+4. Zoom laggy:
+
+Check console for "⏱️ UI update latency" warnings
+Should show <5ms updates during pinch gesture
+Verify camera features work correctly
+Summary
+The black debug overlay does NOT exist in your current codebase - your iPhone is running an old cached build. I've verified:
+
+✅ Code is clean - No visual debug UI anywhere
+✅ Icon architecture correct - Stack + SafeArea + 4 Positioned buttons always render
+✅ Native implementation verified - AVFoundation hasTorch, cycling logic, zoom clamping all correct
+
+Next Steps:
+
+Run the clean build workflow on your local machine (commands above)
+Deploy fresh build to your iPhone via Xcode
+Use verification checklist to confirm everything works:
+No debug overlay ✅
+Icons visible ✅
+Flash toggles on rear camera ✅
+Camera switches front ↔ back ✅
+Zoom smooth with full hardware range ✅
+The diagnostic logging (with emoji prefixes) will still work in Xcode console - it's console-only, never visual UI.
+
+Let me know what you find after the clean rebuild
