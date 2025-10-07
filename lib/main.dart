@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -49,35 +48,16 @@ void main() async {
     print('[SUPABASE] URL in use: ${uri.host}');
   } catch (e) {
     print('DEBUG: Supabase failed to initialize - ${e.toString()}');
-=======
-import 'package:sizer/sizer.dart';
-
-import '../core/app_export.dart';
-import '../widgets/custom_error_widget.dart';
-import './services/supabase_service.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Supabase
-  try {
-    SupabaseService();
-  } catch (e) {
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     debugPrint('Failed to initialize Supabase: $e');
   }
 
   // 🚨 CRITICAL: Custom error handling - DO NOT REMOVE
   ErrorWidget.builder = (FlutterErrorDetails details) {
-<<<<<<< HEAD
     print('DEBUG: ErrorWidget.builder triggered');
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     return CustomErrorWidget(
       errorDetails: details,
     );
   };
-<<<<<<< HEAD
   
   print('DEBUG: Setting device orientation');
   // 🚨 CRITICAL: Device orientation lock (web-safe)
@@ -90,20 +70,11 @@ void main() async {
   
   print('DEBUG: Running MyApp');
   runApp(MyApp());
-=======
-  // 🚨 CRITICAL: Device orientation lock - DO NOT REMOVE
-  Future.wait([
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
-  ]).then((value) {
-    runApp(MyApp());
-  });
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     print('DEBUG: Building MyApp');
     return ResponsiveWrapper(
       child: MaterialApp(
@@ -111,14 +82,6 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark,
-=======
-    return Sizer(builder: (context, orientation, screenType) {
-      return MaterialApp(
-        title: 'ynfny',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         // 🚨 CRITICAL: NEVER REMOVE OR MODIFY
         builder: (context, child) {
           return MediaQuery(
@@ -175,12 +138,7 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-<<<<<<< HEAD
       ),
     );
-=======
-      );
-    });
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }
 }
