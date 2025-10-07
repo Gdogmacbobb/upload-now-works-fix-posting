@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ynfny/utils/responsive_scale.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ynfny/presentation/video_recording/video_recording_screen.dart';
+import 'package:ynfny/presentation/video_upload/video_upload_screen.dart';
+
+
+
+
 
 import '../core/app_export.dart';
 import '../widgets/custom_error_widget.dart';
 import '../config/supabase_config.dart';
+
+
 
 void main() async {
   print('DEBUG: main() started');
