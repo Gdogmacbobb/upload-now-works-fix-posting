@@ -1,0 +1,153 @@
+{
+  "task": "Fix camera UI/UX, performance, hardware zoom/flash, rotation; migrate to native camera plugins",
+  "requirements": {
+    "scope": "Recording screen and camera stack",
+    "goals": [
+      "Icons MUST render (flash + switch) as a persistent overlay, not tied to the preview rebuilds",
+      "Zoom MUST use phone hardware range and start at the widest (min zoom)",
+      "Flash MUST toggle hardware torch on rear camera",
+      "Rotation toggle MUST cycle correctly (front/back/ultrawide/tele) and back again",
+      "Preview/recording MUST match phone-native quality with smooth (target 60fps) performance",
+      "Remove the black debug zoom box"
+    ]
+  },
+  "changes": [
+    {
+      "migrate_camera_plugin": {
+        "android": {
+          "plugin": "camerax",
+          "notes": [
+            "Use TextureView-backed preview via CameraX",
+            "Enable continuous-video AF and AE"
+          ]
+        },
+        "ios": {
+          "plugin": "camera_avfoundation",
+          "notes": [
+            "Use AVCaptureSession with AVCaptureVideoPreviewLayer",
+            "Enable video stabilization if supported"
+          ]
+        },
+        "remove": ["legacy flutter_camera plugin"],
+        "keep_api_facade": "Create PlatformCameraController so Flutter UI code stays the same"
+      }
+    },
+    {
+      "platform_channels": {
+        "dart_channel": "com.ynfny/camera",
+        "methods": [
+          "initialize(cameraId, {fps:60, quality:'max'})",
+          "dispose()",
+          "switchCamera(nextIndex)",
+          "setTorch(enabled)",
+          "getZoomLimits() -> {min,max,current}",
+          "setZoom(level)",
+          "tapToFocus(x,y)",
+          "lockExposure(lock)"
+        ],
+        "android_native": {
+          "torch": "cameraControl.enableTorch(true/false)",
+          "zoom": "cameraControl.setZoomRatio(ratio)",
+          "focus": "cameraControl.startFocusAndMetering(FocusMeteringAction)"
+        },
+        "ios_native": {
+          "torch": "device.torchMode = .on/.off (with configuration lock)",
+          "zoom": "device.videoZoomFactor = clampedFactor",
+          "focus": "device.focusPointOfInterest + setFocusMode locked"
+        }
+      }
+    },
+    {
+      "ui_overlay_controls": {
+        "architecture": "Stack + SafeArea (separate widget from camera view)",
+        "components": [
+          {
+            "type": "IconButton",
+            "id": "flashBtn",
+            "icon_on": "Icons.flash_on",
+            "icon_off": "Icons.flash_off",
+            "size": 32,
+            "color": "#FFFFFFFF",
+            "position": {"top": 12, "right": 12},
+            "always_visible": true,
+            "onTap": "PlatformCameraController.setTorch(toggle)"
+          },
+          {
+            "type": "IconButton",
+            "id": "switchBtn",
+            "icon": "Icons.cameraswitch",
+            "size": 32,
+            "color": "#FFFFFFFF",
+            "position": {"top": 12, "right": 72},
+            "always_visible": true,
+            "onTap": "PlatformCameraController.switchCamera(nextIndex)"
+          }
+        ],
+        "remove": ["debug zoom overlay box"]
+      }
+    },
+    {
+      "zoom_behavior": {
+        "init": "on successful initialize(): query getZoomLimits(); setZoom(min);",
+        "gesture": {
+          "handler": "GestureDetector.onScaleStart/Update/End over preview",
+          "compute": "throttle to 16ms (≈60fps) and send PlatformCameraController.setZoom(queuedLevel)",
+          "clamp": "between hardware min/max",
+          "no_rebuilds": "Do not rebuild CameraPreview on each update"
+        }
+      }
+    },
+    {
+      "quality_performance": {
+        "init_prefs": {
+          "quality": "max/highest available resolution",
+          "fps": "request 60, gracefully fall back",
+          "stabilization": "enable when available",
+          "audio": true
+        },
+        "flutter_side": {
+          "wrap_preview": "RepaintBoundary",
+          "prevent_rebuilds": "Keep preview in a stable subtree; overlays update independently"
+        }
+      }
+    },
+    {
+      "rotation_toggle": {
+        "logic": "cycle through all available cameras by index and wrap around",
+        "state": "persist current index; after switch, re-query zoom limits and reset to min"
+      }
+    },
+    {
+      "flash_logic": {
+        "rear_only": true,
+        "ui_state": "icon remains visible; if front camera, render flash icon at 40% opacity",
+        "feedback": "SnackBar only on true unsupported hardware; otherwise show 'Flash enabled/disabled'"
+      }
+    }
+  ],
+  "verification": {
+    "visual": [
+      "Top-right flash and switch icons are visible on all cameras (white; flash greyed on unsupported)",
+      "No black debug box; UI is clean"
+    ],
+    "functional": [
+      "Rear camera torch physically turns on/off when tapping flash",
+      "Pinch-to-zoom smoothly moves from hardware min to hardware max without jank for 10s",
+      "On app start and after any camera switch, FOV starts at the widest (min zoom)",
+      "Switching cameras cycles correctly and returns to the previous lens when cycling again"
+    ],
+    "quality_perf": [
+      "Preview/record uses highest negotiated resolution; logs show selected size and fps",
+      "Frame pacing ~60fps during pinch (no visible lag)"
+    ],
+    "logging": [
+      "Log camera count, selected camera index, lens type, min/max/current zoom, fps, resolution",
+      "Log torch support and torch state transitions",
+      "Log overlay attached=true at build"
+    ]
+  },
+  "do_not_change": [
+    "Back button, mute button, record button layout/logic",
+    "Navigation and any auth/database code"
+  ]
+}
