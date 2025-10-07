@@ -174,8 +174,8 @@ class _SplashScreenState extends State<SplashScreen> {
     // Navigation logic based on real authentication status
     String nextRoute;
 
-    // DEV MODE: Skip auth/geo and go straight to camera for testing
-    if (kDebugMode && DEV_SKIP_GEO_AUTH) {
+    // DEV MODE: Skip auth/geo and go straight to camera for testing (check FIRST)
+    if (DEV_SKIP_GEO_AUTH) {
       print('DEBUG: [DEV_MODE] Bypassing auth/geo checks - navigating to /video-recording');
       nextRoute = '/video-recording';
     } else if (_supabaseService.isAuthenticated) {
