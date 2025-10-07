@@ -1,9 +1,5 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 import '../../../theme/app_theme.dart';
@@ -36,11 +32,7 @@ class CameraPreviewWidget extends StatelessWidget {
               CircularProgressIndicator(
                 color: AppTheme.primaryOrange,
               ),
-<<<<<<< HEAD
               SizedBox(height: 16.0),
-=======
-              SizedBox(height: 2.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               Text(
                 'Initializing Camera...',
                 style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
@@ -111,11 +103,7 @@ class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-<<<<<<< HEAD
       ..color = AppTheme.textPrimary.withOpacity(0.3)
-=======
-      ..color = AppTheme.textPrimary.withValues(alpha: 0.3)
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       ..strokeWidth = 1;
 
     // Vertical lines

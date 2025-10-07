@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../core/app_export.dart';
 import '../../services/supabase_service.dart';
@@ -97,7 +93,6 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
             .timeout(Duration(seconds: 10));
       } catch (e) {
         debugPrint('Video service error: $e');
-<<<<<<< HEAD
         // On error, show empty state instead of mock data
         videos = [];
       }
@@ -105,15 +100,6 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
       // Handle empty response gracefully with real empty state
       if (videos.isEmpty) {
         debugPrint('No videos available from service');
-=======
-        // Always use mock data to ensure content displays
-        videos = _getMockVideos();
-      }
-
-      // If still empty, ensure we have mock data
-      if (videos.isEmpty) {
-        videos = _getMockVideos();
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       }
 
       if (mounted) {
@@ -125,21 +111,12 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
       }
     } catch (e) {
       debugPrint('Error loading discovery feed: $e');
-<<<<<<< HEAD
       // Handle error state gracefully
       if (mounted) {
         setState(() {
           _videos = []; // Show empty state instead of mock data
           _hasError = true;
           _errorMessage = 'Failed to load videos. Please try again.';
-=======
-      // Always provide mock data as fallback
-      if (mounted) {
-        setState(() {
-          _videos = _getMockVideos()
-              .map((video) => _transformVideoData(video))
-              .toList();
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           _isLoading = false;
           _hasError = false;
         });
@@ -147,91 +124,6 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
     }
   }
 
-<<<<<<< HEAD
-=======
-  List<Map<String, dynamic>> _getMockVideos() {
-    return [
-      {
-        "id": "discovery-mock-1",
-        "title": "Street Jazz Performance",
-        "description":
-            "Amazing jazz performance in Central Park 🎷 #StreetMusic #NYC",
-        "video_url": "https://example.com/video1.mp4",
-        "thumbnail_url":
-            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=800&fit=crop",
-        "duration": 180,
-        "like_count": 1543,
-        "comment_count": 89,
-        "share_count": 156,
-        "view_count": 8234,
-        "location_name": "Central Park",
-        "borough": "Manhattan",
-        "created_at":
-            DateTime.now().subtract(Duration(hours: 2)).toIso8601String(),
-        "performer": {
-          "id": "performer-mock-1",
-          "username": "jazzy_street",
-          "profile_image_url":
-              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-          "performance_type": "musician",
-          "is_verified": true
-        }
-      },
-      {
-        "id": "discovery-mock-2",
-        "title": "Breakdancing Showcase",
-        "description":
-            "Epic breakdancing moves in Brooklyn! 🕺 #BreakDance #Brooklyn",
-        "video_url": "https://example.com/video2.mp4",
-        "thumbnail_url":
-            "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=800&fit=crop",
-        "duration": 240,
-        "like_count": 2867,
-        "comment_count": 234,
-        "share_count": 89,
-        "view_count": 12456,
-        "location_name": "DUMBO",
-        "borough": "Brooklyn",
-        "created_at":
-            DateTime.now().subtract(Duration(hours: 4)).toIso8601String(),
-        "performer": {
-          "id": "performer-mock-2",
-          "username": "brooklyn_breaker",
-          "profile_image_url":
-              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-          "performance_type": "dancer",
-          "is_verified": false
-        }
-      },
-      {
-        "id": "discovery-mock-3",
-        "title": "Magic Show Spectacular",
-        "description":
-            "Mind-blowing magic tricks in Times Square ✨ #Magic #TimesSquare",
-        "video_url": "https://example.com/video3.mp4",
-        "thumbnail_url":
-            "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=800&fit=crop",
-        "duration": 300,
-        "like_count": 4521,
-        "comment_count": 167,
-        "share_count": 298,
-        "view_count": 18765,
-        "location_name": "Times Square",
-        "borough": "Manhattan",
-        "created_at":
-            DateTime.now().subtract(Duration(hours: 6)).toIso8601String(),
-        "performer": {
-          "id": "performer-mock-3",
-          "username": "magic_mike_nyc",
-          "profile_image_url":
-              "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-          "performance_type": "magician",
-          "is_verified": true
-        }
-      }
-    ];
-  }
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   Map<String, dynamic> _transformVideoData(Map<String, dynamic> rawVideo) {
     final performer = rawVideo['performer'] as Map<String, dynamic>?;

@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -92,13 +88,8 @@ class _FollowingVideoPlayerWidgetState
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-<<<<<<< HEAD
                         AppTheme.backgroundDark.withOpacity(0.3),
                         AppTheme.backgroundDark.withOpacity(0.7),
-=======
-                        AppTheme.backgroundDark.withValues(alpha: 0.3),
-                        AppTheme.backgroundDark.withValues(alpha: 0.7),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                       ],
                     ),
                   ),
@@ -114,11 +105,7 @@ class _FollowingVideoPlayerWidgetState
                 width: 20.w,
                 height: 20.w,
                 decoration: BoxDecoration(
-<<<<<<< HEAD
                   color: AppTheme.backgroundDark.withOpacity(0.7),
-=======
-                  color: AppTheme.backgroundDark.withValues(alpha: 0.7),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   shape: BoxShape.circle,
                 ),
                 child: CustomIconWidget(
@@ -136,17 +123,10 @@ class _FollowingVideoPlayerWidgetState
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
               decoration: BoxDecoration(
-<<<<<<< HEAD
                 color: AppTheme.primaryOrange.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: AppTheme.primaryOrange.withOpacity(0.5),
-=======
-                color: AppTheme.primaryOrange.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppTheme.primaryOrange.withValues(alpha: 0.5),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   width: 1,
                 ),
               ),
@@ -362,17 +342,10 @@ class _FollowingVideoPlayerWidgetState
                     padding:
                         EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
                     decoration: BoxDecoration(
-<<<<<<< HEAD
                       color: AppTheme.primaryOrange.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: AppTheme.primaryOrange.withOpacity(0.5),
-=======
-                      color: AppTheme.primaryOrange.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppTheme.primaryOrange.withValues(alpha: 0.5),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         width: 1,
                       ),
                     ),

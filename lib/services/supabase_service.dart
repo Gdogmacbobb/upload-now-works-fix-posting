@@ -1,26 +1,14 @@
-<<<<<<< HEAD
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
-=======
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
-
-class SupabaseService {
-  static final SupabaseService _instance = SupabaseService._internal();
-  late final SupabaseClient _client;
-  bool _isInitialized = false;
-  final Future<void> _initFuture;
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   // Singleton pattern
   factory SupabaseService() {
     return _instance;
   }
 
-<<<<<<< HEAD
   SupabaseService._internal();
 
   // Client getter - uses single initialized instance
@@ -35,46 +23,10 @@ class SupabaseService {
 
   // Current user
   User? get currentUser => client.auth.currentUser;
-=======
-  SupabaseService._internal() : _initFuture = _initializeSupabase();
-
-  static const String supabaseUrl =
-      String.fromEnvironment('SUPABASE_URL', defaultValue: '');
-  static const String supabaseAnonKey =
-      String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
-
-  // Internal initialization logic
-  static Future<void> _initializeSupabase() async {
-    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
-      throw Exception(
-          'SUPABASE_URL and SUPABASE_ANON_KEY must be defined using --dart-define.');
-    }
-
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    );
-
-    _instance._client = Supabase.instance.client;
-    _instance._isInitialized = true;
-  }
-
-  // Client getter (async)
-  Future<SupabaseClient> get client async {
-    if (!_isInitialized) {
-      await _initFuture;
-    }
-    return _client;
-  }
-
-  // Get current user
-  User? get currentUser => _client.auth.currentUser;
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   // Check if user is authenticated
   bool get isAuthenticated => currentUser != null;
 
-<<<<<<< HEAD
   // Session management
   Future<AuthResponse> waitForInitialSession({Duration? timeout}) async {
     final session = client.auth.currentSession;
@@ -160,45 +112,20 @@ class SupabaseService {
       return response?['role'];
     } catch (e) {
       debugPrint('[SUPABASE] Get user role error: $e');
-=======
-  // Get user role
-  Future<String?> getUserRole() async {
-    if (!isAuthenticated) return null;
-
-    try {
-      final response = await _client
-          .from('user_profiles')
-          .select('role')
-          .eq('id', currentUser!.id)
-          .single();
-
-      return response['role'] as String?;
-    } catch (e) {
-      debugPrint('Error getting user role: $e');
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       return null;
     }
   }
 
-<<<<<<< HEAD
-=======
-  // Check if user is street performer
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   Future<bool> isStreetPerformer() async {
     final role = await getUserRole();
     return role == 'street_performer';
   }
 
-<<<<<<< HEAD
-=======
-  // Check if user is New Yorker
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   Future<bool> isNewYorker() async {
     final role = await getUserRole();
     return role == 'new_yorker';
   }
 
-<<<<<<< HEAD
   Future<Map<String, dynamic>?> getCurrentUserProfile() async {
     try {
       final user = currentUser;
@@ -452,8 +379,3 @@ class SupabaseService {
     }
   }
 }
-=======
-  // Auth state stream
-  Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
-}
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5

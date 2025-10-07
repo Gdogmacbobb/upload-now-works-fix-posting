@@ -14,11 +14,7 @@ class UserProfile {
   final String? bio;
 
   // Street Performer specific fields
-<<<<<<< HEAD
   final Map<String, List<String>>? performanceTypes;
-=======
-  final PerformanceType? performanceType;
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   final String? frequentPerformanceSpots;
   final Map<String, String>? socialMediaLinks;
   final VerificationStatus? verificationStatus;
@@ -41,11 +37,7 @@ class UserProfile {
     required this.role,
     this.profileImageUrl,
     this.bio,
-<<<<<<< HEAD
     this.performanceTypes,
-=======
-    this.performanceType,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     this.frequentPerformanceSpots,
     this.socialMediaLinks,
     this.verificationStatus,
@@ -66,12 +58,7 @@ class UserProfile {
       role: _parseUserRole(json['role'] as String?),
       profileImageUrl: json['profile_image_url'] as String?,
       bio: json['bio'] as String?,
-<<<<<<< HEAD
       performanceTypes: _parsePerformanceTypes(json['performance_types']),
-=======
-      performanceType:
-          _parsePerformanceType(json['performance_type'] as String?),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       frequentPerformanceSpots: json['frequent_performance_spots'] as String?,
       socialMediaLinks: json['social_media_links'] != null
           ? Map<String, String>.from(json['social_media_links'] as Map)
@@ -98,13 +85,7 @@ class UserProfile {
       'role': _userRoleToString(role),
       'profile_image_url': profileImageUrl,
       'bio': bio,
-<<<<<<< HEAD
       'performance_types': performanceTypes,
-=======
-      'performance_type': performanceType != null
-          ? _performanceTypeToString(performanceType!)
-          : null,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       'frequent_performance_spots': frequentPerformanceSpots,
       'social_media_links': socialMediaLinks,
       'verification_status': verificationStatus != null
@@ -127,11 +108,7 @@ class UserProfile {
     UserRole? role,
     String? profileImageUrl,
     String? bio,
-<<<<<<< HEAD
     Map<String, List<String>>? performanceTypes,
-=======
-    PerformanceType? performanceType,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     String? frequentPerformanceSpots,
     Map<String, String>? socialMediaLinks,
     VerificationStatus? verificationStatus,
@@ -150,11 +127,7 @@ class UserProfile {
       role: role ?? this.role,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       bio: bio ?? this.bio,
-<<<<<<< HEAD
       performanceTypes: performanceTypes ?? this.performanceTypes,
-=======
-      performanceType: performanceType ?? this.performanceType,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       frequentPerformanceSpots:
           frequentPerformanceSpots ?? this.frequentPerformanceSpots,
       socialMediaLinks: socialMediaLinks ?? this.socialMediaLinks,
@@ -258,7 +231,6 @@ class UserProfile {
     }
   }
 
-<<<<<<< HEAD
   static Map<String, List<String>>? _parsePerformanceTypes(dynamic json) {
     if (json == null) return null;
     if (json is! Map) return null;
@@ -276,8 +248,6 @@ class UserProfile {
     }
   }
 
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   // Convenience getters
   bool get isStreetPerformer => role == UserRole.streetPerformer;
   bool get isNewYorker => role == UserRole.newYorker;

@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -21,17 +17,10 @@ class ShareButtonWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-<<<<<<< HEAD
       margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: SizedBox(
         width: double.infinity,
         height: 48.0,
-=======
-      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      child: SizedBox(
-        width: double.infinity,
-        height: 6.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         child: ElevatedButton(
           onPressed: isEnabled && !isLoading ? onPressed : null,
           style: ElevatedButton.styleFrom(
@@ -61,19 +50,11 @@ class ShareButtonWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-<<<<<<< HEAD
                     SizedBox(width: 12.0),
                     Text(
                       'Sharing...',
                       style: AppTheme.darkTheme.textTheme.labelLarge?.copyWith(
                         fontSize: 16.0,
-=======
-                    SizedBox(width: 3.w),
-                    Text(
-                      'Sharing...',
-                      style: AppTheme.darkTheme.textTheme.labelLarge?.copyWith(
-                        fontSize: 16.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -89,19 +70,11 @@ class ShareButtonWidget extends StatelessWidget {
                           : AppTheme.darkTheme.colorScheme.onSurfaceVariant,
                       size: 20,
                     ),
-<<<<<<< HEAD
                     SizedBox(width: 8.0),
                     Text(
                       'Drop Content',
                       style: AppTheme.darkTheme.textTheme.labelLarge?.copyWith(
                         fontSize: 16.0,
-=======
-                    SizedBox(width: 2.w),
-                    Text(
-                      'Drop Content',
-                      style: AppTheme.darkTheme.textTheme.labelLarge?.copyWith(
-                        fontSize: 16.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         fontWeight: FontWeight.w500,
                         color: isEnabled
                             ? AppTheme.darkTheme.colorScheme.onPrimary

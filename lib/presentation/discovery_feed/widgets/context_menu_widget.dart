@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -83,11 +79,7 @@ class _ContextMenuWidgetState extends State<ContextMenuWidget>
       child: Container(
         width: 100.w,
         height: 100.h,
-<<<<<<< HEAD
         color: AppTheme.backgroundDark.withOpacity(0.8),
-=======
-        color: AppTheme.backgroundDark.withValues(alpha: 0.8),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         child: AnimatedBuilder(
           animation: _animationController,
           builder: (context, child) {
@@ -194,11 +186,7 @@ class _ContextMenuWidgetState extends State<ContextMenuWidget>
                   height: 10.w,
                   decoration: BoxDecoration(
                     color: isDestructive
-<<<<<<< HEAD
                         ? AppTheme.accentRed.withOpacity(0.1)
-=======
-                        ? AppTheme.accentRed.withValues(alpha: 0.1)
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         : AppTheme.borderSubtle,
                     shape: BoxShape.circle,
                   ),

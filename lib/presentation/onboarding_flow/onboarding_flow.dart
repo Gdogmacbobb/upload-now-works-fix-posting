@@ -2,11 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../core/app_export.dart';
 import './widgets/navigation_controls_widget.dart';
@@ -158,11 +154,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                 decoration: AppTheme.glassmorphismDecoration(
                   backgroundColor:
-<<<<<<< HEAD
                       AppTheme.backgroundDark.withOpacity(0.8),
-=======
-                      AppTheme.backgroundDark.withValues(alpha: 0.8),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

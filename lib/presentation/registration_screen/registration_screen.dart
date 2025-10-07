@@ -1,5 +1,4 @@
 import 'dart:async';
-<<<<<<< HEAD
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -11,14 +10,6 @@ import '../../core/app_export.dart';
 import '../../services/supabase_service.dart';
 import '../../core/constants/user_roles.dart';
 import '../../config/supabase_config.dart';
-=======
-
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:sizer/sizer.dart';
-
-import '../../core/app_export.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 import './widgets/account_type_header.dart';
 import './widgets/common_form_fields.dart';
 import './widgets/location_verification_widget.dart';
@@ -51,13 +42,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _youtubeController = TextEditingController();
 
   // Form state
-<<<<<<< HEAD
   String _accountType = UserRoles.performerLabel; // Default from previous screen
   List<String> _selectedPerformanceTypes = []; // Simplified: just category names
-=======
-  String _accountType = 'Street Performer'; // Default from previous screen
-  String? _selectedPerformanceType;
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   DateTime? _selectedBirthDate;
   String? _selectedBorough;
   bool _isLocationVerified = false;
@@ -70,15 +56,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   String? _confirmPasswordError;
   bool _isEmailChecking = false;
   Timer? _emailDebounceTimer;
-<<<<<<< HEAD
   
   // Username availability state
   bool _isUsernameChecking = false;
   bool? _isUsernameAvailable; // null = not checked yet, true = available, false = taken
   List<String> _usernameSuggestions = [];
   Timer? _usernameDebounceTimer;
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   // Mock user data for testing
   final List<Map<String, dynamic>> existingUsers = [
@@ -107,14 +90,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           _accountType = args['accountType'];
         });
       }
-<<<<<<< HEAD
       
       // Auto-check username availability if handle already exists
       if (_handleController.text.isNotEmpty) {
         _onUsernameChanged(_handleController.text);
       }
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     });
   }
 
@@ -130,21 +110,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _youtubeController.dispose();
     _scrollController.dispose();
     _emailDebounceTimer?.cancel();
-<<<<<<< HEAD
     _usernameDebounceTimer?.cancel();
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     print('DEBUG: RegistrationScreen build() - Current account type: $_accountType');
     print('DEBUG: Checking conditional: _accountType == UserRoles.performerLabel = ${_accountType == UserRoles.performerLabel}');
     print('DEBUG: UserRoles.performerLabel value: ${UserRoles.performerLabel}');
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
@@ -193,11 +167,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   SizedBox(height: 1.h),
                   Text(
-<<<<<<< HEAD
                     _accountType == UserRoles.performerLabel
-=======
-                    _accountType == 'Street Performer'
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         ? 'Showcase your talent and connect with NYC audiences'
                         : 'Discover and support amazing street performers in your city',
                     style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
@@ -220,13 +190,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     passwordError: _passwordError,
                     confirmPasswordError: _confirmPasswordError,
                     isEmailChecking: _isEmailChecking,
-<<<<<<< HEAD
                     onUsernameChanged: _onUsernameChanged,
                     isUsernameChecking: _isUsernameChecking,
                     isUsernameAvailable: _isUsernameAvailable,
                     usernameSuggestions: _usernameSuggestions,
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   ),
                   SizedBox(height: 3.h),
 
@@ -241,7 +208,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
 
                   // Account Type Specific Fields
-<<<<<<< HEAD
                   if (_accountType == UserRoles.performerLabel) ...[
                     Builder(
                       builder: (context) {
@@ -256,20 +222,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           } else {
                             _selectedPerformanceTypes.remove(category);
                           }
-=======
-                  if (_accountType == 'Street Performer') ...[
-                    PerformerSpecificFields(
-                      selectedPerformanceType: _selectedPerformanceType,
-                      onPerformanceTypeChanged: (type) {
-                        setState(() {
-                          _selectedPerformanceType = type;
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         });
                       },
                       instagramController: _instagramController,
                       tiktokController: _tiktokController,
                       youtubeController: _youtubeController,
-<<<<<<< HEAD
                       selectedBirthDate: _selectedBirthDate,
                       onBirthDateChanged: (date) {
                         setState(() {
@@ -278,8 +235,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       },
                         );
                       },
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     ),
                     SizedBox(height: 4.h),
 
@@ -417,11 +372,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       setState(() {
         _handleController.text = selectedHandle;
       });
-<<<<<<< HEAD
       // Trigger username availability check
       _onUsernameChanged(selectedHandle);
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     }
   }
 
@@ -481,7 +433,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 
-<<<<<<< HEAD
   void _onUsernameChanged(String username) {
     _usernameDebounceTimer?.cancel();
     _usernameDebounceTimer = Timer(const Duration(milliseconds: 500), () {
@@ -599,8 +550,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   void _validateConfirmPassword() {
     if (_confirmPasswordController.text != _passwordController.text) {
       setState(() {
@@ -614,7 +563,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   bool _canSubmitForm() {
-<<<<<<< HEAD
     // Log why form might be disabled
     if (_isLoading) {
       debugPrint('[REGISTRATION] Form disabled: Loading in progress');
@@ -704,40 +652,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
 
     debugPrint('[REGISTRATION] ✅ Form validation passed - Create Account button ENABLED');
-=======
-    if (_isLoading || _isEmailChecking) return false;
-
-    // Basic validation
-    if (_fullNameController.text.trim().length < 2) return false;
-    if (_emailError != null || _emailController.text.isEmpty) return false;
-    if (_passwordController.text.length < 8) return false;
-    if (_confirmPasswordController.text != _passwordController.text)
-      return false;
-    if (_handleController.text.isEmpty) return false;
-    if (!_isTermsAccepted) return false;
-
-    // Account type specific validation
-    if (_accountType == 'Street Performer') {
-      if (_selectedPerformanceType == null) return false;
-      if (!_isLocationVerified && _selectedBorough == null) return false;
-      // At least one social media handle required
-      if (_instagramController.text.trim().isEmpty &&
-          _tiktokController.text.trim().isEmpty &&
-          _youtubeController.text.trim().isEmpty) return false;
-    } else {
-      if (_selectedBirthDate == null) return false;
-      if (_selectedBorough == null) return false;
-      // Age validation
-      final age = DateTime.now().year - _selectedBirthDate!.year;
-      if (age < 18) return false;
-    }
-
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     return true;
   }
 
   Future<void> _handleRegistration() async {
-<<<<<<< HEAD
     print('🚀 CREATE ACCOUNT BUTTON PRESSED');
     debugPrint('[REGISTRATION] Starting registration flow');
     debugPrint('[REGISTRATION] Form validation check...');
@@ -754,16 +672,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
     
     debugPrint('[REGISTRATION] ✅ Form validation passed');
-=======
-    if (!_formKey.currentState!.validate()) return;
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-<<<<<<< HEAD
       print('[SUPABASE] Step 1: Checking connectivity...');
       // Check Supabase connectivity first
       final supabaseService = SupabaseService();
@@ -970,53 +884,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         
         print('[ERROR] Showing error message to user: $errorMessage');
         
-=======
-      // Simulate registration API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Mock successful registration
-      if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                CustomIconWidget(
-                  iconName: 'check_circle',
-                  color: AppTheme.successGreen,
-                  size: 20,
-                ),
-                SizedBox(width: 3.w),
-                Expanded(
-                  child: Text(
-                    _accountType == 'Street Performer'
-                        ? 'Account created! Check your email for verification.'
-                        : 'Welcome to YNFNY! Your account is ready.',
-                    style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppTheme.darkTheme.colorScheme.surface,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-
-        // Navigate to appropriate screen
-        if (_accountType == 'Street Performer') {
-          // Performers need email verification
-          Navigator.pushReplacementNamed(context, '/login-screen');
-        } else {
-          // New Yorkers can go directly to discovery feed
-          Navigator.pushReplacementNamed(context, '/discovery-feed');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1027,29 +894,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   size: 20,
                 ),
                 SizedBox(width: 3.w),
-<<<<<<< HEAD
                 Expanded(
                   child: Text(
                     errorMessage,
                     style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
                       color: AppTheme.textPrimary,
                     ),
-=======
-                Text(
-                  'Registration failed. Please try again.',
-                  style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textPrimary,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   ),
                 ),
               ],
             ),
             backgroundColor: AppTheme.darkTheme.colorScheme.surface,
             behavior: SnackBarBehavior.floating,
-<<<<<<< HEAD
             duration: const Duration(seconds: 5),
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           ),
         );
       }

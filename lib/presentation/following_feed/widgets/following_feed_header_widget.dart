@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -30,17 +26,10 @@ class FollowingFeedHeaderWidget extends StatelessWidget {
         bottom: 2.h,
       ),
       decoration: BoxDecoration(
-<<<<<<< HEAD
         color: AppTheme.backgroundDark.withOpacity(0.9),
         border: Border(
           bottom: BorderSide(
             color: AppTheme.borderSubtle.withOpacity(0.3),
-=======
-        color: AppTheme.backgroundDark.withValues(alpha: 0.9),
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.borderSubtle.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             width: 1,
           ),
         ),

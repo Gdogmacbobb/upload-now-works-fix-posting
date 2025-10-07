@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -28,21 +24,12 @@ class LocationVerificationWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-<<<<<<< HEAD
       padding: EdgeInsets.all(16.0),
       margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       decoration: AppTheme.glassmorphismDecoration(
         backgroundColor: isVerified
             ? AppTheme.successGreen.withOpacity(0.2)
             : AppTheme.accentRed.withOpacity(0.2),
-=======
-      padding: EdgeInsets.all(4.w),
-      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      decoration: AppTheme.glassmorphismDecoration(
-        backgroundColor: isVerified
-            ? AppTheme.successGreen.withValues(alpha: 0.2)
-            : AppTheme.accentRed.withValues(alpha: 0.2),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,11 +41,7 @@ class LocationVerificationWidget extends StatelessWidget {
                 color: isVerified ? AppTheme.successGreen : AppTheme.accentRed,
                 size: 24,
               ),
-<<<<<<< HEAD
               SizedBox(width: 12.0),
-=======
-              SizedBox(width: 3.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               Expanded(
                 child: Text(
                   isVerified
@@ -73,11 +56,7 @@ class LocationVerificationWidget extends StatelessWidget {
               ),
             ],
           ),
-<<<<<<< HEAD
           SizedBox(height: 16.0),
-=======
-          SizedBox(height: 2.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           if (currentLocation.isNotEmpty) ...[
             Text(
               'Current Location:',
@@ -85,22 +64,14 @@ class LocationVerificationWidget extends StatelessWidget {
                 color: AppTheme.textSecondary,
               ),
             ),
-<<<<<<< HEAD
             SizedBox(height: 4.0),
-=======
-            SizedBox(height: 0.5.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             Text(
               currentLocation,
               style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
                 color: AppTheme.textPrimary,
               ),
             ),
-<<<<<<< HEAD
             SizedBox(height: 16.0),
-=======
-            SizedBox(height: 2.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           ],
           if (!isVerified) ...[
             Text(
@@ -110,28 +81,17 @@ class LocationVerificationWidget extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-<<<<<<< HEAD
             SizedBox(height: 8.0),
             Wrap(
               spacing: 8.0,
               runSpacing: 8.0,
-=======
-            SizedBox(height: 1.h),
-            Wrap(
-              spacing: 2.w,
-              runSpacing: 1.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               children: boroughs.map((borough) {
                 final isSelected = selectedBorough == borough;
                 return GestureDetector(
                   onTap: () => onBoroughSelected(borough),
                   child: Container(
                     padding:
-<<<<<<< HEAD
                         EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-=======
-                        EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppTheme.primaryOrange
@@ -157,11 +117,7 @@ class LocationVerificationWidget extends StatelessWidget {
                 );
               }).toList(),
             ),
-<<<<<<< HEAD
             SizedBox(height: 16.0),
-=======
-            SizedBox(height: 2.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             if (onRetryLocation != null)
               TextButton.icon(
                 onPressed: onRetryLocation,

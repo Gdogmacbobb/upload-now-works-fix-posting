@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -35,7 +31,6 @@ class ContinueButtonWidget extends StatelessWidget {
             : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: isEnabled
-<<<<<<< HEAD
               ? AppTheme.surfaceDark
               : AppTheme.borderSubtle,
           foregroundColor:
@@ -43,15 +38,6 @@ class ContinueButtonWidget extends StatelessWidget {
           elevation: isEnabled ? 4.0 : 0.0,
           shadowColor: isEnabled
               ? AppTheme.surfaceDark.withOpacity(0.3)
-=======
-              ? (accentColor ?? AppTheme.primaryOrange)
-              : AppTheme.borderSubtle,
-          foregroundColor:
-              isEnabled ? AppTheme.backgroundDark : AppTheme.textSecondary,
-          elevation: isEnabled ? 4.0 : 0.0,
-          shadowColor: isEnabled
-              ? (accentColor ?? AppTheme.primaryOrange).withValues(alpha: 0.3)
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -65,11 +51,7 @@ class ContinueButtonWidget extends StatelessWidget {
               'Continue',
               style: AppTheme.darkTheme.textTheme.titleMedium?.copyWith(
                 color: isEnabled
-<<<<<<< HEAD
                     ? Colors.white
-=======
-                    ? AppTheme.backgroundDark
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     : AppTheme.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
@@ -78,11 +60,7 @@ class ContinueButtonWidget extends StatelessWidget {
               SizedBox(width: 2.w),
               CustomIconWidget(
                 iconName: 'arrow_forward',
-<<<<<<< HEAD
                 color: Colors.white,
-=======
-                color: AppTheme.backgroundDark,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 size: 5.w,
               ),
             ],

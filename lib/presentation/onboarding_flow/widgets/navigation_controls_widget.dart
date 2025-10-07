@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -59,11 +55,7 @@ class NavigationControlsWidget extends StatelessWidget {
               foregroundColor: AppTheme.backgroundDark,
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
               elevation: 4,
-<<<<<<< HEAD
               shadowColor: AppTheme.primaryOrange.withOpacity(0.3),
-=======
-              shadowColor: AppTheme.primaryOrange.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

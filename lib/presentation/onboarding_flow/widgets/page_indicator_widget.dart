@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 import '../../../theme/app_theme.dart';
@@ -32,11 +28,7 @@ class PageIndicatorWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: currentPage == index
                 ? AppTheme.primaryOrange
-<<<<<<< HEAD
                 : AppTheme.textSecondary.withOpacity(0.3),
-=======
-                : AppTheme.textSecondary.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             borderRadius: BorderRadius.circular(4),
           ),
         ),

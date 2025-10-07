@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
@@ -8,11 +7,6 @@ import '../../services/profile_service.dart';
 import '../../services/supabase_service.dart';
 import '../../services/video_service.dart';
 import '../../services/image_upload_service.dart';
-=======
-import 'package:sizer/sizer.dart';
-
-import '../../core/app_export.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 import './widgets/about_section_widget.dart';
 import './widgets/donation_button_widget.dart';
 import './widgets/profile_header_widget.dart';
@@ -29,7 +23,6 @@ class PerformerProfile extends StatefulWidget {
 class _PerformerProfileState extends State<PerformerProfile>
     with TickerProviderStateMixin {
   late TabController _tabController;
-<<<<<<< HEAD
   final SupabaseService _supabaseService = SupabaseService();
   final VideoService _videoService = VideoService();
   final ProfileService _profileService = ProfileService();
@@ -49,127 +42,11 @@ class _PerformerProfileState extends State<PerformerProfile>
   
   // Default placeholder for missing profile images
   static const String _defaultAvatarIcon = 'person';
-=======
-  bool isFollowing = false;
-  bool isRefreshing = false;
-
-  // Mock performer data
-  final Map<String, dynamic> performerData = {
-    "id": "performer_001",
-    "name": "Marcus \"The Beat\" Rodriguez",
-    "avatar":
-        "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400",
-    "bio":
-        "Street drummer bringing NYC rhythms to life 🥁 Performing in Times Square, Central Park, and Brooklyn Bridge. Follow for daily beats and street vibes! #NYCStreetMusic #DrumLife",
-    "verificationStatus": "verified",
-    "followersCount": 12500,
-    "followingCount": 89,
-    "videoCount": 47,
-    "totalDonations": 2850,
-    "totalViews": 450000,
-    "totalLikes": 28500,
-    "joinDate": "2023-03-15T10:30:00Z",
-    "performanceTypes": ["Drumming", "Percussion", "Street Performance"],
-    "frequentLocations": [
-      "Times Square",
-      "Central Park",
-      "Brooklyn Bridge",
-      "Washington Square Park"
-    ],
-    "schedule": [
-      {
-        "day": "Monday - Friday",
-        "time": "6:00 PM - 9:00 PM",
-        "location": "Times Square (Red Steps)"
-      },
-      {
-        "day": "Saturday",
-        "time": "2:00 PM - 8:00 PM",
-        "location": "Central Park (Bethesda Fountain)"
-      },
-      {
-        "day": "Sunday",
-        "time": "12:00 PM - 6:00 PM",
-        "location": "Brooklyn Bridge (Manhattan Side)"
-      }
-    ],
-    "socialMedia": {
-      "instagram": "@marcusthebeat",
-      "tiktok": "@marcusbeats",
-      "youtube": "Marcus Rodriguez Music"
-    }
-  };
-
-  // Mock videos data
-  final List<Map<String, dynamic>> videosData = [
-    {
-      "id": "video_001",
-      "title": "Epic Drum Solo in Times Square",
-      "thumbnailUrl":
-          "https://images.pexels.com/photos/1407322/pexels-photo-1407322.jpeg?auto=compress&cs=tinysrgb&w=400",
-      "duration": 45,
-      "viewCount": 15200,
-      "likeCount": 1250,
-      "uploadDate": "2025-01-25T18:30:00Z"
-    },
-    {
-      "id": "video_002",
-      "title": "Crowd Goes Wild - Central Park Performance",
-      "thumbnailUrl":
-          "https://images.pexels.com/photos/1190297/pexels-photo-1190297.jpeg?auto=compress&cs=tinysrgb&w=400",
-      "duration": 38,
-      "viewCount": 8900,
-      "likeCount": 720,
-      "uploadDate": "2025-01-23T16:45:00Z"
-    },
-    {
-      "id": "video_003",
-      "title": "Rainy Day Beats Under Brooklyn Bridge",
-      "thumbnailUrl":
-          "https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=400",
-      "duration": 52,
-      "viewCount": 12800,
-      "likeCount": 980,
-      "uploadDate": "2025-01-22T14:20:00Z"
-    },
-    {
-      "id": "video_004",
-      "title": "Collaboration with Street Dancer",
-      "thumbnailUrl":
-          "https://images.pexels.com/photos/1540406/pexels-photo-1540406.jpeg?auto=compress&cs=tinysrgb&w=400",
-      "duration": 60,
-      "viewCount": 22100,
-      "likeCount": 1850,
-      "uploadDate": "2025-01-20T19:15:00Z"
-    },
-    {
-      "id": "video_005",
-      "title": "Morning Warm-up Session",
-      "thumbnailUrl":
-          "https://images.pexels.com/photos/1699161/pexels-photo-1699161.jpeg?auto=compress&cs=tinysrgb&w=400",
-      "duration": 28,
-      "viewCount": 5600,
-      "likeCount": 420,
-      "uploadDate": "2025-01-19T09:30:00Z"
-    },
-    {
-      "id": "video_006",
-      "title": "Sunset Beats at Washington Square",
-      "thumbnailUrl":
-          "https://images.pexels.com/photos/1644888/pexels-photo-1644888.jpeg?auto=compress&cs=tinysrgb&w=400",
-      "duration": 41,
-      "viewCount": 9800,
-      "likeCount": 750,
-      "uploadDate": "2025-01-18T20:00:00Z"
-    }
-  ];
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-<<<<<<< HEAD
     _loadProfileData();
   }
 
@@ -215,8 +92,6 @@ class _PerformerProfileState extends State<PerformerProfile>
         });
       }
     }
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }
 
   @override
@@ -225,7 +100,6 @@ class _PerformerProfileState extends State<PerformerProfile>
     super.dispose();
   }
 
-<<<<<<< HEAD
   // Handle pull-to-refresh
   Future<void> _handleRefresh() async {
     await _loadProfileData();
@@ -385,10 +259,6 @@ class _PerformerProfileState extends State<PerformerProfile>
     }
 
     // Show profile data (only if not loading and no error)
-=======
-  @override
-  Widget build(BuildContext context) {
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     return Scaffold(
       backgroundColor: AppTheme.darkTheme.scaffoldBackgroundColor,
       body: Stack(
@@ -480,7 +350,6 @@ class _PerformerProfileState extends State<PerformerProfile>
                 // Profile Header
                 SliverToBoxAdapter(
                   child: ProfileHeaderWidget(
-<<<<<<< HEAD
                     performerData: _profileData ?? {},
                     isFollowing: isFollowing,
                     onFollowTap: _handleFollowTap,
@@ -488,11 +357,6 @@ class _PerformerProfileState extends State<PerformerProfile>
                     onEditTap: _handleEditProfile,
                     onProfileUpdated: _loadProfileData,
                     onAvatarTap: (_supabaseService.currentUser?.id == _profileData?['id']) ? _handleAvatarTap : null,
-=======
-                    performerData: performerData,
-                    isFollowing: isFollowing,
-                    onFollowTap: _handleFollowTap,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   ),
                 ),
 
@@ -517,21 +381,13 @@ class _PerformerProfileState extends State<PerformerProfile>
                     children: [
                       // Videos Tab
                       VideoGridWidget(
-<<<<<<< HEAD
                         videos: _userVideos,
-=======
-                        videos: videosData,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         onVideoTap: _handleVideoTap,
                         onVideoLongPress: _handleVideoLongPress,
                       ),
                       // About Tab
                       AboutSectionWidget(
-<<<<<<< HEAD
                         performerData: _profileData ?? {},
-=======
-                        performerData: performerData,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                       ),
                     ],
                   ),
@@ -549,57 +405,17 @@ class _PerformerProfileState extends State<PerformerProfile>
     );
   }
 
-<<<<<<< HEAD
-=======
-  Future<void> _handleRefresh() async {
-    setState(() {
-      isRefreshing = true;
-    });
-
-    // Simulate refresh delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (mounted) {
-      setState(() {
-        isRefreshing = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Profile updated",
-            style: AppTheme.darkTheme.textTheme.bodyMedium,
-          ),
-          backgroundColor: AppTheme.surfaceDark,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   void _handleFollowTap() {
     HapticFeedback.lightImpact();
     setState(() {
       isFollowing = !isFollowing;
-<<<<<<< HEAD
       // Note: Follower count updates should be handled via Supabase in a real implementation
       // For now, we'll just update the UI state
     });
 
     final userName = _profileData?['full_name'] ?? _profileData?['username'] ?? 'User';
     
-=======
-      if (isFollowing) {
-        performerData["followersCount"] =
-            (performerData["followersCount"] as int) + 1;
-      } else {
-        performerData["followersCount"] =
-            (performerData["followersCount"] as int) - 1;
-      }
-    });
-
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -612,13 +428,8 @@ class _PerformerProfileState extends State<PerformerProfile>
             SizedBox(width: 2.w),
             Text(
               isFollowing
-<<<<<<< HEAD
                   ? "Now following $userName"
                   : "Unfollowed $userName",
-=======
-                  ? "Now following ${performerData["name"]}"
-                  : "Unfollowed ${performerData["name"]}",
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               style: AppTheme.darkTheme.textTheme.bodyMedium,
             ),
           ],
@@ -700,7 +511,6 @@ class _PerformerProfileState extends State<PerformerProfile>
     // Report handling is done in VideoContextMenuWidget
   }
 
-<<<<<<< HEAD
   void _handleEditProfile() {
     HapticFeedback.lightImpact();
     
@@ -730,8 +540,6 @@ class _PerformerProfileState extends State<PerformerProfile>
     );
   }
 
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   void _handleShare() {
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -773,11 +581,7 @@ class _PerformerProfileState extends State<PerformerProfile>
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.surfaceDark,
         title: Text(
-<<<<<<< HEAD
           "Block ${_profileData?['full_name'] ?? _profileData?['username'] ?? 'User'}?",
-=======
-          "Block ${performerData["name"]}?",
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           style: AppTheme.darkTheme.textTheme.titleLarge,
         ),
         content: Text(

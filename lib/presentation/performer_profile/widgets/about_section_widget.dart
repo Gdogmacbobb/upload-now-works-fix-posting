@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
 import 'package:ynfny/core/constants/performance_categories.dart';
 
 import '../../../core/app_export.dart';
 import 'performance_type_row.dart';
-=======
-import 'package:sizer/sizer.dart';
-
-import '../../../core/app_export.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 class AboutSectionWidget extends StatelessWidget {
   final Map<String, dynamic> performerData;
@@ -18,7 +12,6 @@ class AboutSectionWidget extends StatelessWidget {
     super.key,
     required this.performerData,
   });
-<<<<<<< HEAD
   
   // Performance type definitions for normalization
   static const List<Map<String, String>> performanceTypes = [
@@ -45,8 +38,6 @@ class AboutSectionWidget extends StatelessWidget {
     );
     return type['label'] as String?;
   }
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +57,6 @@ class AboutSectionWidget extends StatelessWidget {
               ),
             ),
 
-<<<<<<< HEAD
           // Performance Types Section (supports both single and multiple types)
           if (_hasPerformanceTypes(performerData))
             _buildSection(
@@ -153,179 +143,6 @@ class AboutSectionWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-=======
-          // Performance Details
-          if (performerData["performanceTypes"] != null)
-            _buildSection(
-              "Performance Types",
-              Wrap(
-                spacing: 2.w,
-                runSpacing: 1.h,
-                children: (performerData["performanceTypes"] as List)
-                    .map((type) => Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 3.w, vertical: 1.h),
-                          decoration: BoxDecoration(
-                            color:
-                                AppTheme.primaryOrange.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color:
-                                  AppTheme.primaryOrange.withValues(alpha: 0.5),
-                            ),
-                          ),
-                          child: Text(
-                            type as String,
-                            style: AppTheme.darkTheme.textTheme.bodyMedium
-                                ?.copyWith(
-                              color: AppTheme.primaryOrange,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
-
-          // Performance Schedule
-          if (performerData["schedule"] != null)
-            _buildSection(
-              "Performance Schedule",
-              Column(
-                children: (performerData["schedule"] as List)
-                    .map((schedule) => Container(
-                          margin: EdgeInsets.only(bottom: 1.h),
-                          padding: EdgeInsets.all(3.w),
-                          decoration: AppTheme.performerCardDecoration(),
-                          child: Row(
-                            children: [
-                              CustomIconWidget(
-                                iconName: 'schedule',
-                                color: AppTheme.primaryOrange,
-                                size: 20,
-                              ),
-                              SizedBox(width: 3.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      (schedule as Map<String, dynamic>)["day"]
-                                              as String? ??
-                                          "",
-                                      style: AppTheme
-                                          .darkTheme.textTheme.titleSmall,
-                                    ),
-                                    Text(
-                                      "${schedule["time"]} at ${schedule["location"]}",
-                                      style: AppTheme
-                                          .darkTheme.textTheme.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
-
-          // Frequent Locations
-          if (performerData["frequentLocations"] != null)
-            _buildSection(
-              "Frequent Locations",
-              Column(
-                children: (performerData["frequentLocations"] as List)
-                    .map((location) => Container(
-                          margin: EdgeInsets.only(bottom: 1.h),
-                          padding: EdgeInsets.all(3.w),
-                          decoration: AppTheme.performerCardDecoration(),
-                          child: Row(
-                            children: [
-                              CustomIconWidget(
-                                iconName: 'location_on',
-                                color: AppTheme.primaryOrange,
-                                size: 20,
-                              ),
-                              SizedBox(width: 3.w),
-                              Expanded(
-                                child: Text(
-                                  location as String,
-                                  style:
-                                      AppTheme.darkTheme.textTheme.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
-
-          // Social Media Links
-          if (performerData["socialMedia"] != null)
-            _buildSection(
-              "Social Media",
-              Column(
-                children: (performerData["socialMedia"] as Map<String, dynamic>)
-                    .entries
-                    .map((entry) => Container(
-                          margin: EdgeInsets.only(bottom: 1.h),
-                          child: InkWell(
-                            onTap: () {
-                              // Handle social media link tap
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Opening ${entry.key}..."),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: EdgeInsets.all(3.w),
-                              decoration: AppTheme.performerCardDecoration(),
-                              child: Row(
-                                children: [
-                                  CustomIconWidget(
-                                    iconName: _getSocialMediaIcon(entry.key),
-                                    color: AppTheme.primaryOrange,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 3.w),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          entry.key.toUpperCase(),
-                                          style: AppTheme
-                                              .darkTheme.textTheme.titleSmall,
-                                        ),
-                                        Text(
-                                          entry.value as String,
-                                          style: AppTheme
-                                              .darkTheme.textTheme.bodySmall
-                                              ?.copyWith(
-                                            color: AppTheme.primaryOrange,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  CustomIconWidget(
-                                    iconName: 'open_in_new',
-                                    color: AppTheme.textSecondary,
-                                    size: 16,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ))
-                    .toList(),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               ),
             ),
 
@@ -412,7 +229,6 @@ class AboutSectionWidget extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
   bool _hasPerformanceTypes(Map<String, dynamic> data) {
     if (data['performance_types'] != null) {
       if (data['performance_types'] is List) {
@@ -631,8 +447,6 @@ class AboutSectionWidget extends StatelessWidget {
     return handle.startsWith('@') ? handle.substring(1) : handle;
   }
 
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   String _getSocialMediaIcon(String platform) {
     switch (platform.toLowerCase()) {
       case 'instagram':

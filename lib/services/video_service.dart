@@ -68,11 +68,7 @@ class VideoService {
             *,
             performer:user_profiles!performer_id(
               id, username, full_name, profile_image_url, 
-<<<<<<< HEAD
               performance_types, is_verified
-=======
-              performance_type, is_verified
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             )
           ''')
           .eq('is_approved', true)
@@ -114,19 +110,11 @@ class VideoService {
               id,
               username,
               profile_image_url,
-<<<<<<< HEAD
               performance_types,
               is_verified
             )
           ''')
           .eq('is_approved', true)
-=======
-              performance_type,
-              is_verified
-            )
-          ''')
-          .eq('is_active', true)
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           .inFilter('performer_id', await _getFollowedPerformerIds())
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
@@ -427,11 +415,7 @@ class VideoService {
               *,
               performer:user_profiles!performer_id(
                 username, full_name, profile_image_url, 
-<<<<<<< HEAD
                 performance_types, is_verified
-=======
-                performance_type, is_verified
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               )
             )
           ''')

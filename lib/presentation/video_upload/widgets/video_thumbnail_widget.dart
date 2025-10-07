@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -22,13 +18,8 @@ class VideoThumbnailWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-<<<<<<< HEAD
       height: 200.0,
       margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-=======
-      height: 25.h,
-      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       decoration: BoxDecoration(
         color: AppTheme.darkTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -69,11 +60,7 @@ class VideoThumbnailWidget extends StatelessWidget {
             bottom: 12,
             right: 12,
             child: Container(
-<<<<<<< HEAD
               padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-=======
-              padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               decoration: BoxDecoration(
                 color: AppTheme.videoOverlay,
                 borderRadius: BorderRadius.circular(8),
@@ -81,11 +68,7 @@ class VideoThumbnailWidget extends StatelessWidget {
               child: Text(
                 duration,
                 style: AppTheme.videoOverlayStyle().copyWith(
-<<<<<<< HEAD
                   fontSize: 12.0,
-=======
-                  fontSize: 12.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -99,11 +82,7 @@ class VideoThumbnailWidget extends StatelessWidget {
             child: GestureDetector(
               onTap: onRetake,
               child: Container(
-<<<<<<< HEAD
                 padding: EdgeInsets.all(8.0),
-=======
-                padding: EdgeInsets.all(2.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 decoration: BoxDecoration(
                   color: AppTheme.videoOverlay,
                   borderRadius: BorderRadius.circular(20),
@@ -120,11 +99,7 @@ class VideoThumbnailWidget extends StatelessWidget {
           // Play button overlay
           Center(
             child: Container(
-<<<<<<< HEAD
               padding: EdgeInsets.all(12.0),
-=======
-              padding: EdgeInsets.all(3.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               decoration: BoxDecoration(
                 color: AppTheme.videoOverlay,
                 shape: BoxShape.circle,

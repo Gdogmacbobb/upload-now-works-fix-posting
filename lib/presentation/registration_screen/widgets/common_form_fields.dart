@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -20,13 +16,10 @@ class CommonFormFields extends StatefulWidget {
   final String? passwordError;
   final String? confirmPasswordError;
   final bool isEmailChecking;
-<<<<<<< HEAD
   final Function(String)? onUsernameChanged;
   final bool isUsernameChecking;
   final bool? isUsernameAvailable;
   final List<String> usernameSuggestions;
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   const CommonFormFields({
     Key? key,
@@ -42,13 +35,10 @@ class CommonFormFields extends StatefulWidget {
     this.passwordError,
     this.confirmPasswordError,
     this.isEmailChecking = false,
-<<<<<<< HEAD
     this.onUsernameChanged,
     this.isUsernameChecking = false,
     this.isUsernameAvailable,
     this.usernameSuggestions = const [],
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }) : super(key: key);
 
   @override
@@ -116,7 +106,6 @@ class _CommonFormFieldsState extends State<CommonFormFields> {
           decoration: BoxDecoration(
             color: AppTheme.inputBackground,
             borderRadius: BorderRadius.circular(12),
-<<<<<<< HEAD
             border: Border.all(
               color: widget.isUsernameAvailable == true
                   ? AppTheme.successGreen
@@ -124,9 +113,6 @@ class _CommonFormFieldsState extends State<CommonFormFields> {
                       ? Colors.red
                       : AppTheme.borderSubtle,
             ),
-=======
-            border: Border.all(color: AppTheme.borderSubtle),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           ),
           child: Row(
             children: [
@@ -159,7 +145,6 @@ class _CommonFormFieldsState extends State<CommonFormFields> {
                           ),
                         ),
                       ),
-<<<<<<< HEAD
                       // Availability indicator
                       if (widget.isUsernameChecking)
                         SizedBox(
@@ -184,8 +169,6 @@ class _CommonFormFieldsState extends State<CommonFormFields> {
                           color: Colors.red,
                           size: 20,
                         ),
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     ],
                   ),
                 ),
@@ -218,7 +201,6 @@ class _CommonFormFieldsState extends State<CommonFormFields> {
             ],
           ),
         ),
-<<<<<<< HEAD
         
         // Username availability message and suggestions
         if (widget.isUsernameAvailable == false && widget.usernameSuggestions.isNotEmpty) ...[
@@ -263,8 +245,6 @@ class _CommonFormFieldsState extends State<CommonFormFields> {
           ),
         ],
         
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         SizedBox(height: 3.h),
 
         // Email Field

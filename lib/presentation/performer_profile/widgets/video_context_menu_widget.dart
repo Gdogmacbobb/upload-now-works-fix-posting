@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -167,13 +163,8 @@ class VideoContextMenuWidget extends StatelessWidget {
               padding: EdgeInsets.all(2.w),
               decoration: BoxDecoration(
                 color: isDestructive
-<<<<<<< HEAD
                     ? AppTheme.accentRed.withOpacity(0.2)
                     : AppTheme.primaryOrange.withOpacity(0.2),
-=======
-                    ? AppTheme.accentRed.withValues(alpha: 0.2)
-                    : AppTheme.primaryOrange.withValues(alpha: 0.2),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 borderRadius: BorderRadius.circular(8),
               ),
               child: CustomIconWidget(

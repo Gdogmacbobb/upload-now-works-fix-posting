@@ -6,11 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../core/app_export.dart';
 import './widgets/camera_controls_widget.dart';
@@ -480,11 +476,7 @@ class _VideoRecordingState extends State<VideoRecording>
                 margin: EdgeInsets.symmetric(horizontal: 4.w),
                 padding: EdgeInsets.all(3.w),
                 decoration: AppTheme.glassmorphismDecoration(
-<<<<<<< HEAD
                   backgroundColor: AppTheme.accentRed.withOpacity(0.2),
-=======
-                  backgroundColor: AppTheme.accentRed.withValues(alpha: 0.2),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 ),
                 child: Row(
                   children: [

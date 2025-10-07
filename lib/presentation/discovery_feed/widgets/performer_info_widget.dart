@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -46,11 +42,7 @@ class PerformerInfoWidget extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   shadows: [
                     Shadow(
-<<<<<<< HEAD
                       color: AppTheme.backgroundDark.withOpacity(0.8),
-=======
-                      color: AppTheme.backgroundDark.withValues(alpha: 0.8),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -75,17 +67,10 @@ class PerformerInfoWidget extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
             decoration: BoxDecoration(
-<<<<<<< HEAD
               color: AppTheme.primaryOrange.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: AppTheme.primaryOrange.withOpacity(0.5),
-=======
-              color: AppTheme.primaryOrange.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.primaryOrange.withValues(alpha: 0.5),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 width: 1,
               ),
             ),
@@ -117,11 +102,7 @@ class PerformerInfoWidget extends StatelessWidget {
                     color: AppTheme.textSecondary,
                     shadows: [
                       Shadow(
-<<<<<<< HEAD
                         color: AppTheme.backgroundDark.withOpacity(0.8),
-=======
-                        color: AppTheme.backgroundDark.withValues(alpha: 0.8),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -146,11 +127,7 @@ class PerformerInfoWidget extends StatelessWidget {
                     color: AppTheme.textPrimary,
                     shadows: [
                       Shadow(
-<<<<<<< HEAD
                         color: AppTheme.backgroundDark.withOpacity(0.8),
-=======
-                        color: AppTheme.backgroundDark.withValues(alpha: 0.8),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),

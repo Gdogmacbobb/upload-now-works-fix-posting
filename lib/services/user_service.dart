@@ -48,10 +48,6 @@ class UserService {
             )
           ''')
           .eq('role', 'street_performer')
-<<<<<<< HEAD
-=======
-          .eq('is_active', true)
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           .eq('is_verified', true);
 
       if (query != null && query.isNotEmpty) {

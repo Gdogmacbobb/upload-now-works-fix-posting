@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../core/app_export.dart';
 
@@ -24,7 +20,6 @@ class FeedNavigationBottomWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-<<<<<<< HEAD
       height: 64,
       decoration: BoxDecoration(
         color: Color(0xFF1C1C1E),
@@ -60,65 +55,6 @@ class FeedNavigationBottomWidget extends StatelessWidget {
                 Icons.home,
                 size: 28,
                 color: Colors.white,
-=======
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [
-            Colors.black.withAlpha(153),
-            Colors.transparent,
-          ],
-        ),
-      ),
-      child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Search Button - Moved to first position
-            GestureDetector(
-              onTap: () => _showSearchOverlay(context),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                child: Icon(
-                  Icons.search,
-                  size: 6.w,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ),
-
-            SizedBox(width: 8.w),
-
-            // Camera Button - Moved to middle position
-            GestureDetector(
-              onTap: () => _navigateToCamera(context),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                child: Icon(
-                  Icons.camera_alt,
-                  size: 6.w,
-                  color: AppTheme.primaryOrange,
-                ),
-              ),
-            ),
-
-            SizedBox(width: 8.w),
-
-            // Home Button - Remains in same position
-            GestureDetector(
-              onTap: () => _navigateToHome(context),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                child: Icon(
-                  Icons.home,
-                  size: 6.w,
-                  color: currentFeed == 'home'
-                      ? AppTheme.primaryOrange
-                      : AppTheme.textSecondary,
-                ),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               ),
             ),
           ],
@@ -132,13 +68,8 @@ class FeedNavigationBottomWidget extends StatelessWidget {
   }
 
   void _navigateToHome(BuildContext context) {
-<<<<<<< HEAD
     // Navigate to user's own profile page - now always uses PerformerProfile
     Navigator.pushNamed(context, AppRoutes.performerProfile);
-=======
-    // Navigate to user's own profile page instead of discovery feed
-    Navigator.pushNamed(context, AppRoutes.userProfile);
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }
 
   void _showSearchOverlay(BuildContext context) {

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -42,11 +38,7 @@ class DonationSuccessWidget extends StatelessWidget {
             height: 25.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-<<<<<<< HEAD
               color: AppTheme.successGreen.withOpacity(0.1),
-=======
-              color: AppTheme.successGreen.withValues(alpha: 0.1),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               border: Border.all(
                 color: AppTheme.successGreen,
                 width: 2,
@@ -165,17 +157,10 @@ class DonationSuccessWidget extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(3.w),
             decoration: BoxDecoration(
-<<<<<<< HEAD
               color: AppTheme.primaryOrange.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: AppTheme.primaryOrange.withOpacity(0.3),
-=======
-              color: AppTheme.primaryOrange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppTheme.primaryOrange.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 width: 1,
               ),
             ),

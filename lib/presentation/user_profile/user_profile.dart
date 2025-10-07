@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
@@ -7,17 +6,11 @@ import '../../core/constants/user_roles.dart';
 import '../../services/profile_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../services/supabase_service.dart';
-=======
-import 'package:sizer/sizer.dart';
-
-import '../../core/app_export.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 import './widgets/activity_item_widget.dart';
 import './widgets/performer_stats_widget.dart';
 import './widgets/profile_header_widget.dart';
 import './widgets/profile_section_widget.dart';
 import './widgets/supporter_stats_widget.dart';
-<<<<<<< HEAD
 import './edit_profile_page.dart';
 import './edit_social_media_page.dart';
 
@@ -28,18 +21,12 @@ class UserProfile extends StatefulWidget {
     Key? key, 
     required this.userId,
   }) : super(key: key);
-=======
-
-class UserProfile extends StatefulWidget {
-  const UserProfile({super.key});
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   @override
   State<UserProfile> createState() => _UserProfileState();
 }
 
 class _UserProfileState extends State<UserProfile> {
-<<<<<<< HEAD
   // Real user data from Supabase
   Map<String, dynamic>? userData;
   List<Map<String, dynamic>> recentActivities = [];
@@ -288,68 +275,6 @@ class _UserProfileState extends State<UserProfile> {
         ),
       );
     }
-=======
-  // Mock user data
-  final Map<String, dynamic> userData = {
-    "id": 1,
-    "name": "Marcus Rodriguez",
-    "email": "marcus.street@ynfny.com",
-    "avatar":
-        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
-    "accountType": "performer", // or "new_yorker"
-    "joinDate": "2024-01-15",
-    "isVerified": true,
-    "totalEarnings": 2847.50,
-    "followerCount": 1234,
-    "videoCount": 67,
-    "monthlyEarnings": 485.20,
-    "totalDonated": 156.75,
-    "performersSupported": 12,
-    "favoritePerformanceTypes": ["Music", "Dance", "Street Art"],
-  };
-
-  // Mock recent activities
-  final List<Map<String, dynamic>> recentActivities = [
-    {
-      "id": 1,
-      "type": "donation_received",
-      "userName": "Sarah Chen",
-      "amount": 15.0,
-      "timestamp": DateTime.now().subtract(const Duration(hours: 2)),
-    },
-    {
-      "id": 2,
-      "type": "like",
-      "userName": "Mike Johnson",
-      "timestamp": DateTime.now().subtract(const Duration(hours: 4)),
-    },
-    {
-      "id": 3,
-      "type": "follow",
-      "userName": "Emma Davis",
-      "timestamp": DateTime.now().subtract(const Duration(hours: 6)),
-    },
-    {
-      "id": 4,
-      "type": "comment",
-      "userName": "Alex Thompson",
-      "timestamp": DateTime.now().subtract(const Duration(days: 1)),
-    },
-    {
-      "id": 5,
-      "type": "donation_received",
-      "userName": "Lisa Park",
-      "amount": 25.0,
-      "timestamp": DateTime.now().subtract(const Duration(days: 2)),
-    },
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final isPerformer =
-        (userData["accountType"] as String? ?? "new_yorker") == "performer";
-
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       appBar: AppBar(
@@ -359,36 +284,18 @@ class _UserProfileState extends State<UserProfile> {
           color: Colors.white,
         ),
         title: Text(
-<<<<<<< HEAD
           "My Profile",
-=======
-          "Profile",
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           style: AppTheme.darkTheme.textTheme.titleLarge?.copyWith(
             color: AppTheme.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
-<<<<<<< HEAD
-=======
-        actions: [
-          IconButton(
-            onPressed: _showLogoutDialog,
-            icon: CustomIconWidget(
-              iconName: 'logout',
-              color: AppTheme.textSecondary,
-              size: 6.w,
-            ),
-          ),
-        ],
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(4.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-<<<<<<< HEAD
             // Profile Header Container - Template Design
             Container(
               padding: const EdgeInsets.all(16),
@@ -520,23 +427,6 @@ class _UserProfileState extends State<UserProfile> {
               ),
               SizedBox(height: 2.h),
             ],
-=======
-            // Profile Header
-            ProfileHeaderWidget(
-              userData: userData,
-              onAvatarTap: _showAvatarOptions,
-            ),
-
-            SizedBox(height: 3.h),
-
-            // Stats Section (Role-specific)
-            if (isPerformer)
-              PerformerStatsWidget(performerData: userData)
-            else
-              SupporterStatsWidget(supporterData: userData),
-
-            SizedBox(height: 3.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
             // Account Section
             ProfileSectionWidget(
@@ -552,41 +442,6 @@ class _UserProfileState extends State<UserProfile> {
               onItemTap: _handleSectionTap,
             ),
 
-<<<<<<< HEAD
-=======
-            // Recent Activity List
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(4.w),
-              decoration: AppTheme.performerCardDecoration(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Recent Activity",
-                    style: AppTheme.darkTheme.textTheme.titleMedium?.copyWith(
-                      color: AppTheme.primaryOrange,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: recentActivities.length,
-                    itemBuilder: (context, index) {
-                      return ActivityItemWidget(
-                        activity: recentActivities[index],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 3.h),
-
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             // Support Section
             ProfileSectionWidget(
               title: "Support",
@@ -601,7 +456,6 @@ class _UserProfileState extends State<UserProfile> {
               onItemTap: _handleSectionTap,
             ),
 
-<<<<<<< HEAD
             // Logout Button - Only show when viewing own profile
             if (_supabaseService.currentUser?.id == widget.userId) ...[
               SizedBox(height: 3.h),
@@ -630,9 +484,6 @@ class _UserProfileState extends State<UserProfile> {
             ],
 
             SizedBox(height: 4.h),
-=======
-            SizedBox(height: 10.h), // Bottom padding for navigation
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           ],
         ),
       ),
@@ -640,12 +491,8 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   List<Map<String, dynamic>> _getAccountItems() {
-<<<<<<< HEAD
     // Account section items for all users
     List<Map<String, dynamic>> items = [
-=======
-    return [
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       {
         "icon": "edit",
         "title": "Edit Profile",
@@ -653,7 +500,6 @@ class _UserProfileState extends State<UserProfile> {
         "route": "/edit-profile",
       },
       {
-<<<<<<< HEAD
         "icon": "link",
         "title": "Social Media",
         "subtitle": "Add your social media handles",
@@ -688,8 +534,6 @@ class _UserProfileState extends State<UserProfile> {
     
     items.addAll([
       {
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         "icon": "notifications",
         "title": "Notification Preferences",
         "subtitle": "Manage your notification settings",
@@ -708,13 +552,9 @@ class _UserProfileState extends State<UserProfile> {
         "subtitle": "Control your privacy and data",
         "route": "/privacy-settings",
       },
-<<<<<<< HEAD
     ]);
     
     return items;
-=======
-    ];
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }
 
   List<Map<String, dynamic>> _getActivityItems() {
@@ -799,7 +639,6 @@ class _UserProfileState extends State<UserProfile> {
         case "/edit-profile":
           _navigateToEditProfile();
           break;
-<<<<<<< HEAD
         case "/social-media":
           _navigateToSocialMedia();
           break;
@@ -809,8 +648,6 @@ class _UserProfileState extends State<UserProfile> {
         case "/performance-schedule":
           _showScheduleInput();
           break;
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         case "/notification-settings":
           _showNotificationSettings();
           break;
@@ -827,7 +664,6 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
-<<<<<<< HEAD
 
   Future<void> _navigateToEditProfile() async {
     final result = await Navigator.push(
@@ -855,20 +691,6 @@ class _UserProfileState extends State<UserProfile> {
     if (result == true) {
       await _loadUserProfile();
     }
-=======
-  void _navigateToEditProfile() {
-    // Navigate to edit profile screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "Edit Profile feature coming soon",
-          style: AppTheme.darkTheme.textTheme.bodyMedium,
-        ),
-        backgroundColor: AppTheme.surfaceDark,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }
 
   void _showAvatarOptions() {
@@ -1125,7 +947,6 @@ class _UserProfileState extends State<UserProfile> {
     );
   }
 
-<<<<<<< HEAD
   void _showLocationInput() {
     final TextEditingController locationController = TextEditingController(
       text: userData?['frequent_location'] as String? ?? '',
@@ -1286,8 +1107,6 @@ class _UserProfileState extends State<UserProfile> {
     );
   }
 
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1300,7 +1119,6 @@ class _UserProfileState extends State<UserProfile> {
       ),
     );
   }
-<<<<<<< HEAD
 
   // Format role display names
   String _formatRole(String? role) {
@@ -1373,6 +1191,4 @@ class _UserProfileState extends State<UserProfile> {
       ),
     );
   }
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 }

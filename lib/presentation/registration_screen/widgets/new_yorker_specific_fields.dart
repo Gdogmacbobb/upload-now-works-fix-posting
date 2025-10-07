@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -119,11 +115,7 @@ class _NewYorkerSpecificFieldsState extends State<NewYorkerSpecificFields> {
                     style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
                       color: widget.selectedBirthDate != null
                           ? AppTheme.textPrimary
-<<<<<<< HEAD
                           : AppTheme.textSecondary.withOpacity(0.7),
-=======
-                          : AppTheme.textSecondary.withValues(alpha: 0.7),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     ),
                   ),
                 ),
@@ -207,11 +199,7 @@ class _NewYorkerSpecificFieldsState extends State<NewYorkerSpecificFields> {
                 padding: EdgeInsets.all(3.w),
                 decoration: BoxDecoration(
                   color: isSelected
-<<<<<<< HEAD
                       ? AppTheme.primaryOrange.withOpacity(0.2)
-=======
-                      ? AppTheme.primaryOrange.withValues(alpha: 0.2)
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                       : AppTheme.darkTheme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(

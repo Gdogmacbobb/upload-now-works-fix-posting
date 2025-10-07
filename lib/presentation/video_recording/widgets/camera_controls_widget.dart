@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -30,7 +26,6 @@ class CameraControlsWidget extends StatelessWidget {
       children: [
         // Back button (top-left, where flash button was)
         Positioned(
-<<<<<<< HEAD
           top: 64.0,
           left: 16.0,
           child: GestureDetector(
@@ -38,15 +33,6 @@ class CameraControlsWidget extends StatelessWidget {
             child: Container(
               width: 48.0,
               height: 48.0,
-=======
-          top: 8.h,
-          left: 4.w,
-          child: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 12.w,
-              height: 6.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               decoration: BoxDecoration(
                 color: AppTheme.videoOverlay,
                 borderRadius: BorderRadius.circular(8),
@@ -64,20 +50,12 @@ class CameraControlsWidget extends StatelessWidget {
 
         // Timer display (above record button)
         Positioned(
-<<<<<<< HEAD
           bottom: 192.0,
-=======
-          bottom: 24.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           left: 0,
           right: 0,
           child: Center(
             child: Container(
-<<<<<<< HEAD
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-=======
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               decoration: BoxDecoration(
                 color: isRecording ? AppTheme.accentRed : AppTheme.videoOverlay,
                 borderRadius: BorderRadius.circular(20),
@@ -94,11 +72,7 @@ class CameraControlsWidget extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-<<<<<<< HEAD
                     SizedBox(width: 8.0),
-=======
-                    SizedBox(width: 2.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   ],
                   Text(
                     recordingTime,
@@ -112,7 +86,6 @@ class CameraControlsWidget extends StatelessWidget {
 
         // Flip camera (top-right)
         Positioned(
-<<<<<<< HEAD
           top: 64.0,
           right: 16.0,
           child: GestureDetector(
@@ -120,15 +93,6 @@ class CameraControlsWidget extends StatelessWidget {
             child: Container(
               width: 48.0,
               height: 48.0,
-=======
-          top: 8.h,
-          right: 4.w,
-          child: GestureDetector(
-            onTap: onFlipCamera,
-            child: Container(
-              width: 12.w,
-              height: 6.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               decoration: BoxDecoration(
                 color: AppTheme.videoOverlay,
                 borderRadius: BorderRadius.circular(8),
@@ -146,24 +110,15 @@ class CameraControlsWidget extends StatelessWidget {
 
         // Capture button (bottom-center)
         Positioned(
-<<<<<<< HEAD
           bottom: 96.0,
-=======
-          bottom: 12.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           left: 0,
           right: 0,
           child: Center(
             child: GestureDetector(
               onTap: onCapturePressed,
               child: Container(
-<<<<<<< HEAD
                 width: 80.0,
                 height: 80.0,
-=======
-                width: 20.w,
-                height: 10.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color:
@@ -175,13 +130,8 @@ class CameraControlsWidget extends StatelessWidget {
                 ),
                 child: Center(
                   child: Container(
-<<<<<<< HEAD
                     width: isRecording ? 32.0 : 64.0,
                     height: isRecording ? 32.0 : 64.0,
-=======
-                    width: isRecording ? 8.w : 16.w,
-                    height: isRecording ? 4.h : 8.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     decoration: BoxDecoration(
                       color: AppTheme.textPrimary,
                       borderRadius: BorderRadius.circular(isRecording ? 4 : 50),

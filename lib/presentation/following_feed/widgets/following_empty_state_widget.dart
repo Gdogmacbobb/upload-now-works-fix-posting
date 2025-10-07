@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -44,11 +40,7 @@ class FollowingEmptyStateWidget extends StatelessWidget {
                   width: 20.w,
                   height: 20.w,
                   decoration: BoxDecoration(
-<<<<<<< HEAD
                     color: AppTheme.primaryOrange.withOpacity(0.2),
-=======
-                    color: AppTheme.primaryOrange.withValues(alpha: 0.2),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     shape: BoxShape.circle,
                   ),
                   child: CustomIconWidget(
@@ -68,11 +60,7 @@ class FollowingEmptyStateWidget extends StatelessWidget {
                       width: 8.w,
                       height: 8.w,
                       decoration: BoxDecoration(
-<<<<<<< HEAD
                         color: AppTheme.textSecondary.withOpacity(0.3),
-=======
-                        color: AppTheme.textSecondary.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         shape: BoxShape.circle,
                       ),
                       child: CustomIconWidget(
@@ -86,11 +74,7 @@ class FollowingEmptyStateWidget extends StatelessWidget {
                       width: 8.w,
                       height: 8.w,
                       decoration: BoxDecoration(
-<<<<<<< HEAD
                         color: AppTheme.textSecondary.withOpacity(0.3),
-=======
-                        color: AppTheme.textSecondary.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         shape: BoxShape.circle,
                       ),
                       child: CustomIconWidget(
@@ -104,11 +88,7 @@ class FollowingEmptyStateWidget extends StatelessWidget {
                       width: 8.w,
                       height: 8.w,
                       decoration: BoxDecoration(
-<<<<<<< HEAD
                         color: AppTheme.textSecondary.withOpacity(0.3),
-=======
-                        color: AppTheme.textSecondary.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         shape: BoxShape.circle,
                       ),
                       child: CustomIconWidget(
@@ -163,11 +143,7 @@ class FollowingEmptyStateWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-<<<<<<< HEAD
                     color: AppTheme.primaryOrange.withOpacity(0.3),
-=======
-                    color: AppTheme.primaryOrange.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -235,17 +211,10 @@ class FollowingEmptyStateWidget extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
             margin: EdgeInsets.symmetric(horizontal: 8.w),
             decoration: BoxDecoration(
-<<<<<<< HEAD
               color: AppTheme.surfaceDark.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: AppTheme.borderSubtle.withOpacity(0.3),
-=======
-              color: AppTheme.surfaceDark.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.borderSubtle.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 width: 1,
               ),
             ),

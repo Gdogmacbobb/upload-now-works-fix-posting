@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -114,11 +110,7 @@ class _PaymentMethodWidgetState extends State<PaymentMethodWidget> {
                             horizontal: 4.w, vertical: 2.h),
                         decoration: BoxDecoration(
                             color: isSelected
-<<<<<<< HEAD
                                 ? AppTheme.primaryOrange.withOpacity(0.1)
-=======
-                                ? AppTheme.primaryOrange.withValues(alpha: 0.1)
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                                 : AppTheme.surfaceDark,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
@@ -171,11 +163,7 @@ class _PaymentMethodWidgetState extends State<PaymentMethodWidget> {
                         height: 12.w,
                         decoration: BoxDecoration(
                             color:
-<<<<<<< HEAD
                                 AppTheme.primaryOrange.withOpacity(0.1),
-=======
-                                AppTheme.primaryOrange.withValues(alpha: 0.1),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                             borderRadius: BorderRadius.circular(8)),
                         child: Center(
                             child: CustomIconWidget(

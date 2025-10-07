@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -117,11 +113,7 @@ class PerformerInfoWidget extends StatelessWidget {
                     width: 20.w,
                     height: 12.h,
                     decoration: BoxDecoration(
-<<<<<<< HEAD
                       color: AppTheme.videoOverlay.withOpacity(0.3),
-=======
-                      color: AppTheme.videoOverlay.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),

@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
 import '../../services/supabase_service.dart';
-=======
-import 'package:sizer/sizer.dart';
-
-import '../../core/app_export.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 import './widgets/login_footer_widget.dart';
 import './widgets/login_form_widget.dart';
 import './widgets/login_header_widget.dart';
@@ -24,29 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String? _errorMessage;
-<<<<<<< HEAD
   final SupabaseService _supabaseService = SupabaseService();
-=======
-
-  // Mock credentials for testing
-  final Map<String, Map<String, String>> _mockCredentials = {
-    'performer@ynfny.com': {
-      'password': 'performer123',
-      'type': 'performer',
-      'name': 'Marcus Rodriguez'
-    },
-    'newyorker@ynfny.com': {
-      'password': 'newyorker123',
-      'type': 'newyorker',
-      'name': 'Sarah Chen'
-    },
-    'admin@ynfny.com': {
-      'password': 'admin123',
-      'type': 'admin',
-      'name': 'Admin User'
-    },
-  };
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   @override
   void initState() {
@@ -69,7 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-<<<<<<< HEAD
       debugPrint('[LOGIN] Attempting login with: $email');
       
       // Real Supabase authentication
@@ -118,38 +89,6 @@ class _LoginScreenState extends State<LoginScreen> {
         } else {
           _errorMessage = 'Login failed. Please try again later.';
         }
-=======
-      // Simulate network delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Check mock credentials
-      if (_mockCredentials.containsKey(email.toLowerCase())) {
-        final userCredentials = _mockCredentials[email.toLowerCase()]!;
-        if (userCredentials['password'] == password) {
-          // Successful login - trigger haptic feedback
-          HapticFeedback.lightImpact();
-
-          // Navigate to following feed
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/following-feed');
-          }
-          return;
-        }
-      }
-
-      // Invalid credentials
-      setState(() {
-        _errorMessage =
-            'Invalid email or password. Please check your credentials and try again.';
-      });
-
-      // Error haptic feedback
-      HapticFeedback.mediumImpact();
-    } catch (e) {
-      setState(() {
-        _errorMessage =
-            'Network error. Please check your connection and try again.';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       });
       HapticFeedback.mediumImpact();
     } finally {
@@ -206,17 +145,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: EdgeInsets.all(3.w),
                         margin: EdgeInsets.only(bottom: 2.h),
                         decoration: BoxDecoration(
-<<<<<<< HEAD
                           color: AppTheme.accentRed.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(2.w),
                           border: Border.all(
                             color: AppTheme.accentRed.withOpacity(0.3),
-=======
-                          color: AppTheme.accentRed.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(2.w),
-                          border: Border.all(
-                            color: AppTheme.accentRed.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                             width: 1,
                           ),
                         ),

@@ -1,39 +1,27 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../../core/app_export.dart';
 import '../../user_profile/user_profile.dart';
-=======
-import 'package:sizer/sizer.dart';
-
-import '../../../core/app_export.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 class ProfileHeaderWidget extends StatelessWidget {
   final Map<String, dynamic> performerData;
   final bool isFollowing;
   final VoidCallback onFollowTap;
-<<<<<<< HEAD
   final String? currentUserId;
   final VoidCallback? onEditTap;
   final VoidCallback? onProfileUpdated;
   final VoidCallback? onAvatarTap;
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
   const ProfileHeaderWidget({
     super.key,
     required this.performerData,
     required this.isFollowing,
     required this.onFollowTap,
-<<<<<<< HEAD
     this.currentUserId,
     this.onEditTap,
     this.onProfileUpdated,
     this.onAvatarTap,
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   });
 
   @override
@@ -54,7 +42,6 @@ class ProfileHeaderWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-<<<<<<< HEAD
               // Profile Avatar - Tappable if onAvatarTap provided
               GestureDetector(
                 onTap: onAvatarTap,
@@ -75,25 +62,6 @@ class ProfileHeaderWidget extends StatelessWidget {
                       height: 20.w,
                       fit: BoxFit.cover,
                     ),
-=======
-              // Profile Avatar
-              Container(
-                width: 20.w,
-                height: 20.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppTheme.primaryOrange,
-                    width: 2,
-                  ),
-                ),
-                child: ClipOval(
-                  child: CustomImageWidget(
-                    imageUrl: performerData["avatar"] as String? ?? "",
-                    width: 20.w,
-                    height: 20.w,
-                    fit: BoxFit.cover,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   ),
                 ),
               ),
@@ -103,7 +71,6 @@ class ProfileHeaderWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-<<<<<<< HEAD
                     // Full Name
                     Text(
                       performerData["name"] as String? ?? "Unknown Performer",
@@ -147,17 +114,6 @@ class ProfileHeaderWidget extends StatelessWidget {
                     SizedBox(height: 0.5.h),
                     
                     // Verification status below role pill
-=======
-                    Text(
-                      performerData["name"] as String? ?? "Unknown Performer",
-                      style: AppTheme.darkTheme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 0.5.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     if (performerData["verificationStatus"] == "verified")
                       Row(
                         children: [
@@ -220,7 +176,6 @@ class ProfileHeaderWidget extends StatelessWidget {
             ],
           ),
           SizedBox(height: 2.h),
-<<<<<<< HEAD
           // Stats Row with conditional Edit button
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -321,28 +276,6 @@ class ProfileHeaderWidget extends StatelessWidget {
           
           SizedBox(height: 2.h),
           // Performance Type Tags with Icons
-=======
-          // Stats Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildStatColumn(
-                "Videos",
-                (performerData["videoCount"] as int? ?? 0).toString(),
-              ),
-              _buildStatColumn(
-                "Followers",
-                _formatCount(performerData["followersCount"] as int? ?? 0),
-              ),
-              _buildStatColumn(
-                "Following",
-                _formatCount(performerData["followingCount"] as int? ?? 0),
-              ),
-            ],
-          ),
-          SizedBox(height: 2.h),
-          // Performance Type Tags
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           if (performerData["performanceTypes"] != null)
             Wrap(
               spacing: 2.w,
@@ -350,7 +283,6 @@ class ProfileHeaderWidget extends StatelessWidget {
               children: (performerData["performanceTypes"] as List)
                   .map((type) => Container(
                         padding: EdgeInsets.symmetric(
-<<<<<<< HEAD
                             horizontal: 3.w, vertical: 0.8.h),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryOrange.withOpacity(0.2),
@@ -372,29 +304,10 @@ class ProfileHeaderWidget extends StatelessWidget {
                               ),
                             ),
                           ],
-=======
-                            horizontal: 3.w, vertical: 0.5.h),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryOrange.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color:
-                                AppTheme.primaryOrange.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Text(
-                          type as String,
-                          style:
-                              AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.primaryOrange,
-                            fontWeight: FontWeight.w500,
-                          ),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         ),
                       ))
                   .toList(),
             ),
-<<<<<<< HEAD
           
           // Bio
           if (performerData["bio"] != null &&
@@ -410,8 +323,6 @@ class ProfileHeaderWidget extends StatelessWidget {
               ),
             ),
           ],
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           if (performerData["frequentLocations"] != null) SizedBox(height: 1.h),
           // Frequent Locations
           if (performerData["frequentLocations"] != null)
@@ -437,24 +348,6 @@ class ProfileHeaderWidget extends StatelessWidget {
                       ))
                   .toList(),
             ),
-<<<<<<< HEAD
-=======
-          if (performerData["bio"] != null &&
-              (performerData["bio"] as String).isNotEmpty)
-            SizedBox(height: 2.h),
-          // Bio
-          if (performerData["bio"] != null &&
-              (performerData["bio"] as String).isNotEmpty)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                performerData["bio"] as String,
-                style: AppTheme.darkTheme.textTheme.bodyMedium,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         ],
       ),
     );
@@ -487,7 +380,6 @@ class ProfileHeaderWidget extends StatelessWidget {
     }
     return count.toString();
   }
-<<<<<<< HEAD
 
   String _formatRole(String? role) {
     if (role == null || role.isEmpty) return 'Street Performer';
@@ -539,6 +431,4 @@ class ProfileHeaderWidget extends StatelessWidget {
       ),
     );
   }
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 }

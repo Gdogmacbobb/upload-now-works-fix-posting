@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -30,11 +26,7 @@ class FollowingContextMenuWidget extends StatelessWidget {
       child: Container(
         width: 100.w,
         height: 100.h,
-<<<<<<< HEAD
         color: AppTheme.backgroundDark.withOpacity(0.8),
-=======
-        color: AppTheme.backgroundDark.withValues(alpha: 0.8),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         child: Center(
           child: Container(
             width: 80.w,
@@ -172,11 +164,7 @@ class FollowingContextMenuWidget extends StatelessWidget {
               width: 12.w,
               height: 12.w,
               decoration: BoxDecoration(
-<<<<<<< HEAD
                 color: iconColor.withOpacity(0.1),
-=======
-                color: iconColor.withValues(alpha: 0.1),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 shape: BoxShape.circle,
               ),
               child: CustomIconWidget(
@@ -222,11 +210,7 @@ class FollowingContextMenuWidget extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.w),
       height: 1,
-<<<<<<< HEAD
       color: AppTheme.borderSubtle.withOpacity(0.3),
-=======
-      color: AppTheme.borderSubtle.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     );
   }
 }

@@ -22,11 +22,7 @@ class GradientBackgroundWidget extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             AppTheme.backgroundDark,
-<<<<<<< HEAD
             AppTheme.backgroundDark.withOpacity(0.9),
-=======
-            AppTheme.backgroundDark.withValues(alpha: 0.9),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             const Color(0xFF2C3E2D), // Muted green tone
             const Color(0xFF3D2F1F), // Bronze tone
             AppTheme.backgroundDark,
@@ -41,13 +37,8 @@ class GradientBackgroundWidget extends StatelessWidget {
             radius: 1.2,
             colors: [
               Colors.transparent,
-<<<<<<< HEAD
               AppTheme.backgroundDark.withOpacity(0.3),
               AppTheme.backgroundDark.withOpacity(0.7),
-=======
-              AppTheme.backgroundDark.withValues(alpha: 0.3),
-              AppTheme.backgroundDark.withValues(alpha: 0.7),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             ],
             stops: const [0.0, 0.6, 1.0],
           ),

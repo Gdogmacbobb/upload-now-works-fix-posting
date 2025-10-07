@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../core/app_export.dart';
 import './widgets/amount_selection_widget.dart';
@@ -344,11 +340,7 @@ class _DonationFlowState extends State<DonationFlow> {
                   padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                   margin: EdgeInsets.only(bottom: 2.h),
                   decoration: BoxDecoration(
-<<<<<<< HEAD
                     color: AppTheme.primaryOrange.withOpacity(0.1),
-=======
-                    color: AppTheme.primaryOrange.withValues(alpha: 0.1),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(

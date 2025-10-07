@@ -70,13 +70,10 @@ class AppTheme {
     scaffoldBackgroundColor: backgroundDark,
     cardColor: surfaceDark,
     dividerColor: borderSubtle,
-<<<<<<< HEAD
     iconTheme: const IconThemeData(
       color: textPrimary,
       size: 28,
     ),
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     appBarTheme: AppBarTheme(
       backgroundColor: backgroundDark,
       foregroundColor: textPrimary,
@@ -88,20 +85,12 @@ class AppTheme {
         color: textPrimary,
       ),
     ),
-<<<<<<< HEAD
     cardTheme: const CardThemeData(
-=======
-    cardTheme: CardTheme(
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       color: surfaceDark,
       elevation: 2.0,
       shadowColor: shadowDark,
       shape: RoundedRectangleBorder(
-<<<<<<< HEAD
         borderRadius: BorderRadius.all(Radius.circular(12.0)),
-=======
-        borderRadius: BorderRadius.circular(12.0),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       ),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -193,11 +182,7 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
       hintStyle: GoogleFonts.inter(
-<<<<<<< HEAD
         color: textPrimary.withOpacity(0.7),
-=======
-        color: textPrimary.withValues(alpha: 0.7),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         fontSize: 16,
         fontWeight: FontWeight.w400,
       ),
@@ -284,11 +269,7 @@ class AppTheme {
       inactiveTrackColor: borderSubtle,
       trackHeight: 4.0,
     ),
-<<<<<<< HEAD
     tabBarTheme: TabBarThemeData(
-=======
-    tabBarTheme: TabBarTheme(
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       labelColor: primaryOrange,
       unselectedLabelColor: textSecondary,
       indicatorColor: primaryOrange,
@@ -344,11 +325,7 @@ class AppTheme {
         ),
       ),
     ),
-<<<<<<< HEAD
     dialogTheme: DialogThemeData(
-=======
-    dialogTheme: DialogTheme(
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       backgroundColor: surfaceDark,
       elevation: 8.0,
       shape: RoundedRectangleBorder(
@@ -401,11 +378,7 @@ class AppTheme {
     cardColor: surfaceLight,
     dividerColor: borderSubtle.withAlpha(77),
     textTheme: _buildTextTheme(isLight: true),
-<<<<<<< HEAD
     dialogTheme: const DialogThemeData(backgroundColor: surfaceLight),
-=======
-    dialogTheme: DialogThemeData(backgroundColor: surfaceLight),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   );
 
   /// Helper method to build text theme based on brightness

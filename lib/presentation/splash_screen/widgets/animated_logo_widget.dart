@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -77,53 +73,32 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Container(
-<<<<<<< HEAD
             width: 320.0,
-=======
-            width: 80.w,
-            height: 35.h,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.accentRed
-<<<<<<< HEAD
                       .withOpacity(_glowAnimation.value * 0.4),
-=======
-                      .withValues(alpha: _glowAnimation.value * 0.4),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   blurRadius: 20 * _glowAnimation.value,
                   spreadRadius: 5 * _glowAnimation.value,
                 ),
               ],
             ),
             child: Column(
-<<<<<<< HEAD
               mainAxisSize: MainAxisSize.min,
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // YNFNY Logo Image - Made bigger
                 Container(
-<<<<<<< HEAD
                   width: 280.0, // Fixed width
                   height: 224.0, // Fixed height
-=======
-                  width: 70.w, // Increased from 60.w to 70.w
-                  height: 28.h, // Increased from 25.h to 28.h
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.accentRed
-<<<<<<< HEAD
                             .withOpacity(_glowAnimation.value * 0.6),
-=======
-                            .withValues(alpha: _glowAnimation.value * 0.6),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         blurRadius: 15 * _glowAnimation.value,
                         spreadRadius: 2 * _glowAnimation.value,
                       ),
@@ -133,7 +108,6 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
                       'assets/images/YNFNY_Logo-1753709879889.png',
-<<<<<<< HEAD
                       width: 280.0, // Fixed width
                       height: 224.0, // Fixed height
                       fit: BoxFit.cover,
@@ -141,15 +115,6 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                         return Container(
                           width: 280.0, // Fixed width
                           height: 224.0, // Fixed height
-=======
-                      width: 70.w, // Increased from 60.w to 70.w
-                      height: 28.h, // Increased from 25.h to 28.h
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 70.w, // Increased from 60.w to 70.w
-                          height: 28.h, // Increased from 25.h to 28.h
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                           decoration: BoxDecoration(
                             color: AppTheme.primaryOrange,
                             borderRadius: BorderRadius.circular(12),
@@ -160,7 +125,6 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                               CustomIconWidget(
                                 iconName: 'account_balance',
                                 color: AppTheme.backgroundDark,
-<<<<<<< HEAD
                                 size: 60.0,
                               ),
                               SizedBox(height: 16.0),
@@ -168,15 +132,6 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                                 'YNFNY',
                                 style: GoogleFonts.montserrat(
                                   fontSize: 18.0,
-=======
-                                size: 15.w,
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'YNFNY',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 18.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.backgroundDark,
                                   letterSpacing: 2.0,
@@ -190,21 +145,13 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                   ),
                 ),
                 SizedBox(
-<<<<<<< HEAD
                     height: 24.0), // Fixed height to push text down
-=======
-                    height: 3.h), // Increased from 2.h to 3.h to push text down
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 // Added "You Are Not From New York" text in orange
                 Text(
                   'You Are Not From New York',
                   style: GoogleFonts.inter(
                     color: AppTheme.primaryOrange,
-<<<<<<< HEAD
                     fontSize: 14.0,
-=======
-                    fontSize: 14.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.0,
                   ).copyWith(
@@ -217,20 +164,12 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                   ),
                   textAlign: TextAlign.center,
                 ),
-<<<<<<< HEAD
                 SizedBox(height: 16.0),
-=======
-                SizedBox(height: 2.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 // WE OUTSIDE Text
                 Text(
                   'WE OUTSIDE',
                   style: GoogleFonts.inter(
-<<<<<<< HEAD
                     fontSize: 10.0,
-=======
-                    fontSize: 10.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     fontWeight: FontWeight.w500,
                     color: AppTheme.textSecondary,
                     letterSpacing: 1.5,

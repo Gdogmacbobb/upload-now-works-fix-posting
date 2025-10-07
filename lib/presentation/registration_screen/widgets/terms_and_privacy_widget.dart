@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -25,15 +21,9 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-<<<<<<< HEAD
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: AppTheme.darkTheme.colorScheme.surface.withOpacity(0.5),
-=======
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: AppTheme.darkTheme.colorScheme.surface.withValues(alpha: 0.5),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppTheme.borderSubtle,
@@ -51,11 +41,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
                 color: AppTheme.primaryOrange,
                 size: 24,
               ),
-<<<<<<< HEAD
               SizedBox(width: 12.0),
-=======
-              SizedBox(width: 3.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               Text(
                 'Legal Agreement',
                 style: AppTheme.darkTheme.textTheme.titleMedium?.copyWith(
@@ -65,11 +51,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
               ),
             ],
           ),
-<<<<<<< HEAD
           SizedBox(height: 24.0),
-=======
-          SizedBox(height: 3.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
           // Terms and Privacy Links
           _buildLegalLink(
@@ -79,11 +61,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
             icon: 'description',
             onTap: () => _showTermsDialog(context),
           ),
-<<<<<<< HEAD
           SizedBox(height: 16.0),
-=======
-          SizedBox(height: 2.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
           _buildLegalLink(
             title: 'Privacy Policy',
@@ -92,11 +70,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
             icon: 'privacy_tip',
             onTap: () => _showPrivacyDialog(context),
           ),
-<<<<<<< HEAD
           SizedBox(height: 24.0),
-=======
-          SizedBox(height: 3.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
           // Acceptance Checkbox
           Row(
@@ -116,17 +90,10 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
                   width: 2,
                 ),
               ),
-<<<<<<< HEAD
               SizedBox(width: 8.0),
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(top: 12.0),
-=======
-              SizedBox(width: 2.w),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 3.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   child: RichText(
                     text: TextSpan(
                       style: AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
@@ -170,7 +137,6 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
 
           if (!widget.isTermsAccepted)
             Padding(
-<<<<<<< HEAD
               padding: EdgeInsets.only(top: 16.0),
               child: Container(
                 width: double.infinity,
@@ -180,17 +146,6 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: AppTheme.accentRed.withOpacity(0.3),
-=======
-              padding: EdgeInsets.only(top: 2.h),
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentRed.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppTheme.accentRed.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     width: 1,
                   ),
                 ),
@@ -201,11 +156,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
                       color: AppTheme.accentRed,
                       size: 16,
                     ),
-<<<<<<< HEAD
                     SizedBox(width: 8.0),
-=======
-                    SizedBox(width: 2.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     Expanded(
                       child: Text(
                         'You must accept the terms and privacy policy to continue',
@@ -233,11 +184,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-<<<<<<< HEAD
         padding: EdgeInsets.all(12.0),
-=======
-        padding: EdgeInsets.all(3.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         decoration: BoxDecoration(
           color: AppTheme.darkTheme.colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
@@ -253,11 +200,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
               color: AppTheme.primaryOrange,
               size: 20,
             ),
-<<<<<<< HEAD
             SizedBox(width: 12.0),
-=======
-            SizedBox(width: 3.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,11 +212,7 @@ class _TermsAndPrivacyWidgetState extends State<TermsAndPrivacyWidget> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-<<<<<<< HEAD
                   SizedBox(height: 4.0),
-=======
-                  SizedBox(height: 0.5.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                   Text(
                     description,
                     style: AppTheme.darkTheme.textTheme.bodySmall?.copyWith(

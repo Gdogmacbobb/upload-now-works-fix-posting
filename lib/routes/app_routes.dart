@@ -16,11 +16,7 @@ import '../presentation/video_upload/video_upload.dart';
 
 class AppRoutes {
   // TODO: Add your routes here
-<<<<<<< HEAD
   static const String initial = '/splash-screen';
-=======
-  static const String initial = '/';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   static const String accountTypeSelection = '/account-type-selection';
   static const String loginScreen = '/login-screen';
   static const String splashScreen = '/splash-screen';
@@ -28,10 +24,7 @@ class AppRoutes {
   static const String followingFeed = '/following-feed';
   static const String videoUpload = '/video-upload';
   static const String discoveryFeed = '/discovery-feed';
-<<<<<<< HEAD
   static const String discovery = '/discovery'; // Alias for discovery-feed
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   static const String registrationScreen = '/registration-screen';
   static const String userProfile = '/user-profile';
   static const String donationFlow = '/donation-flow';
@@ -49,14 +42,9 @@ class AppRoutes {
     followingFeed: (context) => const FollowingFeed(),
     videoUpload: (context) => const VideoUpload(),
     discoveryFeed: (context) => const DiscoveryFeed(),
-<<<<<<< HEAD
     discovery: (context) => const DiscoveryFeed(), // Alias for discoveryFeed
     registrationScreen: (context) => const RegistrationScreen(),
     userProfile: (context) => const UserProfile(userId: 'b6557ae4-ec19-4483-a2bd-844ff1c0dd9e'),
-=======
-    registrationScreen: (context) => const RegistrationScreen(),
-    userProfile: (context) => const UserProfile(),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     donationFlow: (context) => const DonationFlow(),
     performerProfile: (context) => const PerformerProfile(),
     onboardingFlow: (context) => const OnboardingFlow(),

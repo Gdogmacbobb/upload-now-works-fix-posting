@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -24,11 +20,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-<<<<<<< HEAD
         color: AppTheme.darkTheme.colorScheme.surface.withOpacity(0.5),
-=======
-        color: AppTheme.darkTheme.colorScheme.surface.withValues(alpha: 0.5),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: AppTheme.borderSubtle,

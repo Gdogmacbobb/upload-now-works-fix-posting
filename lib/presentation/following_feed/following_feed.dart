@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../core/app_export.dart';
 import '../../services/supabase_service.dart';
@@ -335,7 +331,6 @@ class _FollowingFeedState extends State<FollowingFeed>
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: AppTheme.backgroundDark,
-<<<<<<< HEAD
         body: SafeArea(
           child: Stack(
             children: [
@@ -432,149 +427,6 @@ class _FollowingFeedState extends State<FollowingFeed>
             ],
           ),
         ));
-=======
-        body: Stack(children: [
-          // Main content
-          _isLoading
-              ? _buildLoadingState()
-              : _hasError
-                  ? _buildErrorState()
-                  : _videos.isEmpty
-                      ? FollowingEmptyStateWidget(
-                          onDiscoverTap: _navigateToDiscovery,
-                        )
-                      : Column(
-                          children: [
-                            // Navigation Header - Same styling as Discovery Feed
-                            FeedNavigationHeaderWidget(
-                              currentFeed: 'following',
-                              showSearch: false,
-                              unreadCount: _unreadCount,
-                              onRefresh: _refreshFeed,
-                            ),
-
-                            // Video Feed
-                            Expanded(
-                              child: RefreshIndicator(
-                                onRefresh: _refreshFeed,
-                                color: AppTheme.primaryOrange,
-                                backgroundColor: AppTheme.surfaceDark,
-                                child: PageView.builder(
-                                  controller: _pageController,
-                                  scrollDirection: Axis.vertical,
-                                  onPageChanged: _onVideoChanged,
-                                  itemCount: _videos.length,
-                                  itemBuilder: (context, index) {
-                                    return GestureDetector(
-                                      onLongPress: _showContextMenuAction,
-                                      child: FollowingVideoPlayerWidget(
-                                        videoData: _videos[index],
-                                        onLike: () => _onLike(index),
-                                        onComment: _onComment,
-                                        onShare: _onShare,
-                                        onDonate: () =>
-                                            _onDonate(_videos[index]['id']),
-                                        onProfileTap: () => _onProfileTap(
-                                            _videos[index]['performerId'] ??
-                                                ''),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-
-                            // Bottom Navigation Header - Added from Discovery Feed
-                            FeedNavigationBottomWidget(
-                              currentFeed: 'following',
-                              showSearch: false,
-                              unreadCount: _unreadCount,
-                              onRefresh: _refreshFeed,
-                            ),
-                          ],
-                        ),
-
-          // Bottom navigation for performers
-          if (_currentUserRole == 'street_performer') _buildBottomNavigation(),
-
-          // Loading indicator for pagination
-          if (_isLoadingMore)
-            Positioned(
-              bottom: 10.h,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.backgroundDark.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primaryOrange,
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-            ),
-
-          // Context Menu Overlay
-          if (_showContextMenu)
-            FollowingContextMenuWidget(
-              onUnfollow: _onUnfollow,
-              onSave: _onSave,
-              onReport: _onReport,
-              onShare: () => _onShare(),
-              onClose: _hideContextMenu,
-            ),
-        ]));
-  }
-
-  Widget _buildBottomNavigation() {
-    return Positioned(
-        bottom: 0,
-        left: 0,
-        right: 0,
-        child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-                color: AppTheme.surfaceDark.withValues(alpha: 0.9),
-                border: Border(
-                    top: BorderSide(color: AppTheme.borderSubtle, width: 0.5))),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavItem(Icons.home, 'Home', true, onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.userProfile);
-                  }),
-                  _buildNavItem(Icons.add_circle_outline, 'Upload', false,
-                      onTap: () {
-                    Navigator.pushNamed(context, '/video-recording');
-                  }),
-                  _buildNavItem(Icons.person_outline, 'Profile', false,
-                      onTap: () {
-                    Navigator.pushNamed(context, '/user-profile');
-                  }),
-                ])));
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive,
-      {VoidCallback? onTap}) {
-    return GestureDetector(
-        onTap: onTap,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon,
-              size: 24,
-              color:
-                  isActive ? AppTheme.primaryOrange : AppTheme.textSecondary),
-          SizedBox(height: 4),
-          Text(label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: isActive
-                      ? AppTheme.primaryOrange
-                      : AppTheme.textSecondary)),
-        ]));
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }
 
   Widget _buildLoadingState() {

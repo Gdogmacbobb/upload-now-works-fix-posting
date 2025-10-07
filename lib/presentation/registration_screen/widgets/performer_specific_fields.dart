@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
 import 'package:ynfny/core/constants/performance_categories.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
 class PerformerSpecificFields extends StatefulWidget {
-<<<<<<< HEAD
   final List<String> selectedPerformanceTypes;
   final Function(String, bool) onCategoryToggled;
   final TextEditingController instagramController;
@@ -27,21 +22,6 @@ class PerformerSpecificFields extends StatefulWidget {
     required this.youtubeController,
     this.selectedBirthDate,
     required this.onBirthDateChanged,
-=======
-  final String? selectedPerformanceType;
-  final Function(String?) onPerformanceTypeChanged;
-  final TextEditingController instagramController;
-  final TextEditingController tiktokController;
-  final TextEditingController youtubeController;
-
-  const PerformerSpecificFields({
-    Key? key,
-    this.selectedPerformanceType,
-    required this.onPerformanceTypeChanged,
-    required this.instagramController,
-    required this.tiktokController,
-    required this.youtubeController,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
   }) : super(key: key);
 
   @override
@@ -50,7 +30,6 @@ class PerformerSpecificFields extends StatefulWidget {
 }
 
 class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
-<<<<<<< HEAD
   Widget _getIconForType(String category, bool isSelected) {
     return Text(
       PerformanceCategories.getEmoji(category),
@@ -70,55 +49,6 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
       children: [
         Text(
           'Age Verification',
-=======
-  final List<Map<String, dynamic>> performanceTypes = [
-    {
-      'value': 'music',
-      'label': 'Music',
-      'icon': 'music_note',
-      'description': 'Singing, instruments, beatboxing',
-    },
-    {
-      'value': 'dance',
-      'label': 'Dance',
-      'icon': 'sports_gymnastics',
-      'description': 'Hip-hop, breakdancing, contemporary',
-    },
-    {
-      'value': 'art',
-      'label': 'Visual Art',
-      'icon': 'palette',
-      'description': 'Painting, drawing, sculpture',
-    },
-    {
-      'value': 'comedy',
-      'label': 'Comedy',
-      'icon': 'theater_comedy',
-      'description': 'Stand-up, improv, street comedy',
-    },
-    {
-      'value': 'magic',
-      'label': 'Magic',
-      'icon': 'auto_fix_high',
-      'description': 'Street magic, illusions',
-    },
-    {
-      'value': 'other',
-      'label': 'Other',
-      'icon': 'category',
-      'description': 'Acrobatics, juggling, etc.',
-    },
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Performance Type Section
-        Text(
-          'Performance Type',
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           style: AppTheme.darkTheme.textTheme.titleMedium?.copyWith(
             color: AppTheme.primaryOrange,
             fontWeight: FontWeight.w600,
@@ -126,18 +56,13 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
         ),
         SizedBox(height: 1.h),
         Text(
-<<<<<<< HEAD
           'You must be 18 or older to create an account',
-=======
-          'What type of street performance do you specialize in?',
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           style: AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
             color: AppTheme.textSecondary,
           ),
         ),
         SizedBox(height: 2.h),
 
-<<<<<<< HEAD
         Text(
           'Date of Birth',
           style: AppTheme.darkTheme.textTheme.labelLarge?.copyWith(
@@ -234,9 +159,6 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
         SizedBox(height: 2.h),
 
         // Main Category Grid
-=======
-        // Performance Type Grid
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -244,7 +166,6 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
             crossAxisCount: 2,
             crossAxisSpacing: 3.w,
             mainAxisSpacing: 2.h,
-<<<<<<< HEAD
             childAspectRatio: 2.2,
           ),
           itemCount: mainCategories.length,
@@ -280,37 +201,10 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
                           ),
                         ]
                       : null,
-=======
-            childAspectRatio: 2.5,
-          ),
-          itemCount: performanceTypes.length,
-          itemBuilder: (context, index) {
-            final type = performanceTypes[index];
-            final isSelected = widget.selectedPerformanceType == type['value'];
-
-            return GestureDetector(
-              onTap: () {
-                widget.onPerformanceTypeChanged(type['value']);
-              },
-              child: Container(
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppTheme.primaryOrange.withValues(alpha: 0.2)
-                      : AppTheme.darkTheme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppTheme.primaryOrange
-                        : AppTheme.borderSubtle,
-                    width: isSelected ? 2 : 1,
-                  ),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-<<<<<<< HEAD
                     _getIconForType(category, isSelected),
                     SizedBox(height: 6),
                     Text(
@@ -325,26 +219,6 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-=======
-                    CustomIconWidget(
-                      iconName: type['icon'],
-                      color: isSelected
-                          ? AppTheme.primaryOrange
-                          : AppTheme.textSecondary,
-                      size: 24,
-                    ),
-                    SizedBox(height: 1.h),
-                    Text(
-                      type['label'],
-                      style: AppTheme.darkTheme.textTheme.labelMedium?.copyWith(
-                        color: isSelected
-                            ? AppTheme.primaryOrange
-                            : AppTheme.textPrimary,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.center,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                     ),
                   ],
                 ),
@@ -482,11 +356,7 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
             ),
           ),
           validator: (value) {
-<<<<<<< HEAD
             if (value != null && value.isNotEmpty && value.length < 2) {
-=======
-            if (value != null && value.isNotEmpty && value.length < 3) {
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               return 'Please enter a valid YouTube channel';
             }
             return null;
@@ -495,7 +365,6 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
       ],
     );
   }
-<<<<<<< HEAD
 
   Future<void> _selectBirthDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -554,6 +423,4 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
     }
     return age;
   }
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 }

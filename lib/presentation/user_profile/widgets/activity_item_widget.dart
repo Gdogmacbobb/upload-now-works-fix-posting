@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -21,7 +17,6 @@ class ActivityItemWidget extends StatelessWidget {
     final timeAgo = _getTimeAgo(timestamp);
 
     return Container(
-<<<<<<< HEAD
       padding: EdgeInsets.all(12.0),
       margin: EdgeInsets.only(bottom: 8.0),
       decoration: BoxDecoration(
@@ -29,51 +24,27 @@ class ActivityItemWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: AppTheme.borderSubtle.withOpacity(0.3),
-=======
-      padding: EdgeInsets.all(3.w),
-      margin: EdgeInsets.only(bottom: 1.h),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppTheme.borderSubtle.withValues(alpha: 0.3),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           width: 1,
         ),
       ),
       child: Row(
         children: [
           Container(
-<<<<<<< HEAD
             width: 40.0,
             height: 40.0,
             decoration: BoxDecoration(
               color: _getActivityColor(activityType).withOpacity(0.2),
-=======
-            width: 10.w,
-            height: 10.w,
-            decoration: BoxDecoration(
-              color: _getActivityColor(activityType).withValues(alpha: 0.2),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
               shape: BoxShape.circle,
             ),
             child: Center(
               child: CustomIconWidget(
                 iconName: _getActivityIcon(activityType),
                 color: _getActivityColor(activityType),
-<<<<<<< HEAD
                 size: 20.0,
               ),
             ),
           ),
           SizedBox(width: 12.0),
-=======
-                size: 5.w,
-              ),
-            ),
-          ),
-          SizedBox(width: 3.w),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,11 +58,7 @@ class ActivityItemWidget extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-<<<<<<< HEAD
                 SizedBox(height: 4.0),
-=======
-                SizedBox(height: 0.5.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 Text(
                   timeAgo,
                   style: AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
@@ -105,11 +72,7 @@ class ActivityItemWidget extends StatelessWidget {
             Text(
               "\$${(activity["amount"] as double).toStringAsFixed(2)}",
               style: AppTheme.donationAmountStyle(isLight: false).copyWith(
-<<<<<<< HEAD
                 fontSize: 14.0,
-=======
-                fontSize: 14.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 color: AppTheme.successGreen,
                 fontWeight: FontWeight.w600,
               ),

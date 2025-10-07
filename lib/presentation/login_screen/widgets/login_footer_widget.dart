@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../../core/app_export.dart';
 
@@ -81,11 +77,7 @@ class LoginFooterWidget extends StatelessWidget {
           child: Text(
             'By continuing, you agree to our Terms of Service and Privacy Policy',
             style: AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
-<<<<<<< HEAD
               color: AppTheme.textSecondary.withOpacity(0.7),
-=======
-              color: AppTheme.textSecondary.withValues(alpha: 0.7),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
             ),
             textAlign: TextAlign.center,
           ),

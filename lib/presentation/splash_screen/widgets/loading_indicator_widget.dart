@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/app_export.dart';
@@ -62,13 +58,8 @@ class _LoadingIndicatorWidgetState extends State<LoadingIndicatorWidget>
             return Transform.rotate(
               angle: _rotationAnimation.value * 2 * 3.14159,
               child: Container(
-<<<<<<< HEAD
                 width: 32.0,
                 height: 32.0,
-=======
-                width: 8.w,
-                height: 8.w,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -91,29 +82,17 @@ class _LoadingIndicatorWidgetState extends State<LoadingIndicatorWidget>
                     ),
                     // Red accent dot
                     Positioned(
-<<<<<<< HEAD
                       top: 2.0,
                       left: 14.0,
                       child: Container(
                         width: 4.0,
                         height: 4.0,
-=======
-                      top: 0.5.w,
-                      left: 3.5.w,
-                      child: Container(
-                        width: 1.w,
-                        height: 1.w,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                         decoration: BoxDecoration(
                           color: AppTheme.accentRed,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-<<<<<<< HEAD
                               color: AppTheme.accentRed.withOpacity(0.6),
-=======
-                              color: AppTheme.accentRed.withValues(alpha: 0.6),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                               blurRadius: 4,
                               spreadRadius: 1,
                             ),
@@ -127,11 +106,7 @@ class _LoadingIndicatorWidgetState extends State<LoadingIndicatorWidget>
             );
           },
         ),
-<<<<<<< HEAD
         SizedBox(height: 24.0),
-=======
-        SizedBox(height: 3.h),
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         // Loading text with typing animation
         AnimatedBuilder(
           animation: _animationController,
@@ -140,11 +115,7 @@ class _LoadingIndicatorWidgetState extends State<LoadingIndicatorWidget>
             return Text(
               '${widget.loadingText}$dots',
               style: GoogleFonts.inter(
-<<<<<<< HEAD
                 fontSize: 14.0,
-=======
-                fontSize: 14.sp,
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 fontWeight: FontWeight.w400,
                 color: AppTheme.textSecondary,
                 letterSpacing: 0.5,

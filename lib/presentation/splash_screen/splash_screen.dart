@@ -2,11 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/app_export.dart';
@@ -38,10 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
     print('DEBUG: SplashScreen init');
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     _setSystemUIOverlay();
     _startInitialization();
   }
@@ -113,15 +106,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _performInitializationTasks() async {
     try {
-<<<<<<< HEAD
       print('DEBUG: Starting initialization tasks');
       // Initialize Supabase and check authentication
       await _supabaseService.waitForInitialization(); // Proper initialization wait
       print('DEBUG: Supabase service ready');
-=======
-      // Initialize Supabase and check authentication
-      await _supabaseService.client; // This will trigger initialization
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
       // Simulate other background tasks
       await Future.wait([
@@ -130,26 +118,17 @@ class _SplashScreenState extends State<SplashScreen> {
         _verifyGeofencingCapabilities(),
         _prepareCachedVideoData(),
       ]);
-<<<<<<< HEAD
       print('DEBUG: Background tasks completed');
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
       // Ensure minimum splash display time
       await Future.delayed(const Duration(milliseconds: 2500));
 
       if (mounted) {
-<<<<<<< HEAD
         print('DEBUG: Navigating to next screen');
         _navigateToNextScreen();
       }
     } catch (e) {
       print('DEBUG: Initialization error - ${e.toString()}');
-=======
-        _navigateToNextScreen();
-      }
-    } catch (e) {
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       debugPrint('Initialization error: $e');
       if (mounted) {
         setState(() {
@@ -192,25 +171,16 @@ class _SplashScreenState extends State<SplashScreen> {
     String nextRoute;
 
     if (_supabaseService.isAuthenticated) {
-<<<<<<< HEAD
       print('DEBUG: User authenticated, navigating to /discovery-feed');
       // Authenticated users go to Discovery Feed
       nextRoute = '/discovery-feed';
     } else {
       print('DEBUG: No user session found, navigating to /login-screen');
-=======
-      // Authenticated users go to Discovery Feed
-      nextRoute = '/discovery-feed';
-    } else {
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       // Non-authenticated users go directly to login screen
       nextRoute = '/login-screen';
     }
 
-<<<<<<< HEAD
     print('DEBUG: Pushing route: $nextRoute');
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
     Navigator.pushReplacementNamed(context, nextRoute);
   }
 
@@ -249,7 +219,6 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
         Expanded(
           flex: 1,
-<<<<<<< HEAD
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -272,27 +241,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ],
             ),
-=======
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              LoadingIndicatorWidget(
-                loadingText: _loadingText.replaceAll('...', ''),
-              ),
-              SizedBox(height: 8.h),
-              // NYC Street Culture tagline
-              Text(
-                'Discover NYC Street Performers',
-                style: GoogleFonts.inter(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w400,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.8),
-                  letterSpacing: 0.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
           ),
         ),
       ],

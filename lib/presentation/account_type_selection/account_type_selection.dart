@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:ynfny/utils/responsive_scale.dart';
-=======
-import 'package:sizer/sizer.dart';
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
 import '../../core/app_export.dart';
 import '../../theme/app_theme.dart';
@@ -33,10 +29,6 @@ class _AccountTypeSelectionState extends State<AccountTypeSelection> {
         "Upload and share performance videos",
         "Receive donations from supporters",
         "Build your follower base",
-<<<<<<< HEAD
-=======
-        "Location-based performance tagging",
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
         "Monetize your street art talents"
       ],
       "verificationInfo":
@@ -45,23 +37,13 @@ class _AccountTypeSelectionState extends State<AccountTypeSelection> {
     {
       "type": "new_yorker",
       "title": "New Yorker",
-<<<<<<< HEAD
       "description": "Discover and watch amazing street performers do their thing",
-=======
-      "description": "Discover and watch amazing street performers do there thing",
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       "iconName": "favorite",
       "accentColor": AppTheme.successGreen,
       "features": [
         "Discover local street performances",
         "Support performers with donations",
-<<<<<<< HEAD
         "Share and repost favorite content"
-=======
-        "Share and repost favorite content",
-        "Follow your favorite artists",
-        "Explore NYC's street culture"
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       ],
       "verificationInfo":
           "Instant access: Start discovering performances immediately"
@@ -76,7 +58,6 @@ class _AccountTypeSelectionState extends State<AccountTypeSelection> {
 
   void _continueToRegistration() {
     if (selectedAccountType != null) {
-<<<<<<< HEAD
       final selectedType = accountTypes.firstWhere(
         (type) => type['type'] == selectedAccountType,
       );
@@ -88,12 +69,6 @@ class _AccountTypeSelectionState extends State<AccountTypeSelection> {
         context,
         '/registration-screen',
         arguments: {'accountType': accountTypeTitle},
-=======
-      Navigator.pushNamed(
-        context,
-        '/registration-screen',
-        arguments: {'accountType': selectedAccountType},
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
       );
     }
   }
@@ -124,10 +99,7 @@ class _AccountTypeSelectionState extends State<AccountTypeSelection> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-<<<<<<< HEAD
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-=======
->>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
                 child: Column(
                   children: [
                     // Account Type Cards
