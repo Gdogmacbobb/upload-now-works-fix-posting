@@ -37,6 +37,9 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   // Zoom throttling with repeating timer (16ms for 60fps response)
   Timer? _zoomUpdateTimer;
   double? _pendingZoom;
+  
+  // Camera switch debounce (200ms cooldown)
+  DateTime? _lastCameraSwitchTime;
 
   @override
   void initState() {
@@ -164,6 +167,17 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   Future<void> _switchCamera() async {
     if (!_isInitialized || _controller == null) return;
     if (_isRecording) return; // Don't switch while recording
+    
+    // Debounce: Prevent rapid button presses
+    final now = DateTime.now();
+    if (_lastCameraSwitchTime != null) {
+      final timeSinceLastSwitch = now.difference(_lastCameraSwitchTime!).inMilliseconds;
+      if (timeSinceLastSwitch < 200) {
+        debugPrint('⏸️ [CAMERA_SWITCH] Debounced (${timeSinceLastSwitch}ms < 200ms)');
+        return;
+      }
+    }
+    _lastCameraSwitchTime = now;
     
     try {
       final startTime = DateTime.now();
