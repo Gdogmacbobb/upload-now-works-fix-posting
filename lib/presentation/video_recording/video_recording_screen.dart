@@ -58,24 +58,41 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       
       _controller = CameraController(
         _cameras![_selectedCamera],
-        ResolutionPreset.high,
+        ResolutionPreset.max,
         enableAudio: !_isMuted,
       );
       await _controller!.initialize();
-      debugPrint('Camera initialization: Controller initialized successfully');
       
-      // Get actual zoom limits from camera, but reset to 1.0
+      // Get actual zoom limits from camera and set to widest view (minZoom)
       try {
         _minZoom = await _controller!.getMinZoomLevel();
         _maxZoom = await _controller!.getMaxZoomLevel();
-        _currentZoom = 1.0;
-        await _controller!.setZoomLevel(1.0);
+        _currentZoom = _minZoom;
+        _baseZoom = _minZoom;
+        await _controller!.setZoomLevel(_minZoom);
+        
+        // Enhanced logging for camera capabilities
+        final camera = _cameras![_selectedCamera];
+        final lensDir = camera.lensDirection == CameraLensDirection.back ? 'Back' : 'Front';
+        final resolution = _controller!.value.previewSize;
+        debugPrint('═══════════════════════════════════════');
+        debugPrint('Camera Initialization Complete');
+        debugPrint('═══════════════════════════════════════');
+        debugPrint('Lens Direction: $lensDir');
+        debugPrint('Flash Support: ${_hasFlashSupport ? "Yes" : "No (front camera)"}');
+        debugPrint('Zoom Range: ${_minZoom.toStringAsFixed(2)}x - ${_maxZoom.toStringAsFixed(2)}x');
+        debugPrint('Starting Zoom: ${_minZoom.toStringAsFixed(2)}x (widest view)');
+        debugPrint('Resolution Preset: ResolutionPreset.max');
+        debugPrint('Preview Size: ${resolution?.width}x${resolution?.height}');
+        debugPrint('Audio Enabled: ${!_isMuted}');
+        debugPrint('═══════════════════════════════════════');
       } catch (e) {
         debugPrint('Failed to get zoom limits: $e');
         // Fallback to safe defaults
         _minZoom = 1.0;
         _maxZoom = 1.0;
         _currentZoom = 1.0;
+        _baseZoom = 1.0;
       }
       
       if (!mounted) return;
@@ -156,19 +173,24 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     _controller = CameraController(
       _cameras![_selectedCamera],
-      ResolutionPreset.high,
+      ResolutionPreset.max,
       enableAudio: !_isMuted,
     );
     
     await _controller!.initialize();
     
-    // Get zoom limits for new camera and reset zoom to 1.0
+    // Get zoom limits for new camera and set to widest view (minZoom)
     try {
       _minZoom = await _controller!.getMinZoomLevel();
       _maxZoom = await _controller!.getMaxZoomLevel();
-      _currentZoom = 1.0;
-      _baseZoom = 1.0;
-      await _controller!.setZoomLevel(1.0);
+      _currentZoom = _minZoom;
+      _baseZoom = _minZoom;
+      await _controller!.setZoomLevel(_minZoom);
+      
+      // Log camera switch details
+      final camera = _cameras![_selectedCamera];
+      final lensDir = camera.lensDirection == CameraLensDirection.back ? 'Back' : 'Front';
+      debugPrint('Camera switched to: $lensDir (Zoom: ${_minZoom.toStringAsFixed(2)}x-${_maxZoom.toStringAsFixed(2)}x)');
     } catch (e) {
       debugPrint('Failed to get zoom limits after camera switch: $e');
       _minZoom = 1.0;
@@ -276,19 +298,20 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     _controller = CameraController(
       _cameras![_selectedCamera],
-      ResolutionPreset.high,
+      ResolutionPreset.max,
       enableAudio: !_isMuted,
     );
     
     await _controller!.initialize();
     
-    // Refresh zoom limits for new controller, reset to 1.0
+    // Refresh zoom limits for new controller, set to widest view (minZoom)
     try {
       _minZoom = await _controller!.getMinZoomLevel();
       _maxZoom = await _controller!.getMaxZoomLevel();
-      _currentZoom = 1.0;
-      _baseZoom = 1.0;
-      await _controller!.setZoomLevel(1.0);
+      _currentZoom = _minZoom;
+      _baseZoom = _minZoom;
+      await _controller!.setZoomLevel(_minZoom);
+      debugPrint('Mute toggled: ${_isMuted ? "ON" : "OFF"} (Zoom reset to ${_minZoom.toStringAsFixed(2)}x)');
     } catch (e) {
       debugPrint('Failed to get zoom limits after mute toggle: $e');
       _minZoom = 1.0;
@@ -433,6 +456,62 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                     child: _overlayIconButton(
                       icon: Icons.cameraswitch,
                       onPressed: _switchCamera,
+                    ),
+                  ),
+                  
+                  // Debug overlay - top left showing zoom info
+                  Positioned(
+                    top: 132,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.white24, width: 1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Zoom: ${_currentZoom.toStringAsFixed(2)}x',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Range: ${_minZoom.toStringAsFixed(2)}x - ${_maxZoom.toStringAsFixed(2)}x',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_cameras![_selectedCamera].lensDirection == CameraLensDirection.back ? "Back" : "Front"} Camera',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'ResolutionPreset.max',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
