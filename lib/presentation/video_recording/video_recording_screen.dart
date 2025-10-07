@@ -144,6 +144,14 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       try {
         _recordingTimer?.cancel();
         final filePath = await _controller!.stopRecording();
+        
+        // Auto-turn off torch when recording stops
+        if (_isFlashOn && _hasFlashSupport) {
+          debugPrint('🔦 [RECORD_LIFECYCLE] Auto-disabling torch after recording stopped');
+          await _controller!.setTorch(false);
+          debugPrint('✅ [RECORD_LIFECYCLE] Torch auto-off completed');
+        }
+        
         setState(() {
           _isRecording = false;
           _recordingSeconds = 0;
@@ -203,10 +211,10 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _toggleFlash() async {
-    if (!_isInitialized || _controller == null) return;
+    if (_controller == null) return;
     
     debugPrint('💡 [FLASH_TOGGLE] Attempting flash toggle...');
-    debugPrint('   Current state: support=$_hasFlashSupport, on=$_isFlashOn, lens=$_lensDirection');
+    debugPrint('   Current state: support=$_hasFlashSupport, on=$_isFlashOn, lens=$_lensDirection, recording=$_isRecording');
     
     // Check if flash is supported
     if (!_hasFlashSupport) {
@@ -224,11 +232,11 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
     
     try {
       final newFlashState = !_isFlashOn;
-      debugPrint('🔦 [FLASH_TOGGLE] Calling setTorch($newFlashState)...');
+      debugPrint('🔦 [FLASH_STATE] User toggled flash: $_isFlashOn → $newFlashState');
       
       await _controller!.setTorch(newFlashState);
       
-      debugPrint('✅ [FLASH_TOGGLE] Torch command sent successfully');
+      debugPrint('✅ [FLASH_STATE] Torch hardware synced successfully');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -241,7 +249,7 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       }
       // State will be updated via stateStream listener
     } catch (e) {
-      debugPrint('❌ [FLASH_TOGGLE] Flash toggle failed: $e');
+      debugPrint('❌ [FLASH_STATE] Flash toggle failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -358,14 +366,14 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
                   ),
                 ),
                 
-                // Flash button - always visible
+                // Flash button - always visible, 40% opacity when unsupported
                 Positioned(
                   top: 12,
                   right: 12,
                   child: _overlayIconButton(
                     icon: _isFlashOn ? Icons.flash_on : Icons.flash_off,
                     onPressed: _toggleFlash,
-                    isDisabled: !_isInitialized || !_hasFlashSupport,
+                    isDisabled: !_hasFlashSupport,
                   ),
                 ),
                 
