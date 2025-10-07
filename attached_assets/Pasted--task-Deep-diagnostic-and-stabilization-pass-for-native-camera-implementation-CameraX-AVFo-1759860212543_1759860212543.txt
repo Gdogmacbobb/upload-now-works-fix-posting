@@ -1,0 +1,107 @@
+{
+  "task": "Deep diagnostic and stabilization pass for native camera implementation (CameraX / AVFoundation)",
+  "requirements": {
+    "scope": "Native camera modules + Flutter UI overlay",
+    "goals": [
+      "Completely remove any leftover black debug or diagnostic boxes from preview",
+      "Ensure flash and camera-switch icons are always visible, not hidden or clipped, and fully responsive",
+      "Fix flash control logic so it activates torch only when supported (rear camera) without false 'not supported' errors",
+      "Eliminate lag in zoom in/out by moving all zoom updates fully off UI thread and confirming non-blocking render path",
+      "Fix rotation toggle so it cycles front → back → front correctly without delay or lockout",
+      "Verify preview frame pacing is smooth (no stalls >16ms) and image stream matches native camera app clarity"
+    ]
+  },
+  "diagnostics": {
+    "enable_verbose_logs": true,
+    "log_channels": [
+      "ui_render",
+      "zoom_events",
+      "flash_state",
+      "camera_switch",
+      "fps_actual"
+    ],
+    "log_output": "console + file (camera_debug.log)",
+    "checkpoints": [
+      "Overlay attached true/false",
+      "Flash icon widget visibility state",
+      "Camera switch event timing (ms)",
+      "Zoom gesture latency (ms per update)",
+      "Frame rate actual vs target"
+    ]
+  },
+  "fixes": [
+    {
+      "ui_overlay": {
+        "remove_elements": ["any Text/Container widgets displaying zoom or diagnostics"],
+        "layout": "Stack + SafeArea persistent layer above preview texture",
+        "ensure_visibility": {
+          "flashBtn": {"visible": true, "zIndex": 10, "color": "#FFFFFFFF", "size": 32},
+          "switchBtn": {"visible": true, "zIndex": 10, "color": "#FFFFFFFF", "size": 32}
+        },
+        "rebuild_trigger": "only on camera index or flash state change"
+      }
+    },
+    {
+      "flash_logic": {
+        "android": {
+          "check": "camera.characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true",
+          "action": "cameraControl.enableTorch(true/false)",
+          "error_handling": "no SnackBar if unsupported, just greyed icon"
+        },
+        "ios": {
+          "check": "AVCaptureDevice.hasTorch == true",
+          "action": "device.torchMode = .on / .off (wrapped in configuration lock)",
+          "ui_sync": "update flash icon state on success"
+        }
+      }
+    },
+    {
+      "zoom_performance": {
+        "move_to_background": true,
+        "android": "run setZoomRatio() inside Dispatchers.IO coroutine with Mutex to prevent concurrent updates",
+        "ios": "dispatch to background queue for device.videoZoomFactor updates",
+        "flutter_side": "throttle to 16ms, but discard queued updates if more than 2 pending to prevent lag buildup",
+        "log_metrics": "record avg latency per zoom gesture frame"
+      }
+    },
+    {
+      "camera_rotation": {
+        "cycle_logic": "(_currentIndex + 1) % _availableCameras.length",
+        "reinit_flow": "dispose old controller, await new init, update overlay immediately",
+        "debounce": "200ms max delay between switch presses",
+        "reset_zoom": "on each switch, re-query minZoom and set as default"
+      }
+    },
+    {
+      "preview_quality": {
+        "verify_stream": "confirm actual resolution and fps from hardware match target (print both)",
+        "adjust_fps": "if device supports 60fps, lock; else fallback gracefully to 30fps",
+        "confirm_smoothness": "monitor average frame interval <= 16ms over 10 seconds"
+      }
+    }
+  ],
+  "verification": {
+    "visual": [
+      "No black boxes or overlays visible on preview",
+      "Flash and switch icons visible in top-right, always above preview"
+    ],
+    "functional": [
+      "Flash toggles LED instantly on rear camera, greyed out on front",
+      "Zoom pinch gestures respond instantly with no lag",
+      "Camera flips back and forth smoothly within 1s total latency"
+    ],
+    "performance": [
+      "Frame rate logs show steady 30–60fps with no drops >16ms",
+      "Console logs confirm async zoom execution (no main-thread blocking)"
+    ],
+    "final_logs": [
+      "Overlay attached=true",
+      "flashSupported: true/false",
+      "zoomLatencyAvg: <16ms",
+      "switchLatency: <200ms"
+    ]
+  },
+  "notes": [
+    "Do not downgrade back to the Flutter camera plugin.",
+    "Prioritize stable icon rendering and true hardware-level performance over web compatibility.",
+    "Run and test only on mobile devices (Android/iOS physical hardware)."
