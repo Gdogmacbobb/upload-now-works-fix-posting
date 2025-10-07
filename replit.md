@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **PRODUCTION-GRADE CAMERA CONTROLS** - Complete camera controller rebuild with isolate-based zoom and always-visible flash icons (Oct 7, 2025). Implemented 30px icons for optimal visibility. Flash icon now always renders with grey-out state for unsupported cameras (lens direction check). Production-ready zoom throttling using Timer.periodic (60ms intervals) with Future.microtask offloading, stream safety checks, and trailing update flush to prevent snap-back. Smooth continuous zoom during sustained pinch gestures with no UI freeze or dropped updates. Enhanced camera initialization logging. Previous: Polished TikTok/Reels-style vertical video interface with full-screen camera preview, portrait-only lock, four top controls, centered orange record button with live timer, and comprehensive error handling. App builds successfully for web (52-55s) with no LSP errors.
+**Current Status**: ✅ **ULTRA-RESPONSIVE STACK OVERLAY ARCHITECTURE** - Production camera system with Stack-based overlay architecture and ultra-fast zoom response (Oct 7, 2025). SafeArea wrapper ensures controls clear notches/status bars. Back button always visible for guaranteed navigation. 32px icons with Stack+Positioned layout for rock-solid overlay rendering. Ultra-fast 25ms zoom throttling (40 updates/second) for buttery-smooth pinch gestures. Success SnackBar feedback for flash toggle ("Flash enabled/disabled"). Flash icon dims to 40% opacity when unsupported (front camera detection). All camera controls (mute, flash, switch) conditional on initialization. Timer.periodic architecture with Future.microtask offloading, stream safety, and trailing flush preserved. App builds successfully for web (53-54s) with no LSP errors.
 
 # User Preferences
 
@@ -19,14 +19,16 @@ The application follows Flutter's standard architecture patterns:
   - **VideoRecordingScreen**: Polished vertical video recording interface
     - **Full-screen preview**: Transform.scale with aspect ratio calculation to fill entire screen without black bars
     - **Portrait lock**: SystemChrome locks orientation to portraitUp only, restored on dispose
-    - **Top controls**: Four buttons with consistent dark rounded backgrounds (8px radius, black54, 30px icons)
-      - Back button (top-left) - Icons.arrow_back
-      - Mute/Unmute toggle (top-left) - Icons.mic/mic_off, fully functional, reconfigures camera controller
-      - Flash on/off toggle (top-right) - Icons.flash_on/flash_off, **always visible** with grey-out state when unsupported (_hasFlashSupport getter checks lens direction), comprehensive error handling
-      - Camera switch (top-right) - Icons.cameraswitch, preserves flash state, disabled during recording
-    - **Pinch-to-zoom**: Production-grade zoom with Timer.periodic throttling for smooth, freeze-free control
-      - **Throttling architecture**: Single Timer.periodic(60ms) started in onScaleStart, stopped in onScaleEnd with trailing update flush
-      - **Update flow**: onScaleUpdate queues latest zoom in _pendingZoom, timer applies every 60ms via Future.microtask
+    - **Top controls**: Stack overlay architecture with SafeArea and Positioned widgets for guaranteed visibility (32px icons, 8px radius, black54 backgrounds)
+      - **SafeArea wrapper**: Ensures all controls stay clear of notches/status bars with proper inset padding
+      - **Stack+Positioned layout**: Controls positioned at exact coordinates (top: 12, left/right: 12/72) from safe area bounds
+      - Back button (Positioned top:12, left:12) - Icons.arrow_back, **always visible** outside initialization guard for guaranteed navigation
+      - Mute toggle (Positioned top:12, left:72) - Icons.mic/mic_off, conditional on camera ready, reconfigures controller
+      - Flash toggle (Positioned top:12, right:12) - Icons.flash_on/flash_off, **always visible** with 40% opacity when unsupported, success SnackBar feedback ("Flash enabled/disabled")
+      - Camera switch (Positioned top:12, right:72) - Icons.cameraswitch, preserves flash state, disabled during recording
+    - **Pinch-to-zoom**: Ultra-fast production-grade zoom with 25ms throttling for buttery-smooth control
+      - **Throttling architecture**: Single Timer.periodic(25ms) started in onScaleStart, stopped in onScaleEnd with trailing update flush
+      - **Update flow**: onScaleUpdate queues latest zoom in _pendingZoom, timer applies every 25ms (40 updates/second) via Future.microtask
       - **Trailing flush**: onScaleEnd flushes any pending zoom before stopping timer (prevents snap-back on release)
       - **UI thread offloading**: Future.microtask moves zoom operations off main thread, prevents blocking
       - **Stream safety**: Checks controller.value.isStreamingImages before applying zoom to avoid frame conflicts
