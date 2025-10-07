@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../platform/camera_controller_interface.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../platform/platform_camera_controller.dart';
 import '../../theme/app_theme.dart';
 
 class VideoRecordingScreen extends StatefulWidget {
@@ -51,6 +52,20 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
   }
 
   Future<void> _initializeCamera() async {
+    // Check if running on web - camera not supported
+    if (kIsWeb) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Camera only available on mobile devices. Please use the iOS or Android app.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+      return;
+    }
+    
     try {
       _controller = PlatformCameraController();
       

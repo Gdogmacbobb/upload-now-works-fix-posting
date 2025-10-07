@@ -1,7 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'package:video_player/video_player.dart';
-import '../../platform/video_controller_factory.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -25,8 +25,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     final videoPath = ModalRoute.of(context)!.settings.arguments as String?;
     if (videoPath != null) {
       try {
-        // Use platform-appropriate controller via conditional imports
-        _controller = createVideoController(videoPath);
+        // Mobile-only: Use File-based video controller
+        _controller = VideoPlayerController.file(File(videoPath));
         _controller!.initialize().then((_) {
           if (mounted) {
             setState(() => _isInitialized = true);
