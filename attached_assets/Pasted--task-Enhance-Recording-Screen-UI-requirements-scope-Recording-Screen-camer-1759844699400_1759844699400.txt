@@ -1,0 +1,62 @@
+{
+  "task": "Enhance Recording Screen UI",
+  "requirements": {
+    "scope": "Recording Screen (camera_recording.dart or equivalent file)",
+    "changes": [
+      {
+        "ui": {
+          "add_buttons": [
+            {
+              "type": "IconButton",
+              "function": "toggleFlash",
+              "icon": "Icons.flash_on",
+              "inactive_icon": "Icons.flash_off",
+              "position": "top_left_empty_box",
+              "tooltip": "Toggle Flash"
+            },
+            {
+              "type": "IconButton",
+              "function": "switchCamera",
+              "icon": "Icons.cameraswitch",
+              "position": "top_right_empty_box",
+              "tooltip": "Switch Camera (Front/Back)"
+            }
+          ]
+        }
+      },
+      {
+        "camera_features": {
+          "flash": {
+            "implementation": "Use CameraController.setFlashMode(FlashMode.torch or off)",
+            "default_state": "off"
+          },
+          "camera_reverse": {
+            "implementation": "Use availableCameras() to detect both front and back cameras, toggle active CameraController on tap"
+          },
+          "zoom": {
+            "implementation": "Implement pinch-to-zoom gesture detection using GestureDetector.onScaleUpdate",
+            "details": {
+              "onScaleStart": "store currentZoomLevel",
+              "onScaleUpdate": "calculate new zoom level = baseZoom * scaleFactor",
+              "limit_zoom_range": "minZoom 1.0, maxZoom 5.0",
+              "apply_to": "cameraController.setZoomLevel(newZoom)"
+            }
+          }
+        }
+      }
+    ],
+    "unchanged": [
+      "Recording button placement",
+      "Mute button functionality",
+      "Overall layout proportions"
+    ]
+  },
+  "verification": {
+    "ui_check": [
+      "Flash icon toggles correctly between on/off",
+      "Camera reverse icon switches between front/back instantly",
+      "Pinch-to-zoom smoothly zooms in/out during recording"
+    ],
+    "test_case": "Test on both Android and iOS simulators to ensure all camera controls respond properly"
+  }
+}

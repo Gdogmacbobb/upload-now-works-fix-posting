@@ -1,0 +1,68 @@
+{
+  "task": "Fix Flash and Camera Switch UI + Implement Pinch-to-Zoom",
+  "requirements": {
+    "scope": "Recording Screen (camera_recording.dart or equivalent)",
+    "objectives": [
+      "Ensure flash toggle and camera switch icons are visible and fully functional",
+      "Implement working pinch-to-zoom gesture during recording",
+      "Maintain all existing layout positions and UI responsiveness"
+    ],
+    "changes": [
+      {
+        "ui_fixes": {
+          "flash_button": {
+            "status": "invisible or non-functional",
+            "fix": {
+              "icon_visibility": "explicitly render flash_on / flash_off icons in top right container",
+              "icon_color": "use Colors.white or full-opacity hex #FFFFFFFF",
+              "state_management": "link button to cameraController.setFlashMode(FlashMode.torch / FlashMode.off)",
+              "default_state": "FlashMode.off",
+              "error_handling": "if flash not supported, disable icon and show snackbar message 'Flash not available on this device'"
+            }
+          },
+          "camera_switch_button": {
+            "status": "invisible or non-functional",
+            "fix": {
+              "icon_visibility": "explicitly render cameraswitch icon in top right container next to flash",
+              "functionality": "toggle between available front and back cameras using availableCameras()",
+              "update_controller": "dispose current CameraController before initializing new one"
+            }
+          }
+        }
+      },
+      {
+        "camera_features": {
+          "zoom": {
+            "implementation": "Wrap camera preview widget in GestureDetector",
+            "gesture": "onScaleStart and onScaleUpdate",
+            "logic": {
+              "store_base_zoom": "onScaleStart -> baseZoom = currentZoomLevel",
+              "update_zoom": "onScaleUpdate -> newZoom = baseZoom * scaleFactor",
+              "limit_range": "min 1.0x, max 5.0x",
+              "apply_zoom": "cameraController.setZoomLevel(newZoom)"
+            },
+            "animation": "smooth transition between zoom levels using duration 150ms curve easeInOut"
+          }
+        }
+      }
+    ],
+    "unchanged": [
+      "Back button",
+      "Mute toggle",
+      "Record button layout",
+      "Audio recording functionality"
+    ]
+  },
+  "verification": {
+    "ui_check": [
+      "Flash icon is visible and toggles between on/off with correct color and feedback",
+      "Camera switch icon appears next to flash and switches cameras instantly",
+      "Pinch gesture zooms in/out smoothly while recording"
+    ],
+    "test_cases": [
+      "Test on iOS and Android emulators",
+      "Verify flash works only on back camera and fails gracefully on front camera",
+      "Ensure no UI crashes during camera switch"
+    ]
+  }
+}
