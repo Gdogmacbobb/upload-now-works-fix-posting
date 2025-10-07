@@ -1,10 +1,30 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'web_camera_controller.dart';
+import 'package:camera/camera.dart' show CameraController;
 
 class PlatformCameraController {
   static const MethodChannel _channel = MethodChannel('com.ynfny/camera');
   static const EventChannel _previewChannel = EventChannel('com.ynfny/camera/preview');
+  
+  final WebCameraController? _webController;
+  final bool _isWebMode;
+  
+  factory PlatformCameraController() {
+    if (kIsWeb) {
+      debugPrint('[ENV_MODE] Dev bridge active - creating WebCameraController');
+      return PlatformCameraController._(webController: WebCameraController(), isWebMode: true);
+    } else {
+      debugPrint('[ENV_MODE] Native mode - using platform channels (CameraX/AVFoundation)');
+      return PlatformCameraController._(isWebMode: false);
+    }
+  }
+  
+  PlatformCameraController._({WebCameraController? webController, required bool isWebMode})
+      : _webController = webController,
+        _isWebMode = isWebMode;
   
   int? _textureId;
   bool _isInitialized = false;
@@ -27,21 +47,32 @@ class PlatformCameraController {
     fps: 0,
   );
   
-  int? get textureId => _textureId;
-  bool get isInitialized => _isInitialized;
-  CameraState get value => _currentState;
-  Stream<CameraState> get stateStream => _stateController.stream;
+  int? get textureId => _isWebMode ? _webController?.textureId : _textureId;
+  bool get isInitialized => _isWebMode ? (_webController?.isInitialized ?? false) : _isInitialized;
+  CameraState get value => _isWebMode ? (_webController?.value ?? _currentState) : _currentState;
+  Stream<CameraState> get stateStream => _isWebMode ? (_webController?.stateStream ?? _stateController.stream) : _stateController.stream;
+  CameraController? get webCameraController => _isWebMode ? _webController?.cameraController : null;
   
   Future<void> initialize({
     int cameraIndex = 0,
     int targetFps = 60,
     String quality = 'max',
   }) async {
+    if (_isWebMode) {
+      debugPrint('[CAMERA_SOURCE] WebCameraPlugin active');
+      return await _webController!.initialize(
+        cameraIndex: cameraIndex,
+        targetFps: targetFps,
+        quality: quality,
+      );
+    }
+    
     if (_isDisposed) throw Exception('Controller is disposed');
     if (_isInitialized) return;
     
     try {
       debugPrint('═══════════════════════════════════════');
+      debugPrint('[CAMERA_SOURCE] Native CameraX/AVFoundation active');
       debugPrint('PlatformCameraController: Initializing...');
       debugPrint('Camera Index: $cameraIndex');
       debugPrint('Target FPS: $targetFps');
@@ -94,6 +125,10 @@ class PlatformCameraController {
   }
   
   Future<void> dispose() async {
+    if (_isWebMode) {
+      return await _webController!.dispose();
+    }
+    
     if (_isDisposed) return;
     _isDisposed = true;
     _isInitialized = false;
@@ -110,6 +145,10 @@ class PlatformCameraController {
   }
   
   Future<void> switchCamera() async {
+    if (_isWebMode) {
+      return await _webController!.switchCamera();
+    }
+    
     if (!_isInitialized || _isDisposed) return;
     
     try {
@@ -148,6 +187,10 @@ class PlatformCameraController {
   }
   
   Future<void> setTorch(bool enabled) async {
+    if (_isWebMode) {
+      return await _webController!.setTorch(enabled);
+    }
+    
     if (!_isInitialized || _isDisposed) return;
     if (!_currentState.torchSupported) {
       debugPrint('Torch not supported on this camera');
@@ -167,6 +210,10 @@ class PlatformCameraController {
   }
   
   Future<void> setZoom(double level) async {
+    if (_isWebMode) {
+      return await _webController!.setZoom(level);
+    }
+    
     if (!_isInitialized || _isDisposed) return;
     
     final clampedZoom = level.clamp(_currentState.minZoom, _currentState.maxZoom);
@@ -181,6 +228,10 @@ class PlatformCameraController {
   }
   
   Future<void> tapToFocus(double x, double y) async {
+    if (_isWebMode) {
+      return await _webController!.tapToFocus(x, y);
+    }
+    
     if (!_isInitialized || _isDisposed) return;
     
     try {
@@ -192,6 +243,10 @@ class PlatformCameraController {
   }
   
   Future<void> lockExposure(bool lock) async {
+    if (_isWebMode) {
+      return await _webController!.lockExposure(lock);
+    }
+    
     if (!_isInitialized || _isDisposed) return;
     
     try {
@@ -203,6 +258,10 @@ class PlatformCameraController {
   }
   
   Future<void> startRecording() async {
+    if (_isWebMode) {
+      return await _webController!.startRecording();
+    }
+    
     if (!_isInitialized || _isDisposed) return;
     
     try {
@@ -215,6 +274,10 @@ class PlatformCameraController {
   }
   
   Future<String> stopRecording() async {
+    if (_isWebMode) {
+      return await _webController!.stopRecording();
+    }
+    
     if (!_isInitialized || _isDisposed) throw Exception('Camera not initialized');
     
     try {
