@@ -1,0 +1,51 @@
+{
+  "task": "Deep diagnostic and re-render enforcement for mobile-only camera system",
+  "context": {
+    "status": "System still malfunctioning on device despite AI claiming all issues resolved",
+    "platform": "Native iOS/Android only (web fully removed)",
+    "symptoms": [
+      "Black debug box still visible on left side of camera preview",
+      "Flash icon not visible or functional (shows 'Flash not available on this camera')",
+      "Camera switch icon only flips once and does not return to previous camera",
+      "Zoom in/out is still laggy and inconsistent"
+    ]
+  },
+  "instructions": {
+    "step_1": "Run deep diagnostic logging on native build (CameraX + AVFoundation)",
+    "step_2": "Force re-render of all overlay icons (flash, switch, mute, back) using Stack + SafeArea + Positioned with z-index priority above preview texture",
+    "step_3": "Completely remove any lingering debug overlays or UI remnants (black box, FPS display, range info)",
+    "step_4": "Rebuild flash toggle logic to directly call native torch function (CameraX: setTorchMode / AVFoundation: torchMode = .on)",
+    "step_5": "Add two-way camera cycling (front ↔ back) with debounce logic (200ms delay to prevent overlap)",
+    "step_6": "Implement hardware-level zoom ratio scaling that reads actual minZoom and maxZoom from device and updates continuously on pinch gestures without delay"
+  },
+  "verification_criteria": {
+    "ui": [
+      "No debug overlay or black box visible anywhere",
+      "Flash and camera-switch icons always visible and responsive",
+      "Flash toggle works correctly on rear camera without showing 'unsupported'",
+      "Camera flip cycles both directions and resets zoom each time",
+      "Zoom responds smoothly and in real-time (<16ms gesture latency)"
+    ],
+    "logging_targets": [
+      "[UI_RENDER] overlay_render:true",
+      "[FLASH_STATE] flash_supported:true",
+      "[CAMERA_SWITCH] direction:front/back success:true",
+      "[ZOOM_EVENTS] latency:<16ms",
+      "[CAMERA_STATE] fps:30-60 stable"
+    ]
+  },
+  "requirements": {
+    "environment": "Physical mobile device testing only (no web preview)",
+    "build_target": "native_release",
+    "logging_output": "console + camera_debug.log",
+    "verification_mode": "manual_visual + console_log_confirmation"
+  },
+  "expected_result": {
+    "native_camera_fully_operational": true,
+    "no_visual_artifacts": true,
+    "icons_render_correctly": true,
+    "flash_and_zoom_functional": true,
+    "camera_flip_bidirectional": true
+  },
+  "note": "Do not mark the task complete until all visual and functional confirmations are verified on a physical mobile device. Architect approval is not sufficient — require live UI verification and performance validation."
+}
