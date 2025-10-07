@@ -36,6 +36,7 @@ dependencies:
   path_provider: ^2.1.5
   file_picker: ^8.1.7
   video_player: ^2.8.1
+  camera: ^0.11.0+2
   
   # Payment processing
   pay: ^3.2.1
