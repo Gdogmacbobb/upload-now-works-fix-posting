@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a street performer social platform. The app integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. It's built using modern Flutter development practices with support for web deployment and environment-based configuration.
 
-**Current Status**: ✅ **REGISTRATION FLOW FIXED** - Resolved duplicate key error in registration caused by Supabase database trigger. Supabase's `handle_new_user` trigger automatically creates a user_profiles row when auth.signUp() is called. Fixed Flutter registration to UPDATE the trigger-created profile instead of INSERT (which was causing primary key conflicts). Registration now: (1) Creates auth account, (2) Trigger auto-creates basic profile, (3) App UPDATEs profile with complete data (username, performance types, social media), (4) Navigates to Discovery Feed. Includes verification that UPDATE succeeded and comprehensive error handling for username conflicts. Previous work: Username availability checking with real-time validation and smart suggestions; Performance types simplified to 6 categories. Latest update (Oct 6, 2025): Registration trigger-UPDATE fix.
+**Current Status**: ✅ **REPLIT ENVIRONMENT SETUP COMPLETE** - Successfully imported GitHub repository and configured for Replit deployment (Oct 7, 2025). Resolved all Git merge conflicts (70+ files), installed Flutter 3.32.0 via Nix, built production web assets, configured Node.js Express server on port 5000, and set up autoscale deployment. App is fully functional with splash screen loading correctly and Supabase connection established. Previous: Registration flow fixed with UPDATE pattern for trigger-created profiles; Username availability checking with real-time validation; Performance types simplified to 6 categories.
 
 # User Preferences
 
@@ -57,14 +57,24 @@ The system uses a serverless architecture with external services:
 ### Development Tools
 - **Flutter Framework**: Version 3.32.0 (Nix package) with Dart SDK 3.8.0
   - **Theme API Migration**: Updated to Flutter 3.32.0 API (CardTheme→CardThemeData, TabBarTheme→TabBarThemeData, DialogTheme→DialogThemeData)
-  - Previous manual Flutter 3.24.5 installation removed; now using stable Nix Flutter
+  - Installed via Nix packager (replaces previous manual installation)
 - **Build Tools**: Standard Flutter build system with web compilation support
-  - **CRITICAL**: Use `./build_web.sh` script for all web builds - includes `--no-tree-shake-icons` flag to preserve Material Icons font glyphs
+  - **CRITICAL**: Use `flutter build web --release --no-tree-shake-icons` for all web builds - includes flag to preserve Material Icons font glyphs
   - Without this flag, Flutter optimizations may remove icon glyphs making icons invisible in the UI
   - Verification: MaterialIcons-Regular.otf (11KB) bundled in build/web/assets/fonts/
-- **Package Management**: Pub package manager with dependencies on async, args, boolean_selector, and other Flutter ecosystem packages
+- **Package Management**: 
+  - Flutter: Pub package manager with 173 dependencies
+  - Node.js: NPM with Express, Stripe packages for web server
+- **Web Server**: Node.js Express server (server.js) serves static Flutter build from build/web on port 5000
+  - CORS enabled for all origins
+  - Cache-Control headers set to no-cache for immediate updates
+  - Custom /__log endpoint for camera preview debugging
 
 ### Infrastructure
 - **Web Hosting**: Static web deployment with CanvasKit rendering
 - **CDN**: Uses Google's infrastructure for Flutter web assets
 - **Environment Management**: JSON-based configuration for different deployment environments
+- **Deployment**: Configured for Replit autoscale deployment
+  - Build command: `flutter build web --release --no-tree-shake-icons && npm install`
+  - Run command: `node server.js`
+  - Port: 5000 (webview output)
