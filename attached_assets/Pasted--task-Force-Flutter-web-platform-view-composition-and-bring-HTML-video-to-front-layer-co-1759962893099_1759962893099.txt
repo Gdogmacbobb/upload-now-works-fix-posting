@@ -1,0 +1,41 @@
+{
+  "task": "Force Flutter web platform view composition and bring HTML video to front layer",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "Frame and Sound are confirmed working. Paint ❌ means the HTML video element is attached but not composited on screen. The <video> element is being rendered behind Flutter's main canvas layer. We need to explicitly promote the video element's z-index and ensure platform view composition is enabled so the texture can display above the canvas.",
+    "requiredFixes": [
+      {
+        "1️⃣ Enable Hybrid Composition": [
+          "In the web index.html, add <meta name='flutter-web-renderer' content='html'> to force HTML renderer instead of CanvasKit if not already set.",
+          "Ensure the build uses '--web-renderer=html' instead of '--web-renderer=canvaskit' for full DOM control."
+        ]
+      },
+      {
+        "2️⃣ Bring Video Element to Front": [
+          "After confirming the video element exists, run:",
+          "js.context.callMethod('eval', ['document.querySelectorAll(\"video\").forEach(v => {v.style.position = \"absolute\"; v.style.zIndex = \"9999\"; v.style.top = \"0\"; v.style.left = \"0\";})']);",
+          "This ensures the HTML video element is visually stacked above the Flutter canvas and not clipped."
+        ]
+      },
+      {
+        "3️⃣ Ensure No Overflow Clipping": [
+          "Wrap the VideoPlayer widget in a Container with clipBehavior: Clip.none and alignment: Alignment.center.",
+          "Ensure the parent Stack or Positioned elements also use Clip.none."
+        ]
+      },
+      {
+        "4️⃣ Final Paint Check": [
+          "After applying z-index and clip fixes, verify with document.querySelector('video').getBoundingClientRect().width and height > 0 to confirm it’s visible.",
+          "Update debug overlay to show Paint ✅ once bounding box is nonzero."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "VisibleVideo": "Video frame is visible immediately after first preview tap.",
+      "AudioSync": "Sound and video remain synchronized.",
+      "PaintFlag": "Debug overlay shows Paint ✅ after bounding box detection.",
+      "RendererMode": "Web renderer set to HTML for stable DOM video playback."
+    },
+    "note": "The issue is not playback logic but Flutter web layer composition. Promoting the video element’s z-index and using HTML renderer will expose the frame properly."
+  }
+}
