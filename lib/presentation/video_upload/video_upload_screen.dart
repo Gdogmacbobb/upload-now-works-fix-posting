@@ -598,10 +598,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     // Add listener to detect when first frame is actually decoded
     widget.controller.addListener(_onControllerUpdate);
     
-    // Check if frame is already ready (in case initialization completed before modal opened)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _checkAndStartPlayback();
+    // Trigger first frame decode with play-pause sequence
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted && widget.controller.value.isInitialized) {
+        debugPrint('[PREVIEW] Triggering first frame decode with play-pause...');
+        
+        // Play then immediately pause to force first frame decode
+        await widget.controller.play();
+        await widget.controller.pause();
+        
+        debugPrint('[PREVIEW] Play-pause complete, waiting for position update...');
       }
     });
   }
@@ -613,21 +619,28 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   }
 
   void _checkAndStartPlayback() {
-    // Only start playback when we have a real decoded frame
+    // Only start playback when first frame has been decoded (position > 0)
     if (widget.controller.value.isInitialized && 
-        widget.controller.value.size.width > 0 &&
-        widget.controller.value.size.height > 0 &&
+        widget.controller.value.position > Duration.zero &&
         !_firstFrameReady) {
       
-      debugPrint('[PREVIEW] First frame ready - size: ${widget.controller.value.size}');
+      debugPrint('[PREVIEW] First frame decoded - position: ${widget.controller.value.position}');
       
       _firstFrameReady = true;
-      widget.controller.setVolume(1.0);
-      widget.controller.play();
-      widget.controller.setLooping(true);
       
-      setState(() => _isPlaying = true);
-      debugPrint('[PREVIEW] Playback started with confirmed frame');
+      // Force rebuild to ensure texture is painted
+      setState(() {});
+      
+      // Start playback after texture paint
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.controller.setVolume(1.0);
+          widget.controller.play();
+          widget.controller.setLooping(true);
+          setState(() => _isPlaying = true);
+          debugPrint('[PREVIEW] Playback started with texture painted');
+        }
+      });
     }
   }
 
