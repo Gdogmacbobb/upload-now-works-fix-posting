@@ -2,15 +2,16 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment.
 
-**Current Status** (Oct 8, 2025): ✅ **VIDEO PREVIEW BLACK SCREEN FIXED** - Implemented comprehensive fix for Flutter web first-load black screen issue via DOM visibility detection, CSS enforcement, and paint refresh sequence.
+**Current Status** (Oct 8, 2025): ✅ **VIDEO PREVIEW BLACK SCREEN FIXED** - Implemented comprehensive fix for Flutter web first-load black screen issue via DOM visibility detection, CSS enforcement with style restoration, and paint polling verification.
 
 ## Recent Video Preview Fixes (Oct 8, 2025)
 
-### Layer Composition Fix (Latest)
-- **Z-Index Promotion**: After DOM detection, sets `z-index=9999` + `position=absolute` + full viewport sizing (top=0, left=0, width/height=100%) to bring video element above Flutter canvas layer
-- **Bounding Box Detection**: Uses `getBoundingClientRect()` instead of `videoWidth/videoHeight` for reliable visibility confirmation - only confirms paint when browser reports non-zero rendered box
-- **Clip Prevention**: Added `clipBehavior: Clip.none` to Stack and Container wrappers to prevent Flutter from clipping the promoted DOM video element
-- **Complete Fix Flow**: DOM detected → CSS visibility + z-index layer promotion → Playback starts → 150ms delay → Pause/play repaint → Bounding rect check → Paint confirmed
+### Full-Screen Rendering Fix with Style Restoration (Latest)
+- **Fixed Positioning with Viewport Units**: Uses `position: fixed` (not absolute) with `100vw/100vh` to completely detach video from Flutter layout and force full-screen rendering
+- **Parent Overflow Reset**: Clears `overflow: hidden` on body/html/flt-glass-pane to prevent clipping
+- **Style Lifecycle Management**: Saves all original CSS before modification, restores in dispose() to prevent persistent full-screen video after dialog closes
+- **Paint Polling Verification**: Retries `getBoundingClientRect()` every 200ms until browser reports non-zero dimensions (timeout: 3 seconds)
+- **Complete Fix Flow**: DOM detected → Save original styles → Reset parent overflow → Apply fixed position with viewport sizing → Playback starts → 150ms delay → Pause/play repaint → Poll bounding rect → Paint confirmed → On dialog close: Restore all original styles
 
 ### Paint Visibility Enforcement
 - **CSS Visibility Enforcement**: After DOM detection, explicitly sets `visibility='visible'`, `opacity='1'`, `display='block'` on all video elements to override hidden styles
