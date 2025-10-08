@@ -1,0 +1,98 @@
+{
+  "task": "Icons still not visible — fix Material icon font pipeline and render real glyphs (not empty boxes)",
+  "context": {
+    "symptom": "Top-right buttons show dark rounded boxes but no glyphs",
+    "most_likely_root_cause": "Material icon fonts not loaded / wrong family on web (or icons not supported by current font set)"
+  },
+  "must_fix_first": [
+    {
+      "pubspec_yaml": {
+        "action": "Ensure Material icon fonts are bundled",
+        "changes": [
+          "uses-material-design: true  # REQUIRED",
+          "# DO NOT comment this out; commit the file after enabling"
+        ]
+      }
+    },
+    {
+      "web_index_html": {
+        "action": "Load Material icons for Flutter web",
+        "ensure_links_exist": [
+          {
+            "rel": "stylesheet",
+            "href": "https://fonts.googleapis.com/css?family=Material+Icons"
+          },
+          {
+            "rel": "preload",
+            "as": "font",
+            "href": "assets/fonts/MaterialIcons-Regular.ttf",
+            "type": "font/ttf",
+            "crossorigin": "anonymous"
+          }
+        ],
+        "note": "Some glyphs (e.g., cameraswitch) may map to Material Symbols; for max compatibility keep to classic Material Icons or explicitly add Symbols if needed."
+      }
+    },
+    {
+      "flutter_build_flags": {
+        "action": "Disable tree-shaking for icons in dev so glyphs are not stripped",
+        "web": "flutter build web --no-tree-shake-icons",
+        "hot_reload": "flutter run -d chrome --web-renderer html --no-tree-shake-icons"
+      }
+    }
+  ],
+  "icon_compatibility": {
+    "replace_glyphs_for_max_coverage": [
+      { "id": "flashBtn", "icon": "Icons.flash_on", "fallback": "Icons.flashlight_on" },
+      { "id": "flashBtnOff", "icon": "Icons.flash_off" },
+      { "id": "switchBtn", "icon": "Icons.flip_camera_ios", "fallback": "Icons.cameraswitch" }
+    ],
+    "icon_style": {
+      "size": 32,
+      "color": "#FFFFFFFF",
+      "shadow": false,
+      "background": "Colors.black54",
+      "constraints": { "minWidth": 48, "minHeight": 48 }
+    }
+  },
+  "overlay_render": {
+    "layout": "Stack > Positioned (top-right) inside SafeArea",
+    "z_order": [
+      "CameraPreview (RepaintBoundary, Positioned.fill)",
+      "Material(color: Colors.transparent, elevation: 8)",
+      "Row(children: [flashBtn, switchBtn])"
+    ],
+    "guards": "DO NOT wrap icons in controller.isInitialized; buttons must always be in the tree",
+    "gesture": "IconButton with onPressed handlers wired"
+  },
+  "web_dev_bridge": {
+    "flash_behavior": "Mock state toggle (icon changes) — no hardware torch on web",
+    "native_behavior": "Real torch via CameraX/AVFoundation; auto-off on recording stop"
+  },
+  "quick_visibility_test": {
+    "temporary_widget": "At top of RecordingScreen build(), render a Row(mainAxisSize: min) with the same two Icon widgets fixed at the top of screen to confirm fonts draw. Remove after pass.",
+    "expected": "If Row shows proper glyphs, overlay path is fine; if Row shows empty squares, font pipeline is broken."
+  },
+  "logs_required": [
+    "[UI_RENDER] overlay_attached:true",
+    "[ICON_FONT] material_icons_loaded:true",
+    "[ICON_TEST] glyphs_drawn:true"
+  ],
+  "verification": {
+    "steps": [
+      "Hard refresh the Replit preview (Empty Cache + Hard Reload).",
+      "Confirm the temporary Row displays the flash and flip glyphs.",
+      "Confirm the top-right overlay shows the same glyphs and they are tappable.",
+      "On native device: start recording with flash toggled on → torch stays on; stop recording → torch turns off."
+    ],
+    "pass_criteria": [
+      "No empty boxes — real icons visible in both the temporary Row and overlay.",
+      "No snackbar ‘flash not available’ on native rear camera.",
+      "Flip works both directions; no controller disposal errors."
+    ]
+  },
+  "cleanup_after_success": [
+    "Remove the temporary Row test widget.",
+    "Keep uses-material-design:true and --no-tree-shake-icons for dev; re-enable tree shaking only after verifying icons appear in release."
+  ]
+}

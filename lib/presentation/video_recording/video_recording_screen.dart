@@ -386,6 +386,52 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // TEMPORARY: Visible proof we're on camera screen + icon test (REMOVE AFTER VERIFICATION)
+          Positioned(
+            top: 60,
+            left: 0,
+            right: 0,
+            child: Builder(
+              builder: (context) {
+                debugPrint('[ICON_TEST] Rendering test overlay - camera screen LOADED');
+                debugPrint('[ICON_TEST] Testing 4 icon glyphs: flash_on, flash_off, cameraswitch, flip_camera_ios');
+                return Container(
+                  color: Colors.red.withOpacity(0.9),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        '🎥 CAMERA SCREEN LOADED - ICON TEST 🎥',
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.flash_on, color: Colors.white, size: 40),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.flash_off, color: Colors.white, size: 40),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.cameraswitch, color: Colors.white, size: 40),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.flip_camera_ios, color: Colors.white, size: 40),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'If you see icon glyphs above (not empty boxes), fonts work!',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          
           // Full-screen camera preview with RepaintBoundary for z-index isolation
           if (_isInitialized && _controller != null)
             Positioned.fill(
