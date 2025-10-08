@@ -1,5 +1,9 @@
 name: ynfny
 description: A new Flutter project.
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
 dependencies:
   cached_network_image: ^3.3.1
   camera: ^0.11.0+2

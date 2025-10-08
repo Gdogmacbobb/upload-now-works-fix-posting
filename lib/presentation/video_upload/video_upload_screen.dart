@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../theme/app_theme.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:path_provider/path_provider.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -18,12 +21,19 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   String _location = 'Washington Square Park';
   String _privacy = 'Public';
   bool _isInitialized = false;
+  String? _videoPath;
+  
+  // Thumbnail selection
+  List<String> _thumbnails = [];
+  int _selectedThumbnailIndex = -1;
+  bool _isGeneratingThumbnails = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final videoPath = ModalRoute.of(context)!.settings.arguments as String?;
-    if (videoPath != null) {
+    if (videoPath != null && _videoPath == null) {
+      _videoPath = videoPath;
       try {
         // Mobile-only: Use File-based video controller
         _controller = VideoPlayerController.file(File(videoPath));
@@ -43,6 +53,76 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         debugPrint('Video controller creation failed: $e');
       }
     }
+  }
+
+  Future<void> _generateThumbnails() async {
+    if (_videoPath == null || kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thumbnail generation not available on web')),
+      );
+      return;
+    }
+
+    setState(() => _isGeneratingThumbnails = true);
+
+    try {
+      final duration = _controller?.value.duration;
+      if (duration == null) {
+        throw Exception('Video duration not available');
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      final List<String> generatedThumbnails = [];
+      final int thumbnailCount = 8;
+      
+      for (int i = 0; i < thumbnailCount; i++) {
+        final timeMs = (duration.inMilliseconds / (thumbnailCount + 1) * (i + 1)).round();
+        
+        final thumbnail = await VideoThumbnail.thumbnailFile(
+          video: _videoPath!,
+          thumbnailPath: tempDir.path,
+          imageFormat: ImageFormat.PNG,
+          maxWidth: 200,
+          timeMs: timeMs,
+          quality: 75,
+        );
+        
+        if (thumbnail != null) {
+          generatedThumbnails.add(thumbnail);
+        }
+      }
+
+      setState(() {
+        _thumbnails = generatedThumbnails;
+        _isGeneratingThumbnails = false;
+        if (_thumbnails.isNotEmpty) {
+          _selectedThumbnailIndex = 0; // Select first thumbnail by default
+        }
+      });
+    } catch (e) {
+      debugPrint('Thumbnail generation failed: $e');
+      setState(() => _isGeneratingThumbnails = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate thumbnails: $e')),
+        );
+      }
+    }
+  }
+
+  void _showFullScreenPreview() {
+    if (_controller == null || !_isInitialized) return;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black,
+      builder: (context) => _FullScreenVideoPreview(
+        controller: _controller!,
+        caption: _caption ?? '',
+        performanceType: _performanceType,
+        location: _location,
+      ),
+    );
   }
 
   @override
@@ -66,50 +146,144 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Video thumbnail preview
+            // Video preview (tappable for full-screen)
             if (_isInitialized && _controller != null)
-              AspectRatio(
-                aspectRatio: _controller!.value.aspectRatio,
-                child: Stack(
-                  children: [
-                    VideoPlayer(_controller!),
-                    Center(
-                      child: IconButton(
-                        icon: Icon(
-                          _isPlaying ? Icons.pause_circle : Icons.play_circle,
-                          color: Colors.white,
-                          size: 50,
+              GestureDetector(
+                onTap: _showFullScreenPreview,
+                child: AspectRatio(
+                  aspectRatio: _controller!.value.aspectRatio,
+                  child: Stack(
+                    children: [
+                      // Show selected thumbnail or video frame
+                      if (_selectedThumbnailIndex >= 0 && 
+                          _selectedThumbnailIndex < _thumbnails.length)
+                        Image.file(
+                          File(_thumbnails[_selectedThumbnailIndex]),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        )
+                      else
+                        VideoPlayer(_controller!),
+                      
+                      // Play icon overlay
+                      Center(
+                        child: Icon(
+                          Icons.play_circle,
+                          color: Colors.white.withOpacity(0.8),
+                          size: 64,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _isPlaying ? _controller!.pause() : _controller!.play();
-                            _isPlaying = !_isPlaying;
-                          });
-                        },
                       ),
-                    ),
-                    Positioned(
-                      right: 12,
-                      top: 12,
-                      child: Icon(Icons.refresh, color: Colors.white),
-                    ),
-                    Positioned(
-                      right: 12,
-                      bottom: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(6),
+                      
+                      // Refresh icon
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: Icon(Icons.refresh, color: Colors.white),
+                      ),
+                      
+                      // Duration badge
+                      Positioned(
+                        right: 12,
+                        bottom: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _formatDuration(_controller!.value.duration),
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                          ),
                         ),
-                        child: const Text("0:45", style: TextStyle(color: Colors.white)),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+              )
+            else
+              Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Video preview unavailable',
+                    style: TextStyle(color: Colors.white54),
+                  ),
                 ),
               ),
 
             const SizedBox(height: 16),
+
+            // Select Thumbnail button
+            if (_isInitialized && !kIsWeb)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryOrange,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: _isGeneratingThumbnails
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.image, color: Colors.white),
+                label: Text(
+                  _isGeneratingThumbnails ? 'Generating...' : 'Select Thumbnail',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                onPressed: _isGeneratingThumbnails ? null : _generateThumbnails,
+              ),
+
+            // Thumbnail selection list
+            if (_thumbnails.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 80,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _thumbnails.length,
+                  itemBuilder: (context, index) {
+                    final isSelected = _selectedThumbnailIndex == index;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedThumbnailIndex = index);
+                      },
+                      child: Container(
+                        width: 60,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected ? AppTheme.primaryOrange : Colors.transparent,
+                            width: 3,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.file(
+                            File(_thumbnails[index]),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 24),
 
             // Caption
             Text("Caption", style: _labelStyle()),
@@ -127,7 +301,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              onChanged: (value) => _caption = value,
+              onChanged: (value) => setState(() => _caption = value),
             ),
 
             const SizedBox(height: 24),
@@ -166,17 +340,25 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                 ),
               ),
               icon: const Icon(Icons.upload, color: Colors.white),
-              label: const Text("Drop Content", style: TextStyle(color: Colors.white)),
+              label: const Text("Drop Content", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Uploading video...")),
                 );
               },
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 
   TextStyle _labelStyle() => const TextStyle(
@@ -198,8 +380,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Manhattan, NYC",
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                const Text("Manhattan, NYC",
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                 Text(_location, style: const TextStyle(color: Colors.white70)),
               ],
             ),
@@ -234,14 +416,16 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                 color: _privacy == title ? AppTheme.primaryOrange : Colors.white54,
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(desc, style: const TextStyle(color: Colors.white70)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(desc, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  ],
+                ),
               ),
             ],
           ),
@@ -252,5 +436,201 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   void dispose() {
     _controller?.dispose();
     super.dispose();
+  }
+}
+
+// Full-screen video preview modal
+class _FullScreenVideoPreview extends StatefulWidget {
+  final VideoPlayerController controller;
+  final String caption;
+  final String performanceType;
+  final String location;
+
+  const _FullScreenVideoPreview({
+    required this.controller,
+    required this.caption,
+    required this.performanceType,
+    required this.location,
+  });
+
+  @override
+  State<_FullScreenVideoPreview> createState() => _FullScreenVideoPreviewState();
+}
+
+class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-play when modal opens
+    widget.controller.play();
+    _isPlaying = true;
+    widget.controller.setLooping(true);
+  }
+
+  @override
+  void dispose() {
+    // Pause when modal closes
+    widget.controller.pause();
+    widget.controller.setLooping(false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: EdgeInsets.zero,
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        child: Stack(
+          children: [
+            // Full-screen video
+            Center(
+              child: AspectRatio(
+                aspectRatio: widget.controller.value.aspectRatio,
+                child: VideoPlayer(widget.controller),
+              ),
+            ),
+
+            // Close button (top-left)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+
+            // Bottom overlay (like discovery feed)
+            Positioned(
+              bottom: 40,
+              left: 16,
+              right: 80,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Profile image and handle
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primaryOrange,
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        '@streetartist',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black,
+                              offset: Offset(0, 1),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Performance type
+                  Text(
+                    '🎵 ${widget.performanceType}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black,
+                          offset: Offset(0, 1),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Caption
+                  if (widget.caption.isNotEmpty)
+                    Text(
+                      widget.caption,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black,
+                            offset: Offset(0, 1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Location
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.location,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black,
+                              offset: Offset(0, 1),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
