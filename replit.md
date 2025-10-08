@@ -6,11 +6,17 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 
 ## Recent Video Preview Fixes (Oct 8, 2025)
 
-### Hard Dimension Forcing Fix (Latest - Oct 8, 2025)
+### Hardware Compositing & Cross-Origin Fix (Latest - Oct 8, 2025)
+- **GPU Acceleration**: Forces hardware compositing with `willChange`, `transform: translateZ(0)`, `backfaceVisibility: hidden`, `perspective: 1000px`, `mixBlendMode: normal`
+- **Cross-Origin Safety**: Sets `crossOrigin='anonymous'` to prevent video texture rejection when blending with Flutter's WebGL layer
+- **Smart Paint Detection**: Finds VISIBLE video element (first with non-zero bounding box) instead of always using first DOM element
+- **Compositor Verification**: Logs computed opacity and transform values to confirm GPU compositing is active
+- **Enhanced Diagnostics**: Detects when video has dimensions but compositor blocks blending - logs "Hardware compositor or sandbox blocked HTML video blending"
+- **Complete Flow**: DOM detected → Apply GPU acceleration + CORS → Find visible video → Verify compositor → Paint ✅
+
+### Hard Dimension Forcing Fix (Oct 8, 2025)
 - **Explicit Sizing Fix**: Sets both HTML attributes (`video.width`/`height` = viewport pixels) AND CSS (`100vw`/`100vh`) to force browser allocation
 - **Forced Reflow Sequence**: `pause()` → read `offsetHeight` (triggers synchronous layout) → `play()` to commit dimensions
-- **Canvas Snapshot Fallback**: If video still has zero bounding box after 3 seconds, draws video frame to canvas element and appends to DOM as visible proof
-- **Complete Fix Flow**: DOM detected → Get viewport dimensions → Set HTML width/height attrs → Set CSS fixed position + viewport sizing → Force reflow → Poll bounding rect → If timeout: Create canvas snapshot
 - **Style Lifecycle**: Saves and restores maxHeight, objectFit, backgroundColor in addition to previous styles
 
 ### Renderer Verification & Visual Debugging
