@@ -8,7 +8,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/profile_service.dart';
-import 'dart:js' as js if (dart.library.html) 'dart:js';
+import '../../utils/web_dom_stub.dart' if (dart.library.html) 'dart:html' as html;
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -645,12 +645,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       
       // Check if <video> element exists in DOM
       try {
-        final videoElements = js.context.callMethod('eval', [
-          'document.getElementsByTagName("video").length'
-        ]);
+        final videoElements = html.document.getElementsByTagName('video').length;
         
-        if (videoElements != null && videoElements > 0) {
-          debugPrint('[PREVIEW] ✅ DOM Check: Found ${videoElements} <video> element(s) on retry #$_retryCount');
+        if (videoElements > 0) {
+          debugPrint('[PREVIEW] ✅ DOM Check: Found $videoElements <video> element(s) on retry #$_retryCount');
           setState(() => _domAttached = true);
           timer.cancel();
           _startPlayback();
