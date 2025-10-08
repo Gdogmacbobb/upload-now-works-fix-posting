@@ -646,12 +646,23 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         final video = videoElements[i];
         // Access style property directly without type casting
         final dynamic videoElement = video;
+        
+        // Visibility and opacity
         videoElement.style.visibility = 'visible';
         videoElement.style.opacity = '1';
         videoElement.style.display = 'block';
-        debugPrint('[PREVIEW] Set visibility on video #$i');
+        
+        // Z-index and positioning to bring above Flutter canvas
+        videoElement.style.position = 'absolute';
+        videoElement.style.zIndex = '9999';
+        videoElement.style.top = '0';
+        videoElement.style.left = '0';
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        
+        debugPrint('[PREVIEW] Set visibility + z-index positioning on video #$i');
       }
-      debugPrint('[PREVIEW] 🎨 Forced CSS visibility on ${videoElements.length} video element(s)');
+      debugPrint('[PREVIEW] 🎨 Forced CSS visibility and layer promotion on ${videoElements.length} video element(s)');
     } catch (e, stackTrace) {
       debugPrint('[PREVIEW] CSS visibility enforcement failed: $e');
       debugPrint('[PREVIEW] Stack trace: $stackTrace');
@@ -776,12 +787,21 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     if (!kIsWeb || !mounted) return;
     
     try {
-      final video = html.document.querySelector('video') as html.VideoElement?;
-      if (video != null && video.videoWidth > 0 && video.videoHeight > 0) {
-        setState(() => _paintConfirmed = true);
-        debugPrint('[PREVIEW] ✅ PAINT confirmed - dimensions: ${video.videoWidth}x${video.videoHeight}');
+      final video = html.document.querySelector('video');
+      if (video != null) {
+        // Use getBoundingClientRect() for more reliable visibility detection
+        final dynamic rect = video.getBoundingClientRect();
+        final width = rect.width ?? 0;
+        final height = rect.height ?? 0;
+        
+        if (width > 0 && height > 0) {
+          setState(() => _paintConfirmed = true);
+          debugPrint('[PREVIEW] ✅ PAINT confirmed - bounding box: ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}');
+        } else {
+          debugPrint('[PREVIEW] ⚠️ Video element has zero bounding box: ${width}x${height}');
+        }
       } else {
-        debugPrint('[PREVIEW] ⚠️ Video element has zero dimensions');
+        debugPrint('[PREVIEW] ⚠️ No video element found for paint check');
       }
     } catch (e) {
       debugPrint('[PREVIEW] Paint dimension check failed: $e');
@@ -849,6 +869,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         child: Stack(
+          clipBehavior: Clip.none,
           children: [
             // Black background layer (bottom-most)
             Positioned.fill(
@@ -861,6 +882,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                   ? RepaintBoundary(
                       key: ValueKey(_textureKey),
                       child: Container(
+                        clipBehavior: Clip.none,
                         color: Colors.black,
                         child: Center(
                           child: AspectRatio(
