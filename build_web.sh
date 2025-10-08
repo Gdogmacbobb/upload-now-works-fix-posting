@@ -14,7 +14,7 @@ rm -rf build .dart_tool
 echo "📦 Getting dependencies..."
 flutter pub get
 
-echo "🌐 Building for web (preserving Material Icons)..."
+echo "🌐 Building for web (HTML renderer via web/index.html, preserving Material Icons)..."
 flutter build web --no-tree-shake-icons
 
 echo "✅ Build complete! Icons, images, and fonts preserved."

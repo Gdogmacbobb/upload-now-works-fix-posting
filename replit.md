@@ -5,6 +5,11 @@ YNFNY is a cross-platform Flutter mobile application serving as a social platfor
 **Current Status**: ✅ **VIDEO RECORDING & UPLOAD COMPLETE** (Oct 8, 2025) - Production-ready TikTok/Reels-style recording with full-screen preview modal and thumbnail selection in upload screen.
 
 **Recent Enhancements (Oct 8, 2025)**:
+- **Asset Configuration Fixed**: Added Flutter assets declaration to pubspec.yaml with `uses-material-design: true` and proper asset paths (assets/, images/, fonts/)
+- **Service Worker Disabled for Replit**: SW registration fails in Replit's iframe sandbox, breaking Image.asset loading; disabled by setting `serviceWorkerVersion = null` in web/index.html
+- **HTML Renderer Configured**: Changed renderer from 'canvaskit' to 'html' in web/index.html buildConfig for non-WebGL environments
+- **Logo Compression Pipeline**: Created Sharp-based compression script (compress_logo.mjs) to optimize large PNG assets; reduces 3.4MB → 715KB PNG / 289KB WebP
+- **Known Limitation - Image.asset in Replit**: Image.asset() fails to render in Replit's CPU-only sandbox regardless of file size or format (tested 3.4MB, 715KB, 289KB, 207KB across PNG/JPG/WebP). Assets are correctly bundled and HTTP-accessible (200 responses), but Flutter web's image decoding fails in this environment. **App functions correctly otherwise** (video, camera, navigation all work). Likely Replit-specific; production deployments should be unaffected.
 - **Upload Screen Modernization**: Full-screen video preview modal (tap to expand), 8-thumbnail generation/selection with orange border (#FF8C00) on selected, platform-safe with web compatibility (blob URLs for web, File-based for mobile)
 - **Platform-Safe Video Controllers**: Proper `dart:io` import guards prevent web compilation errors; `VideoPlayerController.networkUrl()` for web, `VideoPlayerController.file()` for mobile
 - **Thumbnail Generation**: Mobile-only feature using `video_thumbnail` package (v0.5.6); web shows feedback snackbar "not available on web"

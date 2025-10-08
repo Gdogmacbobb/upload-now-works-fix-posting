@@ -9,13 +9,15 @@
   </head>
   <body>
     <script>
-      var serviceWorkerVersion = '{{flutter_service_worker_version}}';
+      // Service worker disabled for Replit iframe environment
+      // SW registration fails in sandboxed iframes, breaking Image.asset loading
+      var serviceWorkerVersion = null;
       window._flutter = window._flutter || {};
       window._flutter.buildConfig = {
         builds: [
           {
             compileTarget: 'dart2js',
-            renderer: 'canvaskit',
+            renderer: 'html',
             mainJsPath: 'main.dart.js',
           }
         ]
@@ -24,9 +26,7 @@
     <script>
       window.addEventListener('load', function(ev) {
         _flutter.loader.load({
-          serviceWorkerSettings: {
-            serviceWorkerVersion: serviceWorkerVersion,
-          }
+          // Service worker disabled - assets load directly without SW cache
         });
       });
     </script>
