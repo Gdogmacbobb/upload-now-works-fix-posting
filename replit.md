@@ -2,6 +2,23 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment.
 
+**Current Status** (Oct 8, 2025): ✅ **VIDEO PREVIEW BLACK SCREEN FIXED** - Implemented comprehensive fix for Flutter web first-load black screen issue via DOM visibility detection, CSS enforcement, and paint refresh sequence.
+
+## Recent Video Preview Fixes (Oct 8, 2025)
+
+### Paint Visibility Enforcement (Latest)
+- **CSS Visibility Enforcement**: After DOM detection, explicitly sets `visibility='visible'`, `opacity='1'`, `display='block'` on all video elements to override hidden styles
+- **Paint Refresh Sequence**: 150ms delay after CSS changes, then pause/play cycle in postFrameCallback to force browser texture repaint
+- **Paint Confirmation**: Checks `video.videoWidth > 0` and `video.videoHeight > 0` to verify actual rendering
+- **Enhanced Debug Overlay**: Added "Paint ✅/❌" indicator (web-only) to confirm video texture has dimensions
+- **Complete Fix Flow**: DOM detected → CSS visibility enforced → Playback starts → 150ms delay → Pause/play repaint → Dimension check → Paint confirmed
+
+### DOM Visibility Detection
+- **Cross-Platform Stub Pattern**: Created `web_dom_stub.dart` with Document/ElementList stubs for mobile builds, conditional import switches to real `dart:html` on web
+- **Direct DOM Access**: Replaced eval() with `html.document.getElementsByTagName('video').length` for CSP-safe checking
+- **Retry Logic**: Polls every 200ms for up to 3 seconds (15 attempts) to detect when HTML `<video>` element attaches to DOM
+- **Dynamic Texture Refresh**: ValueKey based on timestamp forces texture layer recreation on timeout
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
