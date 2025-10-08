@@ -1,0 +1,32 @@
+{
+  "task": "Guarantee video and audio playback start together on the first Preview tap",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "The first Preview tap still shows a black screen with no audio. The second tap plays only audio. The third tap finally shows video + audio with correct rotation. The controller listener fix based on value.size > 0 is firing too early — before the first frame is actually rendered on the texture.",
+    "currentBehavior": {
+      "Tap1": "Black screen, silent",
+      "Tap2": "Audio only",
+      "Tap3": "Video + audio (correct orientation)"
+    },
+    "diagnosis": [
+      "The controller listener triggers when the video dimensions become known, but before the first frame is displayed.",
+      "controller.value.isInitialized and non-null size don't guarantee that the texture has drawn the first decoded frame.",
+      "Audio starts only once the controller.play() call occurs, but video texture isn't repainted until the next rebuild."
+    ],
+    "requiredFixes": [
+      {
+        "1️⃣ Replace size-based listener with frame-render callback": [
+          "After controller.initialize(), call controller.play(), then immediately pause().",
+          "Add a listener that checks controller.value.isPlaying == false && controller.value.isInitialized == true && controller.value.position > Duration.zero — this indicates at least one frame has been decoded.",
+          "Once that condition is met, set _firstFrameRendered = true, rebuild the widget, and then play() with volume 1.0."
+        ]
+      },
+      {
+        "2️⃣ Ensure one-time trigger": [
+          "Guard playback start with a boolean _firstFramePlayed to prevent multiple activations.",
+          "Clean up listeners in dispose() to avoid duplicate triggers on subsequent previews."
+        ]
+      },
+      {
+        "3️⃣ Confirm texture paint before playback": [
+          "Optionally add WidgetsBinding.instance.addPostFrameCallback((_) => controller.play()) *after* _firstFrameRendered becomes true to guarantee texture ready state."
