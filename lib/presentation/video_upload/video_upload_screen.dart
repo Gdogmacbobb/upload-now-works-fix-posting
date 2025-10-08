@@ -589,32 +589,51 @@ class _FullScreenVideoPreview extends StatefulWidget {
 
 class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   bool _isPlaying = false;
+  bool _firstFrameReady = false;
 
   @override
   void initState() {
     super.initState();
-    // Delay playback until VideoPlayer texture is mounted and first frame decoded
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted && widget.controller.value.isInitialized) {
-        debugPrint('[PREVIEW] Texture mounted, waiting for first frame decode...');
-        
-        // Wait for first frame to be decoded (prevents black screen/audio-only issues)
-        await Future.delayed(const Duration(milliseconds: 150));
-        
-        if (mounted) {
-          widget.controller.setVolume(1.0);
-          widget.controller.play();
-          setState(() => _isPlaying = true);
-          widget.controller.setLooping(true);
-          debugPrint('[PREVIEW] Playback started - first frame ready');
-        }
+    
+    // Add listener to detect when first frame is actually decoded
+    widget.controller.addListener(_onControllerUpdate);
+    
+    // Check if frame is already ready (in case initialization completed before modal opened)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _checkAndStartPlayback();
       }
     });
   }
 
+  void _onControllerUpdate() {
+    if (!_firstFrameReady && mounted) {
+      _checkAndStartPlayback();
+    }
+  }
+
+  void _checkAndStartPlayback() {
+    // Only start playback when we have a real decoded frame
+    if (widget.controller.value.isInitialized && 
+        widget.controller.value.size.width > 0 &&
+        widget.controller.value.size.height > 0 &&
+        !_firstFrameReady) {
+      
+      debugPrint('[PREVIEW] First frame ready - size: ${widget.controller.value.size}');
+      
+      _firstFrameReady = true;
+      widget.controller.setVolume(1.0);
+      widget.controller.play();
+      widget.controller.setLooping(true);
+      
+      setState(() => _isPlaying = true);
+      debugPrint('[PREVIEW] Playback started with confirmed frame');
+    }
+  }
+
   @override
   void dispose() {
-    // Pause when modal closes
+    widget.controller.removeListener(_onControllerUpdate);
     widget.controller.pause();
     widget.controller.setLooping(false);
     super.dispose();
