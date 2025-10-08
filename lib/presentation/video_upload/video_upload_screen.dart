@@ -601,6 +601,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   Timer? _retryTimer;
   Timer? _paintCheckTimer;
   String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
+  
+  // Store original styles for cleanup
+  final Map<String, Map<String, String>> _originalVideoStyles = {};
+  final Map<String, Map<String, String>> _originalRootStyles = {};
 
   @override
   void initState() {
@@ -640,30 +644,50 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     debugPrint('[PREVIEW] 🎨 Attempting CSS visibility enforcement...');
     
     try {
-      // First: Reset parent overflow to prevent clipping
+      // First: Reset parent overflow to prevent clipping (save original styles)
       final rootElements = html.document.querySelectorAll('body, html, flt-glass-pane');
       for (var i = 0; i < rootElements.length; i++) {
         final dynamic elem = rootElements[i];
+        final elemId = 'root_$i';
+        
+        // Save original styles
+        _originalRootStyles[elemId] = {
+          'overflow': elem.style.overflow ?? '',
+          'position': elem.style.position ?? '',
+        };
+        
+        // Apply temporary styles
         elem.style.overflow = 'visible';
         elem.style.position = 'relative';
       }
       debugPrint('[PREVIEW] Reset overflow on ${rootElements.length} root container(s)');
       
-      // Second: Force full-screen rendering of video elements
+      // Second: Force full-screen rendering of video elements (save original styles)
       final videoElements = html.document.getElementsByTagName('video');
       debugPrint('[PREVIEW] Found ${videoElements.length} video elements to modify');
       
       for (var i = 0; i < videoElements.length; i++) {
         final video = videoElements[i];
-        // Access style property directly without type casting
         final dynamic videoElement = video;
+        final videoId = 'video_$i';
         
-        // Visibility and opacity
+        // Save original styles
+        _originalVideoStyles[videoId] = {
+          'visibility': videoElement.style.visibility ?? '',
+          'opacity': videoElement.style.opacity ?? '',
+          'display': videoElement.style.display ?? '',
+          'position': videoElement.style.position ?? '',
+          'zIndex': videoElement.style.zIndex ?? '',
+          'top': videoElement.style.top ?? '',
+          'left': videoElement.style.left ?? '',
+          'width': videoElement.style.width ?? '',
+          'height': videoElement.style.height ?? '',
+        };
+        
+        // Apply temporary full-screen styles
         videoElement.style.visibility = 'visible';
         videoElement.style.opacity = '1';
         videoElement.style.display = 'block';
-        
-        // Fixed positioning with viewport units to fully detach from Flutter layout
         videoElement.style.position = 'fixed';
         videoElement.style.zIndex = '99999';
         videoElement.style.top = '0';
@@ -853,10 +877,54 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     }
   }
 
+  void _restoreOriginalStyles() {
+    if (!kIsWeb) return;
+    
+    try {
+      // Restore root container styles
+      final rootElements = html.document.querySelectorAll('body, html, flt-glass-pane');
+      for (var i = 0; i < rootElements.length; i++) {
+        final elemId = 'root_$i';
+        if (_originalRootStyles.containsKey(elemId)) {
+          final dynamic elem = rootElements[i];
+          final originalStyles = _originalRootStyles[elemId]!;
+          
+          elem.style.overflow = originalStyles['overflow'] ?? '';
+          elem.style.position = originalStyles['position'] ?? '';
+        }
+      }
+      debugPrint('[PREVIEW] Restored ${_originalRootStyles.length} root container style(s)');
+      
+      // Restore video element styles
+      final videoElements = html.document.getElementsByTagName('video');
+      for (var i = 0; i < videoElements.length; i++) {
+        final videoId = 'video_$i';
+        if (_originalVideoStyles.containsKey(videoId)) {
+          final dynamic videoElement = videoElements[i];
+          final originalStyles = _originalVideoStyles[videoId]!;
+          
+          videoElement.style.visibility = originalStyles['visibility'] ?? '';
+          videoElement.style.opacity = originalStyles['opacity'] ?? '';
+          videoElement.style.display = originalStyles['display'] ?? '';
+          videoElement.style.position = originalStyles['position'] ?? '';
+          videoElement.style.zIndex = originalStyles['zIndex'] ?? '';
+          videoElement.style.top = originalStyles['top'] ?? '';
+          videoElement.style.left = originalStyles['left'] ?? '';
+          videoElement.style.width = originalStyles['width'] ?? '';
+          videoElement.style.height = originalStyles['height'] ?? '';
+        }
+      }
+      debugPrint('[PREVIEW] Restored ${_originalVideoStyles.length} video element style(s)');
+    } catch (e) {
+      debugPrint('[PREVIEW] Style restoration failed: $e');
+    }
+  }
+
   @override
   void dispose() {
     _retryTimer?.cancel();
     _paintCheckTimer?.cancel();
+    _restoreOriginalStyles();
     widget.controller.removeListener(_updatePlaybackState);
     widget.controller.pause();
     widget.controller.setLooping(false);
