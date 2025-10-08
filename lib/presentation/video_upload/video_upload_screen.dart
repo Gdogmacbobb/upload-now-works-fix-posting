@@ -639,6 +639,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     debugPrint('[PREVIEW] 🎨 Attempting CSS visibility enforcement...');
     
     try {
+      // First: Reset parent overflow to prevent clipping
+      final rootElements = html.document.querySelectorAll('body, html, flt-glass-pane');
+      for (var i = 0; i < rootElements.length; i++) {
+        final dynamic elem = rootElements[i];
+        elem.style.overflow = 'visible';
+        elem.style.position = 'relative';
+      }
+      debugPrint('[PREVIEW] Reset overflow on ${rootElements.length} root container(s)');
+      
+      // Second: Force full-screen rendering of video elements
       final videoElements = html.document.getElementsByTagName('video');
       debugPrint('[PREVIEW] Found ${videoElements.length} video elements to modify');
       
@@ -652,17 +662,17 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         videoElement.style.opacity = '1';
         videoElement.style.display = 'block';
         
-        // Z-index and positioning to bring above Flutter canvas
-        videoElement.style.position = 'absolute';
-        videoElement.style.zIndex = '9999';
+        // Fixed positioning with viewport units to fully detach from Flutter layout
+        videoElement.style.position = 'fixed';
+        videoElement.style.zIndex = '99999';
         videoElement.style.top = '0';
         videoElement.style.left = '0';
-        videoElement.style.width = '100%';
-        videoElement.style.height = '100%';
+        videoElement.style.width = '100vw';
+        videoElement.style.height = '100vh';
         
-        debugPrint('[PREVIEW] Set visibility + z-index positioning on video #$i');
+        debugPrint('[PREVIEW] Set fixed positioning + viewport sizing on video #$i');
       }
-      debugPrint('[PREVIEW] 🎨 Forced CSS visibility and layer promotion on ${videoElements.length} video element(s)');
+      debugPrint('[PREVIEW] 🎨 Forced full-screen rendering on ${videoElements.length} video element(s)');
     } catch (e, stackTrace) {
       debugPrint('[PREVIEW] CSS visibility enforcement failed: $e');
       debugPrint('[PREVIEW] Stack trace: $stackTrace');
