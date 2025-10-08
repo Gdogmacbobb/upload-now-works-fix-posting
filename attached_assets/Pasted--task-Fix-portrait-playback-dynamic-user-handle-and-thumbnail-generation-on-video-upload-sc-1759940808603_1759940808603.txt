@@ -1,0 +1,60 @@
+{
+  "task": "Fix portrait playback, dynamic user handle, and thumbnail generation on video upload screen",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "screen": "Video Upload Screen",
+    "description": "After implementing the TikTok-style upload screen, video playback orientation, user handle rendering, and thumbnail generation are malfunctioning."
+  },
+  "issues": [
+    {
+      "id": "orientation_issue",
+      "symptom": "Uploaded videos play in horizontal orientation even when recorded vertically.",
+      "expected_behavior": "Videos should auto-rotate and display in full-screen portrait orientation (similar to discovery_feed screen).",
+      "fix": [
+        "Use `Transform.rotate` or `AspectRatio` based on video width/height to maintain portrait orientation.",
+        "For web builds, ensure `video_player_web` is initialized with correct aspect ratio.",
+        "Mirror the logic used in discovery_feed for consistent orientation handling."
+      ]
+    },
+    {
+      "id": "handle_issue",
+      "symptom": "User handle appears as static '@streetartist' instead of showing actual logged-in user's handle.",
+      "expected_behavior": "Handle should dynamically load from Supabase user profile (field: username or handle) just like performer_profile and discovery_feed.",
+      "fix": [
+        "Fetch current user data from AuthService or SupabaseProvider.",
+        "Pass the handle to the upload preview widget and render it dynamically.",
+        "Ensure the handle updates immediately after upload (no caching)."
+      ]
+    },
+    {
+      "id": "thumbnail_issue",
+      "symptom": "‘Select Thumbnail’ button does not generate or show thumbnails.",
+      "expected_behavior": "Tapping the button should generate 6–8 evenly spaced thumbnails using `video_thumbnail` and show them in a horizontal scroll view.",
+      "fix": [
+        "Confirm `video_thumbnail` dependency is installed and imported correctly.",
+        "Implement thumbnail generation using `VideoThumbnail.thumbnailData` with time intervals calculated from video duration.",
+        "Ensure generated thumbnails are stored in memory as Uint8List and displayed in Image.memory widgets.",
+        "Handle both mobile and web — web should show a placeholder if thumbnail generation is unsupported."
+      ]
+    }
+  ],
+  "constraints": {
+    "do_not_modify": [
+      "backend logic (Supabase uploads)",
+      "other presentation screens",
+      "main.dart or app routing"
+    ],
+    "theme": "Dark mode (#1C1C1E background, #FF8C00 accents)"
+  },
+  "validation_steps": [
+    "Upload a vertical video and confirm full-screen playback remains portrait.",
+    "Verify logged-in user's handle appears correctly in overlay.",
+    "Tap 'Select Thumbnail' → ensure thumbnails appear and can be selected.",
+    "Run on both web and mobile preview to ensure no errors or orientation flips."
+  ],
+  "post_actions": [
+    "Run: flutter clean && flutter pub get",
+    "Run: flutter build web --no-tree-shake-icons",
+    "Re-test: record → upload → full-screen preview → select thumbnail → upload"
+  ]
+}
