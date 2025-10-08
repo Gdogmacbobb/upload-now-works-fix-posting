@@ -623,8 +623,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   @override
   Widget build(BuildContext context) {
     final videoSize = widget.controller.value.size;
-    final int rotationCorrectionInt = widget.controller.value.rotationCorrection;
-    final double rotationCorrection = rotationCorrectionInt.toDouble();
+    final rotationCorrection = widget.controller.value.rotationCorrection.toDouble();
     final int rotationDegrees = (rotationCorrection * 180 / 3.14159).round();
     
     // Check portrait: dimensions OR rotation metadata OR device orientation (for web landscape videos)
