@@ -5,7 +5,7 @@ YNFNY is a cross-platform Flutter mobile application serving as a social platfor
 **Current Status**: ✅ **VIDEO PLAYBACK STABILIZATION COMPLETE** (Oct 8, 2025) - First-frame decode delay, autoplay disabled, and preview modal initialization fully optimized.
 
 **Latest Playback Fixes (Oct 8, 2025 - Night)**:
-- **Frame-Ready Detection**: Replaced unreliable 150ms fixed delay with actual frame-ready listener. Preview modal now uses `controller.addListener()` to detect when `controller.value.size` becomes non-null (first frame decoded). Playback only starts when frame validation passes (`size.width > 0 && size.height > 0`), eliminating black screen on first Preview tap. Added `_firstFrameReady` flag to prevent re-triggering and proper `removeListener()` cleanup in dispose.
+- **Play-Pause-Replay Pattern**: Implemented guaranteed first-frame decode before playback. Preview modal now triggers `play()→pause()` sequence in initState to force first frame decode, then listens for `controller.value.position > Duration.zero` (stronger signal than size check). When detected, `setState()` rebuilds widget to paint texture, then nested `postFrameCallback` starts final playback. Eliminates black screen/audio-only states on first Preview tap.
 - **Autoplay Disabled**: Changed upload screen initialization from `controller.play()` to `controller.pause()`, preventing automatic playback on entry. Video stays paused as still frame until user explicitly taps Preview button.
 
 **Previous Stabilization Fixes (Oct 8, 2025 - Evening)**:
