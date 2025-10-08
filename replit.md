@@ -6,12 +6,16 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 
 ## Recent Video Preview Fixes (Oct 8, 2025)
 
-### Paint Visibility Enforcement (Latest)
+### Layer Composition Fix (Latest)
+- **Z-Index Promotion**: After DOM detection, sets `z-index=9999` + `position=absolute` + full viewport sizing (top=0, left=0, width/height=100%) to bring video element above Flutter canvas layer
+- **Bounding Box Detection**: Uses `getBoundingClientRect()` instead of `videoWidth/videoHeight` for reliable visibility confirmation - only confirms paint when browser reports non-zero rendered box
+- **Clip Prevention**: Added `clipBehavior: Clip.none` to Stack and Container wrappers to prevent Flutter from clipping the promoted DOM video element
+- **Complete Fix Flow**: DOM detected → CSS visibility + z-index layer promotion → Playback starts → 150ms delay → Pause/play repaint → Bounding rect check → Paint confirmed
+
+### Paint Visibility Enforcement
 - **CSS Visibility Enforcement**: After DOM detection, explicitly sets `visibility='visible'`, `opacity='1'`, `display='block'` on all video elements to override hidden styles
 - **Paint Refresh Sequence**: 150ms delay after CSS changes, then pause/play cycle in postFrameCallback to force browser texture repaint
-- **Paint Confirmation**: Checks `video.videoWidth > 0` and `video.videoHeight > 0` to verify actual rendering
 - **Enhanced Debug Overlay**: Added "Paint ✅/❌" indicator (web-only) to confirm video texture has dimensions
-- **Complete Fix Flow**: DOM detected → CSS visibility enforced → Playback starts → 150ms delay → Pause/play repaint → Dimension check → Paint confirmed
 
 ### DOM Visibility Detection
 - **Cross-Platform Stub Pattern**: Created `web_dom_stub.dart` with Document/ElementList stubs for mobile builds, conditional import switches to real `dart:html` on web
