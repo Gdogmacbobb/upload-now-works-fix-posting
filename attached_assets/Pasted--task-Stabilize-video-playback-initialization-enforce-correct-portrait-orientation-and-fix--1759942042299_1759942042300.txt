@@ -1,0 +1,47 @@
+{
+  "task": "Stabilize video playback initialization, enforce correct portrait orientation, and fix thumbnail generation conditions on upload screen",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "screen": "Video Upload Screen",
+    "description": "Video preview loads inconsistently (black screen, then sound only, then horizontal video). Thumbnail selection throws 'not available on web' instantly without attempting generation. Orientation handling still incorrect for portrait videos."
+  },
+  "objectives": [
+    "Ensure video_player controller is properly initialized before display or playback.",
+    "Guarantee vertical (portrait) videos use a FittedBox or AspectRatio that fills screen height without rotation.",
+    "Fix thumbnail generation logic so it gracefully skips only unsupported platforms, but actually runs on web and mobile where possible."
+  ],
+  "fix_instructions": [
+    {
+      "id": "init_fix",
+      "description": "Add explicit await on VideoPlayerController.initialize() and use FutureBuilder to render only after initialization completes. Prevent multiple controller instances or premature dispose calls."
+    },
+    {
+      "id": "portrait_fix",
+      "description": "Detect video dimensions via controller.value.size and if height > width, wrap player in Center → FittedBox(fit: BoxFit.cover) → SizedBox with MediaQuery height. Remove any Transform.rotate hack."
+    },
+    {
+      "id": "thumbnail_fix",
+      "description": "Replace placeholder message with working generation flow using video_thumbnail.thumbnailData even on web (using js interop blob if necessary). If platform == web and thumbnailData returns null, fallback to first frame snapshot rather than 'not available'."
+    },
+    {
+      "id": "error_handling",
+      "description": "Wrap thumbnail generation and playback in try/catch blocks with print logs for debugging, but never crash or freeze UI."
+    }
+  ],
+  "testing_steps": [
+    "Tap video preview once — should instantly show portrait playback with sound.",
+    "Tap 'Select Thumbnail' — should generate visible thumbnails (or fallback first frame) without any 'not available' message.",
+    "Switch between landscape and portrait videos to confirm correct scaling.",
+    "Reload the app and confirm handle, caption, and location remain consistent."
+  ],
+  "constraints": {
+    "keep_backend_unchanged": true,
+    "do_not_modify_routes": true,
+    "respect_dark_theme": true
+  },
+  "post_actions": [
+    "Run: flutter clean && flutter pub get",
+    "Rebuild web: flutter build web --no-tree-shake-icons",
+    "Re-test flow end-to-end: record → upload → preview → thumbnail → upload"
+  ]
+}
