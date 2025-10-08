@@ -5,6 +5,7 @@ YNFNY is a cross-platform Flutter mobile application serving as a social platfor
 **Current Status**: ✅ **CAMERA SYSTEM PRODUCTION-READY** (Oct 8, 2025) - TikTok/Reels-style video recording with flash support, camera switching, and web compatibility. Navigation flow restored to production settings.
 
 **Recent Fixes (Oct 8, 2025)**:
+- **Continuous Torch Light**: Torch stays ON for full recording duration when flash enabled before start; auto-disables when recording stops. Platform-aware: hardware torch on native rear camera, visual-only feedback on web/front camera. Snackbar feedback ("Flash enabled for recording", "Flash disabled") on all platforms.
 - **Navigation Restored**: DEV_SKIP_GEO_AUTH set to false; authenticated users → /discovery-feed, non-authenticated → /login-screen
 - **Recording Stop Protection**: Added comprehensive null/state checks before stopRecording() to prevent crashes
 - **Flash Auto-Off Fix**: Platform-aware flash disable after recording - visual-only on web, hardware call on native to prevent NoSuchMethodError
