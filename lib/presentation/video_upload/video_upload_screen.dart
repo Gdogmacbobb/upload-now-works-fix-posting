@@ -593,14 +593,21 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   @override
   void initState() {
     super.initState();
-    // Delay playback until VideoPlayer texture is mounted
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Delay playback until VideoPlayer texture is mounted and first frame decoded
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted && widget.controller.value.isInitialized) {
-        widget.controller.setVolume(1.0);
-        widget.controller.play();
-        setState(() => _isPlaying = true);
-        widget.controller.setLooping(true);
-        debugPrint('[PREVIEW] Playback started after texture mounted');
+        debugPrint('[PREVIEW] Texture mounted, waiting for first frame decode...');
+        
+        // Wait for first frame to be decoded (prevents black screen/audio-only issues)
+        await Future.delayed(const Duration(milliseconds: 150));
+        
+        if (mounted) {
+          widget.controller.setVolume(1.0);
+          widget.controller.play();
+          setState(() => _isPlaying = true);
+          widget.controller.setLooping(true);
+          debugPrint('[PREVIEW] Playback started - first frame ready');
+        }
       }
     });
   }
