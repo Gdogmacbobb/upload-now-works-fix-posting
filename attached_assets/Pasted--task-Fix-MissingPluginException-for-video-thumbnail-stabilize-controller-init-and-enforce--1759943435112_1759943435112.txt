@@ -1,0 +1,46 @@
+{
+  "task": "Fix MissingPluginException for video_thumbnail, stabilize controller init, and enforce correct portrait playback",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "The upload screen still fails thumbnail generation with MissingPluginException (path_provider). Video preview shows blank or sound only on first play, and portrait videos display sideways."
+  },
+  "objectives": [
+    "Replace path_provider dependency with safe web+mobile compatible code.",
+    "Implement a unified thumbnail generator: use video_thumbnail for mobile, use video_player snapshot for web.",
+    "Guarantee that video controller is fully initialized before rendering any frame or reading aspect ratio.",
+    "Lock portrait playback correctly once initialization completes."
+  ],
+  "fix_instructions": [
+    {
+      "id": "thumbnail_plugin_guard",
+      "description": "Wrap thumbnail generation in platform checks: if (kIsWeb) capture first frame via VideoPlayerController and CanvasKit snapshot; else use video_thumbnail + path_provider with proper await on WidgetsFlutterBinding.ensureInitialized()."
+    },
+    {
+      "id": "controller_futurebuilder",
+      "description": "Use FutureBuilder(controller.initialize()) and render only when snapshot.connectionState == done. Persist a single controller instance for entire lifecycle."
+    },
+    {
+      "id": "orientation_stabilization",
+      "description": "Detect video dimensions only after controller initialization, then apply FittedBox(BoxFit.cover) with Center alignment to force portrait display for height > width videos."
+    },
+    {
+      "id": "error_handling",
+      "description": "Catch MissingPluginException separately and show a clean SnackBar: 'Thumbnail not supported on this platform' instead of throwing."
+    }
+  ],
+  "dependencies": {
+    "video_thumbnail": ">=0.5.3",
+    "path_provider": ">=2.1.0"
+  },
+  "validation_steps": [
+    "Run on both web and mobile preview.",
+    "Tap Select Thumbnail → should no longer crash or show plugin error.",
+    "Video preview should show correctly on first tap with sound and correct orientation.",
+    "Ensure no MissingPluginException in logs."
+  ],
+  "post_actions": [
+    "Run: flutter clean && flutter pub get",
+    "Restart app to register new plugin bindings",
+    "Then rebuild: flutter build web --no-tree-shake-icons"
+  ]
+}
