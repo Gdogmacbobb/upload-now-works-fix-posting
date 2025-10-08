@@ -1,0 +1,58 @@
+{
+  "goal": "Fix missing drawings, logos, and icons across all screens in the YNFNY app (Flutter Web + Supabase). Ensure proper asset rendering and Supabase image fetching on both web and mobile builds.",
+  "tasks": [
+    {
+      "title": "1️⃣ Verify Asset Linking in pubspec.yaml",
+      "instructions": [
+        "Open pubspec.yaml and confirm all images, logos, and SVGs are declared under the assets section.",
+        "Ensure the indentation is correct (two spaces per level). Example:",
+        "flutter:\n  uses-material-design: true\n  assets:\n    - assets/images/\n    - assets/icons/\n    - assets/logos/",
+        "If missing, add all folders where images and drawings are stored."
+      ]
+    },
+    {
+      "title": "2️⃣ Prevent Flutter Tree-Shaking of Icons and SVGs",
+      "instructions": [
+        "In the build_web.sh file, include the following flags:",
+        "./build_web.sh → flutter build web --release --no-tree-shake-icons",
+        "Ensure this script also removes old build caches before rebuilding:",
+        "flutter clean && flutter pub get && flutter build web --release --no-tree-shake-icons"
+      ]
+    },
+    {
+      "title": "3️⃣ Fix Supabase Image URLs (Logo Fetching)",
+      "instructions": [
+        "Confirm Supabase storage URLs are being fetched via the correct bucket and public path.",
+        "In all image widgets using NetworkImage or Image.network, verify that the URL is complete, e.g.:",
+        "Image.network('${supabaseUrl}/storage/v1/object/public/logos/app_logo.png')",
+        "If the app uses private buckets, implement getPublicUrl() or signedUrl logic for access."
+      ]
+    },
+    {
+      "title": "4️⃣ Ensure Font and Icon Packages Load Correctly",
+      "instructions": [
+        "Verify that Material Icons and custom fonts are included in pubspec.yaml.",
+        "Ensure pubspec.yaml includes:",
+        "flutter:\n  fonts:\n    - family: Roboto\n      fonts:\n        - asset: assets/fonts/Roboto-Regular.ttf\n    - family: Icons\n      fonts:\n        - asset: assets/icons/MaterialIcons-Regular.ttf",
+        "Run flutter pub get after saving."
+      ]
+    },
+    {
+      "title": "5️⃣ Update Asset References in Code",
+      "instructions": [
+        "Search for all references to images or logos in the app (e.g., Image.asset, SvgPicture.asset).",
+        "Ensure they use lowercase consistent paths (Flutter is case-sensitive). Example:",
+        "Image.asset('assets/logos/ynfny_logo.png', fit: BoxFit.contain),"
+      ]
+    },
+    {
+      "title": "6️⃣ Force Clean Deployment on Replit",
+      "instructions": [
+        "Run the build script manually once before pushing to ensure assets load properly:",
+        "./build_web.sh",
+        "Then re-deploy using Replit’s deploy button or CLI after confirming images appear locally."
+      ]
+    }
+  ],
+  "expected_result": "All icons, drawings, and logos load correctly on both startup (splash screen) and discovery/feed screens. No placeholder ‘X’ boxes appear, and Supabase-stored images render properly in production builds."
+}
