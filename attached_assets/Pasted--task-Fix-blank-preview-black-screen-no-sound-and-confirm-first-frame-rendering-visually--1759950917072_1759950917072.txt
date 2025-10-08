@@ -1,0 +1,43 @@
+{
+  "task": "Fix blank preview (black screen + no sound) and confirm first-frame rendering visually",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "After the Play-Pause-Detect-Replay fix, pressing Preview shows a completely black screen with no audio. The AI claims caching, but this is a live rendering issue: the controller.play() fires before the texture is painted and sound output is initialized. We need the video to visibly render and play with sound on the first tap — not just logs showing 'frame decoded'."
+  },
+  "observations": {
+    "CurrentBehavior": {
+      "PreviewTap1": "Black screen, no sound.",
+      "Logs": "[PREVIEW] First frame decoded - playback started.",
+      "Reality": "Nothing is rendered; texture not painted; audio not audible."
+    },
+    "LikelyCause": [
+      "controller.play() fires before the widget tree rebuilds with the texture.",
+      "controller.pause() → controller.play() sequence happens before paint commit.",
+      "Audio output context may be blocked by user-gesture policies if playback isn't tied to a live UI frame."
+    ]
+  },
+  "requiredFixes": [
+    {
+      "1️⃣ Verify Texture Paint": [
+        "Add a debug Text('Painting Frame...') overlay that changes to Text('Frame Painted ✅') when controller.value.isPlaying == true and controller.value.position > Duration.zero.",
+        "Ensure controller.play() is called only inside a postFrameCallback AFTER setState() that rebuilds the VideoPlayer widget.",
+        "Use a short Future.microtask(() => controller.play()) instead of calling play() immediately inside the listener."
+      ]
+    },
+    {
+      "2️⃣ Confirm Audio Output": [
+        "Call controller.setVolume(1.0) AFTER confirming controller.value.isInitialized == true and _firstFrameRendered == true.",
+        "Ensure there is no auto-mute or silent mode flag being applied on modal open.",
+        "If necessary, trigger controller.play() in response to a direct user gesture event (button tap) rather than on build or listener fire."
+      ]
+    },
+    {
+      "3️⃣ Add Visual Debug Proof": [
+        "Display a translucent overlay label (top-left) showing: FrameDecoded: ✅/❌, SoundActive: ✅/❌, and controller.position in milliseconds.",
+        "Require this overlay to visually show both FrameDecoded ✅ and SoundActive ✅ within 1 second of pressing Preview."
+      ]
+    }
+  ],
+  "completionCriteria": {
+    "FirstTap": "Video and audio both start immediately upon the first Preview tap.",
+    "VisualConfirma
