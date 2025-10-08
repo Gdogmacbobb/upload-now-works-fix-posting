@@ -1,0 +1,49 @@
+{
+  "task": "Fix autoplay and frozen preview issues on the video upload screen",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "After recording, when the user navigates to the upload screen, audio starts playing automatically before tapping Preview. When Preview is tapped, the camera preview area displays a still frame with no motion and no audio. The debug overlay confirms proper rotation and portrait detection, but playback logic is not functioning correctly.",
+    "currentDebugOverlay": {
+      "Initialized": "✅",
+      "Video": "1280x720",
+      "Screen": "430x667",
+      "Device": "portrait",
+      "Rotation": "90° (web fix)",
+      "Portrait": "✅ (device)",
+      "BoxFit": "cover",
+      "Aspect": "1.78",
+      "Volume": "1.0"
+    },
+    "problems": [
+      "Audio plays automatically when entering the upload screen without pressing Preview.",
+      "When Preview is pressed, the video shows only a still frame and no sound.",
+      "Playback controller likely starts on navigation instead of being paused until user input.",
+      "Controller may not be rebuilding or reinitializing the texture correctly on Preview press."
+    ],
+    "requiredFixes": [
+      {
+        "1️⃣ Disable Autoplay on Upload Entry": [
+          "Ensure controller.play() is never called inside initState or any navigation callback.",
+          "Add a controller.pause() immediately after initialization so the video stays still until Preview is pressed."
+        ]
+      },
+      {
+        "2️⃣ Proper Preview Playback": [
+          "When the user taps Preview, explicitly call await controller.initialize() if not already initialized, then controller.play() and controller.setVolume(1.0).",
+          "Make sure the video texture widget rebuilds after playback begins — wrap in a StatefulBuilder or use setState(() {})."
+        ]
+      },
+      {
+        "3️⃣ Texture Freeze Fix": [
+          "If the preview still shows a still frame, add a short Future.delayed(const Duration(milliseconds: 100)) before calling controller.play() to ensure texture frame rendering begins after rotation transform is applied."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "Autoplay": "No sound or playback occurs until the user manually taps Preview.",
+      "PreviewPlayback": "Tapping Preview displays moving video with audio synced immediately.",
+      "NoFreeze": "No still-frame freeze or delayed playback after pressing Preview."
+    },
+    "note": "The debug overlay should remain visible until verified working. Once verified, it can be removed."
+  }
+}
