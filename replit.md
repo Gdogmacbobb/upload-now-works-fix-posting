@@ -6,7 +6,14 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 
 ## Recent Video Preview Fixes (Oct 8, 2025)
 
-### Renderer Verification & Visual Debugging (Latest)
+### Hard Dimension Forcing Fix (Latest - Oct 8, 2025)
+- **Explicit Sizing Fix**: Sets both HTML attributes (`video.width`/`height` = viewport pixels) AND CSS (`100vw`/`100vh`) to force browser allocation
+- **Forced Reflow Sequence**: `pause()` → read `offsetHeight` (triggers synchronous layout) → `play()` to commit dimensions
+- **Canvas Snapshot Fallback**: If video still has zero bounding box after 3 seconds, draws video frame to canvas element and appends to DOM as visible proof
+- **Complete Fix Flow**: DOM detected → Get viewport dimensions → Set HTML width/height attrs → Set CSS fixed position + viewport sizing → Force reflow → Poll bounding rect → If timeout: Create canvas snapshot
+- **Style Lifecycle**: Saves and restores maxHeight, objectFit, backgroundColor in addition to previous styles
+
+### Renderer Verification & Visual Debugging
 - **Explicit HTML Renderer Mode**: Added `<meta name='flutter-web-renderer' content='html'>` to web/index.html to force HTML renderer
 - **Runtime Renderer Detection**: Checks `window.flutterWebRenderer` and logs active mode ("html", "canvaskit", or "unknown")
 - **Visual DOM Debugging**: Injects lime outline (`4px solid lime`) on video elements with bounding rect logging for visual confirmation
