@@ -604,8 +604,12 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   Widget build(BuildContext context) {
     final videoSize = widget.controller.value.size;
     final isPortrait = videoSize.height > videoSize.width;
+    final screenSize = MediaQuery.of(context).size;
+    final isInitialized = widget.controller.value.isInitialized;
     
     debugPrint('[PREVIEW] Video size: $videoSize, isPortrait: $isPortrait');
+    debugPrint('[PREVIEW] Screen size: ${screenSize.width}x${screenSize.height}');
+    debugPrint('[PREVIEW] Controller initialized: $isInitialized');
     
     return Dialog(
       backgroundColor: Colors.black,
@@ -634,6 +638,83 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                       aspectRatio: widget.controller.value.aspectRatio,
                       child: VideoPlayer(widget.controller),
                     ),
+            ),
+
+            // DEBUG OVERLAY - Visual verification
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black87,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange, width: 2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '🐛 DEBUG',
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Initialized: ${isInitialized ? '✅' : '❌'}',
+                      style: TextStyle(
+                        color: isInitialized ? Colors.green : Colors.red,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'Video: ${videoSize.width.toInt()}x${videoSize.height.toInt()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'Screen: ${screenSize.width.toInt()}x${screenSize.height.toInt()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'Portrait: ${isPortrait ? '✅' : '❌'}',
+                      style: TextStyle(
+                        color: isPortrait ? Colors.green : Colors.amber,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'BoxFit: ${isPortrait ? 'cover' : 'aspectRatio'}',
+                      style: const TextStyle(
+                        color: Colors.cyan,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'Aspect: ${widget.controller.value.aspectRatio.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             // Close button (top-left)
