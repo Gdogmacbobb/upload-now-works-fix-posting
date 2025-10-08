@@ -1,0 +1,39 @@
+{
+  "task": "Force HTML renderer mode and confirm visible <video> element paint on Flutter web",
+  "context": {
+    "file": "web/index.html",
+    "description": "The video element is playing (Frame ✅, Sound ✅) but Paint ❌ persists because the HTML <video> element is not being visually composited. This usually happens when Flutter uses CanvasKit instead of HTML renderer, which prevents platform views (like video) from drawing correctly. We must force HTML rendering, confirm the <video> element’s visibility in DOM, and add a fallback overlay check.",
+    "requiredFixes": [
+      {
+        "1️⃣ Force HTML Renderer": [
+          "In web/index.html, ensure this meta tag is present inside <head>:",
+          "<meta name='flutter-web-renderer' content='html'>",
+          "Also, make sure the deployment/build command uses '--web-renderer html'."
+        ]
+      },
+      {
+        "2️⃣ Renderer Mode Verification": [
+          "Add a debug log that prints 'Renderer Mode: ${renderer}' using 'window.flutterWebRenderer' or a platform channel check.",
+          "If renderer is CanvasKit, display a red warning in debug overlay: '⚠️ Switch to HTML Renderer for Video'."
+        ]
+      },
+      {
+        "3️⃣ DOM Confirmation Overlay": [
+          "Inject a visual DOM outline to verify the video is attached:",
+          "js.context.callMethod('eval', ['document.querySelectorAll(\"video\").forEach(v => {v.style.outline=\"4px solid lime\"; console.log(\"Video bounds:\", v.getBoundingClientRect());})']);"
+        ]
+      },
+      {
+        "4️⃣ Fallback Paint Layer": [
+          "If video bounding box remains 0×0 for more than 3 seconds, create a temporary <div id='video-debug-fallback'> with text 'Video element active but not composited — switch renderer to HTML'."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "RendererMode": "HTML mode confirmed in logs or overlay.",
+      "PaintVisible": "Video outline appears or bounding box shows non-zero dimensions.",
+      "Fallback": "If still invisible, user receives visual message confirming compositor limitation."
+    },
+    "note": "All playback, rotation, and audio logic is correct — this is purely a Flutter web renderer composition issue. For guaranteed fix, the app must run with the HTML renderer."
+  }
+}
