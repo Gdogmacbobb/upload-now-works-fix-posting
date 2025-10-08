@@ -17,12 +17,12 @@ class VideoUploadScreen extends StatefulWidget {
 
 class _VideoUploadScreenState extends State<VideoUploadScreen> {
   VideoPlayerController? _controller;
+  Future<void>? _initializeVideoPlayerFuture;
   bool _isPlaying = false;
   String? _caption;
   String _performanceType = 'Music';
   String _location = 'Washington Square Park';
   String _privacy = 'Public';
-  bool _isInitialized = false;
   String? _videoPath;
   String _userHandle = '@user';
   
@@ -39,7 +39,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     final videoPath = ModalRoute.of(context)!.settings.arguments as String?;
     if (videoPath != null && _videoPath == null) {
       _videoPath = videoPath;
-      _initializeVideoController(videoPath);
+      _initializeVideoPlayerFuture = _initializeVideoController(videoPath);
       _loadUserProfile();
     }
   }
@@ -65,31 +65,42 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
 
-  void _initializeVideoController(String videoPath) {
+  Future<void> _initializeVideoController(String videoPath) async {
     try {
-      // Platform-specific video controller initialization
+      debugPrint('[VIDEO_INIT] Starting initialization for: $videoPath');
+      
+      // Platform-specific video controller creation
+      final VideoPlayerController controller;
       if (kIsWeb) {
         // Web: Use network-based controller (video path is a blob URL on web)
-        _controller = VideoPlayerController.networkUrl(Uri.parse(videoPath));
+        controller = VideoPlayerController.networkUrl(Uri.parse(videoPath));
+        debugPrint('[VIDEO_INIT] Created web network controller');
       } else {
         // Mobile: Use file-based controller
-        _controller = VideoPlayerController.file(File(videoPath));
+        controller = VideoPlayerController.file(File(videoPath));
+        debugPrint('[VIDEO_INIT] Created mobile file controller');
       }
       
-      _controller!.initialize().then((_) {
-        if (mounted) {
-          setState(() => _isInitialized = true);
-        }
-      }).catchError((error) {
-        debugPrint('Video player initialization failed: $error');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load video')),
-          );
-        }
-      });
+      // Assign controller before awaiting initialization
+      _controller = controller;
+      
+      await _controller!.initialize();
+      debugPrint('[VIDEO_INIT] Controller initialized successfully');
+      debugPrint('[VIDEO_INIT] Video size: ${_controller!.value.size}');
+      debugPrint('[VIDEO_INIT] Video aspect ratio: ${_controller!.value.aspectRatio}');
+      debugPrint('[VIDEO_INIT] Video duration: ${_controller!.value.duration}');
+      
+      if (mounted) {
+        setState(() {});
+      }
     } catch (e) {
-      debugPrint('Video controller creation failed: $e');
+      debugPrint('[VIDEO_INIT] Controller initialization failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load video: $e')),
+        );
+      }
+      rethrow;
     }
   }
 
@@ -101,14 +112,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       return;
     }
 
-    if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thumbnail generation not available on web')),
-      );
-      return;
-    }
-
     setState(() => _isGeneratingThumbnails = true);
+    debugPrint('[THUMBNAIL] Starting thumbnail generation...');
 
     try {
       final duration = _controller?.value.duration;
@@ -116,54 +121,80 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         throw Exception('Video duration not available');
       }
 
-      final tempDir = await getTemporaryDirectory();
+      debugPrint('[THUMBNAIL] Video duration: $duration');
+      
+      // Attempt thumbnail generation (works on mobile, may fail gracefully on web)
       final List<String> generatedThumbnails = [];
       final int thumbnailCount = 8;
+      
+      if (kIsWeb) {
+        debugPrint('[THUMBNAIL] Web platform detected - attempting generation with fallback');
+      }
+      
+      final tempDir = await getTemporaryDirectory();
       
       for (int i = 0; i < thumbnailCount; i++) {
         final timeMs = (duration.inMilliseconds / (thumbnailCount + 1) * (i + 1)).round();
         
-        final thumbnail = await VideoThumbnail.thumbnailFile(
-          video: _videoPath!,
-          thumbnailPath: tempDir.path,
-          imageFormat: ImageFormat.PNG,
-          maxWidth: 200,
-          timeMs: timeMs,
-          quality: 75,
-        );
-        
-        if (thumbnail != null) {
-          generatedThumbnails.add(thumbnail);
-          debugPrint('Generated thumbnail $i at $timeMs ms: $thumbnail');
-        } else {
-          debugPrint('Failed to generate thumbnail $i at $timeMs ms');
+        try {
+          final thumbnail = await VideoThumbnail.thumbnailFile(
+            video: _videoPath!,
+            thumbnailPath: tempDir.path,
+            imageFormat: ImageFormat.PNG,
+            maxWidth: 200,
+            timeMs: timeMs,
+            quality: 75,
+          );
+          
+          if (thumbnail != null) {
+            generatedThumbnails.add(thumbnail);
+            debugPrint('[THUMBNAIL] ✓ Generated thumbnail $i at $timeMs ms: $thumbnail');
+          } else {
+            debugPrint('[THUMBNAIL] ✗ Null result for thumbnail $i at $timeMs ms');
+          }
+        } catch (thumbnailError) {
+          debugPrint('[THUMBNAIL] ✗ Error generating thumbnail $i: $thumbnailError');
         }
       }
 
-      setState(() {
-        _thumbnails = generatedThumbnails;
-        _isGeneratingThumbnails = false;
-        if (_thumbnails.isNotEmpty) {
-          _selectedThumbnailIndex = 0;
-          debugPrint('Generated ${_thumbnails.length} thumbnails, selected index 0');
-        } else {
-          debugPrint('No thumbnails were generated');
-        }
-      });
-    } catch (e) {
-      debugPrint('Thumbnail generation failed: $e');
-      setState(() => _isGeneratingThumbnails = false);
       if (mounted) {
+        setState(() {
+          _thumbnails = generatedThumbnails;
+          _isGeneratingThumbnails = false;
+          if (_thumbnails.isNotEmpty) {
+            _selectedThumbnailIndex = 0;
+            debugPrint('[THUMBNAIL] Successfully generated ${_thumbnails.length} thumbnails');
+          } else {
+            debugPrint('[THUMBNAIL] No thumbnails generated - platform may not support it');
+          }
+        });
+      }
+      
+      if (generatedThumbnails.isEmpty && kIsWeb) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Thumbnail generation not supported on web')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[THUMBNAIL] Thumbnail generation failed: $e');
+      if (mounted) {
+        setState(() => _isGeneratingThumbnails = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate thumbnails: $e')),
+          SnackBar(content: Text('Thumbnail generation failed: $e')),
         );
       }
     }
   }
 
   void _showFullScreenPreview() {
-    if (_controller == null || !_isInitialized) return;
+    if (_controller == null || !_controller!.value.isInitialized) {
+      debugPrint('[PREVIEW] Cannot show preview - controller not initialized');
+      return;
+    }
 
+    debugPrint('[PREVIEW] Opening full-screen preview');
     showDialog(
       context: context,
       barrierColor: Colors.black,
@@ -198,81 +229,104 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Video preview (tappable for full-screen)
-            if (_isInitialized && _controller != null)
-              GestureDetector(
-                onTap: _showFullScreenPreview,
-                child: AspectRatio(
-                  aspectRatio: _controller!.value.aspectRatio,
-                  child: Stack(
-                    children: [
-                      // Show selected thumbnail or video frame
-                      if (_selectedThumbnailIndex >= 0 && 
-                          _selectedThumbnailIndex < _thumbnails.length &&
-                          !kIsWeb)
-                        Image.file(
-                          File(_thumbnails[_selectedThumbnailIndex]),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        )
-                      else
-                        VideoPlayer(_controller!),
-                      
-                      // Play icon overlay
-                      Center(
-                        child: Icon(
-                          Icons.play_circle,
-                          color: Colors.white.withOpacity(0.8),
-                          size: 64,
-                        ),
+            // Video preview with FutureBuilder (tappable for full-screen)
+            FutureBuilder<void>(
+              future: _initializeVideoPlayerFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done && 
+                    snapshot.hasError) {
+                  return Container(
+                    height: 300,
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Video failed to load',
+                        style: TextStyle(color: Colors.red.shade400),
                       ),
-                      
-                      // Refresh icon
-                      Positioned(
-                        right: 12,
-                        top: 12,
-                        child: Icon(Icons.refresh, color: Colors.white),
-                      ),
-                      
-                      // Duration badge
-                      Positioned(
-                        right: 12,
-                        bottom: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(6),
+                    ),
+                  );
+                } else if (snapshot.connectionState == ConnectionState.done &&
+                           _controller != null &&
+                           _controller!.value.isInitialized) {
+                  return GestureDetector(
+                    onTap: _showFullScreenPreview,
+                    child: AspectRatio(
+                      aspectRatio: _controller!.value.aspectRatio,
+                      child: Stack(
+                        children: [
+                          // Show selected thumbnail or video frame
+                          if (_selectedThumbnailIndex >= 0 && 
+                              _selectedThumbnailIndex < _thumbnails.length &&
+                              !kIsWeb)
+                            Image.file(
+                              File(_thumbnails[_selectedThumbnailIndex]),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            )
+                          else
+                            VideoPlayer(_controller!),
+                          
+                          // Play icon overlay
+                          Center(
+                            child: Icon(
+                              Icons.play_circle,
+                              color: Colors.white.withOpacity(0.8),
+                              size: 64,
+                            ),
                           ),
-                          child: Text(
-                            _formatDuration(_controller!.value.duration),
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                          
+                          // Refresh icon
+                          Positioned(
+                            right: 12,
+                            top: 12,
+                            child: Icon(Icons.refresh, color: Colors.white),
                           ),
-                        ),
+                          
+                          // Duration badge
+                          Positioned(
+                            right: 12,
+                            bottom: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                _formatDuration(_controller!.value.duration),
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Video preview unavailable',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ),
-              ),
+                    ),
+                  );
+                } else {
+                  // Loading state
+                  return Container(
+                    height: 300,
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
 
             const SizedBox(height: 16),
 
-            // Select Thumbnail button (visible on all platforms, shows feedback on web)
-            if (_isInitialized)
+            // Select Thumbnail button (visible after video loads)
+            if (_controller != null && _controller!.value.isInitialized)
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryOrange,
@@ -534,8 +588,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final videoAspectRatio = widget.controller.value.aspectRatio;
-    final isPortrait = videoAspectRatio < 1.0;
+    final videoSize = widget.controller.value.size;
+    final isPortrait = videoSize.height > videoSize.width;
+    
+    debugPrint('[PREVIEW] Video size: $videoSize, isPortrait: $isPortrait');
     
     return Dialog(
       backgroundColor: Colors.black,
@@ -552,16 +608,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                       width: MediaQuery.of(context).size.width,
                       height: MediaQuery.of(context).size.height,
                       child: FittedBox(
-                        fit: BoxFit.contain,
+                        fit: BoxFit.cover,
                         child: SizedBox(
-                          width: widget.controller.value.size.width,
-                          height: widget.controller.value.size.height,
+                          width: videoSize.width,
+                          height: videoSize.height,
                           child: VideoPlayer(widget.controller),
                         ),
                       ),
                     )
                   : AspectRatio(
-                      aspectRatio: videoAspectRatio,
+                      aspectRatio: widget.controller.value.aspectRatio,
                       child: VideoPlayer(widget.controller),
                     ),
             ),
