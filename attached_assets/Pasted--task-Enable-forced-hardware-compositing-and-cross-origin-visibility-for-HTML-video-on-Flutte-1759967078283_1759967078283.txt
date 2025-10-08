@@ -1,0 +1,44 @@
+{
+  "task": "Enable forced hardware compositing and cross-origin visibility for HTML video on Flutter web",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "Frame ✅, Sound ✅, and DOM ✅ show playback is functional, but Paint ❌ persists because the HTML <video> element’s pixels are not being composited onto the visible canvas. The browser is rejecting the texture due to hardware compositing or CORS security context.",
+    "requiredFixes": [
+      {
+        "1️⃣ Force Hardware Acceleration": [
+          "After ensuring the <video> element is attached to DOM, apply the following CSS styles:",
+          "v.style.willChange = 'transform, opacity';",
+          "v.style.transform = 'translateZ(0)';",
+          "v.style.backfaceVisibility = 'hidden';",
+          "v.style.perspective = '1000px';",
+          "v.style.mixBlendMode = 'normal';",
+          "These properties force GPU compositing and re-enable visual blending in Chrome/Safari WebView sandboxes."
+        ]
+      },
+      {
+        "2️⃣ Enable Cross-Origin Rendering": [
+          "Add: v.crossOrigin = 'anonymous';",
+          "Set attribute: v.setAttribute('crossorigin', 'anonymous');",
+          "This prevents the HTML video texture from being rejected when attached to a Flutter WebGL layer."
+        ]
+      },
+      {
+        "3️⃣ Fallback Layer Verification": [
+          "Add a console.log('VIDEO COMPOSITED', v.getBoundingClientRect(), getComputedStyle(v).opacity, getComputedStyle(v).transform);",
+          "If opacity=1 and transform=matrix3d or translateZ(0), mark Paint ✅ in overlay."
+        ]
+      },
+      {
+        "4️⃣ Debugging Timeout": [
+          "If after 2 seconds bounding box > 0 but Paint ❌, log: '⚠️ Hardware compositor or sandbox blocked HTML video blending in current environment (Replit/WebKit)'"
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "PaintVisible": "Video’s hardware-composited texture visible with Paint ✅ confirmed in debug overlay.",
+      "CrossOriginSafe": "<video> has crossorigin='anonymous' and no CORS console errors.",
+      "Fallback": "If still black, logs explicitly show sandbox compositor limitation so we can switch to an alternate web video player."
+    },
+    "note": "Do NOT modify rotation or sizing logic. The black screen now results from browser compositor isolation between Flutter’s CanvasKit layer and HTML <video>. Forcing hardware acceleration and enabling CORS-safe rendering usually resolves it."
+  }
+}
