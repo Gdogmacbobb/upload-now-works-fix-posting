@@ -16,7 +16,7 @@ import './widgets/loading_indicator_widget.dart';
 import './widgets/retry_connection_widget.dart';
 
 // DEV MODE: Set to true to skip auth/geo checks and go straight to camera screen
-const bool DEV_SKIP_GEO_AUTH = true;
+const bool DEV_SKIP_GEO_AUTH = false;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);

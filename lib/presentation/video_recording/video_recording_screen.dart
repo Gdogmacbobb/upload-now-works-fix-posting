@@ -141,17 +141,43 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         }
       }
     } else {
+      // Stop recording with proper null checks and state verification
       try {
         _recordingTimer?.cancel();
+        
+        // Verify controller is still valid and initialized before stopping
+        if (_controller == null) {
+          debugPrint('⚠️ [RECORD_LIFECYCLE] Controller is null, cannot stop recording');
+          throw Exception('Camera controller not available');
+        }
+        
+        if (!_isInitialized) {
+          debugPrint('⚠️ [RECORD_LIFECYCLE] Controller not initialized, cannot stop recording');
+          throw Exception('Camera not initialized');
+        }
+        
+        debugPrint('🎬 [RECORD_LIFECYCLE] Stopping recording...');
         final filePath = await _controller!.stopRecording();
+        debugPrint('✅ [RECORD_LIFECYCLE] Recording stopped successfully. File: $filePath');
         
         // Auto-turn off flash when recording stops
         if (_isFlashOn && _hasFlashSupport) {
           debugPrint('🔦 [RECORD_LIFECYCLE] Auto-disabling flash after recording stopped');
-          await _controller!.setFlashMode(FlashMode.off);
-          setState(() {
-            _isFlashOn = false;
-          });
+          
+          // Web: Visual-only state update (no hardware call)
+          if (kIsWeb) {
+            debugPrint('🌐 [RECORD_LIFECYCLE] Web mode - visual flash state reset only');
+            setState(() {
+              _isFlashOn = false;
+            });
+          } else {
+            // Native: Turn off hardware flash
+            await _controller!.setFlashMode(FlashMode.off);
+            setState(() {
+              _isFlashOn = false;
+            });
+          }
+          
           debugPrint('✅ [RECORD_LIFECYCLE] Flash auto-off completed');
         }
         
@@ -159,15 +185,26 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
           _isRecording = false;
           _recordingSeconds = 0;
         });
+        
         if (!mounted) return;
+        
+        debugPrint('📍 [NAV_STATE] Navigating to video upload with file: $filePath');
         Navigator.pushNamed(context, '/video-upload', arguments: filePath);
       } catch (e) {
-        debugPrint('Failed to stop recording: $e');
+        debugPrint('❌ [RECORD_LIFECYCLE] Failed to stop recording: $e');
+        
+        // Reset recording state even if stop fails
+        setState(() {
+          _isRecording = false;
+          _recordingSeconds = 0;
+        });
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to stop recording: $e'),
               backgroundColor: Colors.red.shade900,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
