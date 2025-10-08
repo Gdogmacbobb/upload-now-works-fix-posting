@@ -1,4 +1,5 @@
 import 'dart:io' show File;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../theme/app_theme.dart';
@@ -7,6 +8,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/profile_service.dart';
+import 'dart:js' as js if (dart.library.html) 'dart:js';
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -591,6 +593,12 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   bool _isPlaying = false;
   bool _frameDecoded = false;
   bool _soundActive = false;
+  
+  // DOM visibility retry logic
+  int _retryCount = 0;
+  bool _domAttached = false;
+  Timer? _retryTimer;
+  String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
 
   @override
   void initState() {
@@ -609,59 +617,97 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       return;
     }
 
-    debugPrint('[PREVIEW] Step 1: Adding VideoPlayer to render tree');
+    debugPrint('[PREVIEW] Starting DOM visibility check (Retry #$_retryCount)');
     
     // Force rebuild to add VideoPlayer widget to tree
     setState(() {});
     
-    // Platform-specific texture attachment delay
-    // Web: HTML <video> element needs time to mount in DOM
-    // Mobile: Platform texture needs 2-3 frames to attach
-    debugPrint('[PREVIEW] Step 2: Waiting 250ms for texture layer to attach...');
-    await Future.delayed(const Duration(milliseconds: 250));
+    if (kIsWeb) {
+      // Web: Check if HTML <video> element is in DOM before playing
+      _startDomVisibilityCheck();
+    } else {
+      // Mobile: Use standard texture attachment delay
+      await Future.delayed(const Duration(milliseconds: 250));
+      if (mounted) _startPlayback();
+    }
+  }
+  
+  void _startDomVisibilityCheck() {
+    _retryTimer?.cancel();
     
+    _retryTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      _retryCount++;
+      
+      // Check if <video> element exists in DOM
+      try {
+        final videoElements = js.context.callMethod('eval', [
+          'document.getElementsByTagName("video").length'
+        ]);
+        
+        if (videoElements != null && videoElements > 0) {
+          debugPrint('[PREVIEW] ✅ DOM Check: Found ${videoElements} <video> element(s) on retry #$_retryCount');
+          setState(() => _domAttached = true);
+          timer.cancel();
+          _startPlayback();
+        } else {
+          debugPrint('[PREVIEW] ⏳ DOM Check: No <video> elements yet (retry #$_retryCount)');
+        }
+      } catch (e) {
+        debugPrint('[PREVIEW] DOM Check failed: $e');
+      }
+      
+      // Timeout after 3 seconds (15 attempts at 200ms)
+      if (_retryCount >= 15) {
+        debugPrint('[PREVIEW] ⚠️ DOM Check timeout after $_retryCount attempts - forcing playback');
+        timer.cancel();
+        setState(() => _domAttached = false);
+        
+        // Last resort: dispose and reinit with fresh texture key
+        setState(() {
+          _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
+        });
+        
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (mounted) _startPlayback();
+      }
+    });
+  }
+  
+  Future<void> _startPlayback() async {
     if (!mounted) return;
     
-    // Trigger first frame decode to ensure texture is populated
-    debugPrint('[PREVIEW] Step 3: Triggering first frame decode');
+    debugPrint('[PREVIEW] Starting playback (DOM: ${_domAttached ? "✅" : "❌"}, Retry: #$_retryCount)');
+    
     try {
+      // Trigger first frame decode
       await widget.controller.play();
-      await Future.delayed(const Duration(milliseconds: 32)); // 2 frames at 60fps
+      await Future.delayed(const Duration(milliseconds: 32));
       await widget.controller.pause();
       await widget.controller.seekTo(Duration.zero);
-      debugPrint('[PREVIEW] First frame decoded successfully');
+      debugPrint('[PREVIEW] First frame decoded');
     } catch (e) {
-      debugPrint('[PREVIEW] First frame decode failed: $e');
+      debugPrint('[PREVIEW] Frame decode failed: $e');
     }
     
     if (!mounted) return;
     
-    // Give texture one more frame to stabilize
-    await Future.delayed(const Duration(milliseconds: 16));
+    // Start actual playback
+    widget.controller.setVolume(1.0);
+    await widget.controller.play();
+    widget.controller.setLooping(true);
     
-    if (!mounted) return;
-    
-    // Final rebuild to ensure texture is fresh in tree
-    debugPrint('[PREVIEW] Step 4: Final rebuild before playback');
-    setState(() {});
-    
-    // Start playback in next frame
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) {
-        debugPrint('[PREVIEW] Step 5: Starting playback with audio');
-        widget.controller.setVolume(1.0);
-        await widget.controller.play();
-        widget.controller.setLooping(true);
-        
-        setState(() {
-          _isPlaying = true;
-          _frameDecoded = true;
-          _soundActive = widget.controller.value.volume > 0;
-        });
-        
-        debugPrint('[PREVIEW] ✅ Playback started - isPlaying: ${widget.controller.value.isPlaying}, volume: ${widget.controller.value.volume}');
-      }
+    setState(() {
+      _isPlaying = true;
+      _frameDecoded = true;
+      _soundActive = widget.controller.value.volume > 0;
     });
+    
+    debugPrint('[PREVIEW] ✅ Playback active - isPlaying: ${widget.controller.value.isPlaying}');
   }
 
   void _updatePlaybackState() {
@@ -678,6 +724,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
     widget.controller.removeListener(_updatePlaybackState);
     widget.controller.pause();
     widget.controller.setLooping(false);
@@ -730,13 +777,29 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               child: Container(color: Colors.black),
             ),
             
-            // VIDEO LAYER - BARE TEST: No rotation, no transforms, no sizing
+            // VIDEO LAYER with dynamic texture refresh
             Positioned.fill(
               child: widget.controller.value.isInitialized
-                  ? Container(
-                      color: Colors.black,
-                      child: Center(
-                        child: VideoPlayer(widget.controller),
+                  ? RepaintBoundary(
+                      key: ValueKey(_textureKey),
+                      child: Container(
+                        color: Colors.black,
+                        child: Center(
+                          child: AspectRatio(
+                            aspectRatio: isPortrait 
+                                ? (videoSize.height / videoSize.width) 
+                                : widget.controller.value.aspectRatio,
+                            child: isPortrait
+                                ? Transform.rotate(
+                                    angle: finalRotation,
+                                    child: AspectRatio(
+                                      aspectRatio: widget.controller.value.aspectRatio,
+                                      child: VideoPlayer(widget.controller),
+                                    ),
+                                  )
+                                : VideoPlayer(widget.controller),
+                          ),
+                        ),
                       ),
                     )
                   : Container(
@@ -779,6 +842,24 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                         fontFamily: 'monospace',
                       ),
                     ),
+                    if (kIsWeb) ...[
+                      Text(
+                        'Retry: #$_retryCount',
+                        style: TextStyle(
+                          color: _retryCount > 0 ? Colors.yellow : Colors.white,
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      Text(
+                        'DOM: ${_domAttached ? '✅' : '❌'}',
+                        style: TextStyle(
+                          color: _domAttached ? Colors.green : Colors.red,
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
                     Text(
                       'Video: ${videoSize.width.toInt()}x${videoSize.height.toInt()}',
                       style: const TextStyle(
