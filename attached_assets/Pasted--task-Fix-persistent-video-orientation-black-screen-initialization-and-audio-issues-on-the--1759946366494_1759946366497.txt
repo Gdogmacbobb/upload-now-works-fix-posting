@@ -1,0 +1,51 @@
+{
+  "task": "Fix persistent video orientation, black-screen initialization, and audio issues on the video upload preview screen",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "observations": {
+      "rotation": "0° (controller.value.rotationCorrection not applied)",
+      "portraitDetection": "❌ (still false even for portrait videos)",
+      "playback": "first preview shows black screen with audio only, then video appears sideways",
+      "audio": "auto-mutes on entering upload screen before pressing preview"
+    },
+    "debugOverlay": {
+      "initialized": true,
+      "video": "1280x720",
+      "screen": "430x667",
+      "rotation": "0°",
+      "portrait": "✖ (dim)",
+      "boxFit": "aspectRatio",
+      "aspect": "1.78",
+      "volume": "1.0"
+    },
+    "requiredFixes": [
+      {
+        "1️⃣ Proper Rotation Handling": [
+          "Explicitly read controller.value.rotationCorrection after initialization",
+          "If rotationCorrection == 90° or 270°, wrap VideoPlayer in:",
+          "Transform.rotate(angle: controller.value.rotationCorrection * pi / 180, child: VideoPlayer(controller))",
+          "Do not default to 0°"
+        ]
+      },
+      {
+        "2️⃣ Stable Controller Initialization": [
+          "Delay playback until after await controller.initialize() completes",
+          "Use WidgetsBinding.instance.addPostFrameCallback to ensure the texture is mounted before calling play()"
+        ]
+      },
+      {
+        "3️⃣ Audio Behavior": [
+          "Remove any auto-mute logic in initState",
+          "Ensure controller.setVolume(1.0) is called only once, after initialization"
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "rotation": "shows 90° (or 270° for flipped portrait)",
+      "portraitFlag": "turns green (✅)",
+      "preview": "video and audio play together immediately, no black screen",
+      "debugOverlay": "keep visible until all above conditions confirmed"
+    }
+  },
+  "note": "This is not a caching issue — the debug overlay itself proves the rotationCorrection and initialization logic are not being executed. Fix the functional logic, not just rebuild."
+}
