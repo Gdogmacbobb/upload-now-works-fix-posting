@@ -7,9 +7,9 @@ YNFNY is a cross-platform Flutter mobile application serving as a social platfor
 **Latest Stabilization Fixes (Oct 8, 2025 - Late Evening)**:
 - **FutureBuilder Video Initialization**: Refactored video controller to use async/await pattern with FutureBuilder, eliminating race conditions. Controller assigned before awaiting initialization, ensuring proper UI rendering with loading/error/success states.
 - **Portrait Orientation Fix**: Changed detection from aspectRatio to height > width comparison. Updated BoxFit from `contain` to `cover` to properly fill screen height for vertical videos without letterboxing.
-- **Thumbnail Generation Flow**: Removed instant platform block - now attempts generation first, logs per-frame success/failure with ✓/✗ symbols, gracefully degrades with user feedback only after actual failure.
+- **Thumbnail Generation Platform Guard**: Fixed MissingPluginException on web by checking `kIsWeb` BEFORE calling `path_provider.getTemporaryDirectory()`. Web now shows clean "Thumbnail selection not available on web" message without crashes. Mobile thumbnail generation preserved in dedicated `_generateMobileThumbnails()` helper method.
 - **Comprehensive Debug Logging**: Added [VIDEO_INIT], [PREVIEW], [THUMBNAIL] prefixed logs tracking initialization, playback, and thumbnail generation lifecycle with detailed diagnostics.
-- **Robust Error Handling**: All async operations wrapped in try-catch with mounted checks, SnackBar user feedback, proper rethrow on critical failures to prevent silent bugs.
+- **Robust Error Handling**: All async operations wrapped in try-catch with mounted checks, SnackBar user feedback, MissingPluginException-specific handling, proper rethrow on critical failures to prevent silent bugs.
 
 **Previous Fixes (Oct 8, 2025 - Earlier)**:
 - **Dynamic User Handles**: Replaced hardcoded '@streetartist' with real-time username fetching from Supabase user_profiles table via ProfileService with null-safe fallbacks.
