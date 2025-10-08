@@ -672,9 +672,8 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     final isInitialized = widget.controller.value.isInitialized;
     
     // Texture debugging
-    final textureId = widget.controller.textureId;
     debugPrint('[PREVIEW] Video size: $videoSize, isPortrait: $isPortrait');
-    debugPrint('[PREVIEW] Texture ID: $textureId (null means not mounted)');
+    debugPrint('[PREVIEW] Controller hashCode: ${widget.controller.hashCode} (for ValueKey)');
     debugPrint('[PREVIEW] Device orientation: ${deviceIsPortrait ? "portrait" : "landscape"}');
     debugPrint('[PREVIEW] Needs rotation: $needsRotation (device portrait + video landscape)');
     debugPrint('[PREVIEW] Final rotation: $finalRotationDegrees° (metadata: $rotationDegrees°)');
