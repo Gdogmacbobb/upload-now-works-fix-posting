@@ -1,0 +1,63 @@
+{
+  "task": "Implement continuous torch light during recording with automatic shutdown after stop",
+  "goal": "Flashlight (torch) should remain ON for the full duration of a recording and turn OFF immediately when recording stops.",
+  "requirements": {
+    "trigger_behavior": {
+      "before_recording": "User can toggle the flash ON or OFF manually.",
+      "during_recording": "If flash is ON when the recording starts, enable the torch (FlashMode.torch) for the full duration.",
+      "after_recording": "Once recording stops, automatically disable the torch (FlashMode.off) regardless of previous state."
+    },
+    "ui_behavior": {
+      "flash_icon": "Always visible. Changes state visually when toggled.",
+      "flash_feedback": "Show a small green snackbar: 'Flash enabled for recording' when recording starts with flash ON, and 'Flash disabled' when recording stops."
+    },
+    "implementation": {
+      "platform_logic": {
+        "mobile": [
+          "Use CameraController.setFlashMode(FlashMode.torch) when recording starts.",
+          "Use CameraController.setFlashMode(FlashMode.off) when recording stops.",
+          "Ensure this logic only applies to rear camera (front camera flash unsupported)."
+        ],
+        "web": [
+          "Simulate flash behavior visually with icon change only (no torch hardware API)."
+        ]
+      },
+      "record_lifecycle_hooks": {
+        "onStartRecording": [
+          "Check current flash state; if ON and torch supported, call setFlashMode(FlashMode.torch)."
+        ],
+        "onStopRecording": [
+          "Always call setFlashMode(FlashMode.off) in a try/catch block.",
+          "Reset flash icon to OFF state visually."
+        ]
+      },
+      "error_handling": [
+        "If FlashMode.torch throws NotSupportedError on web or front camera, catch and fallback to icon toggle only.",
+        "Log these events with prefix [FLASH_LIFECYCLE]."
+      ]
+    },
+    "diagnostic_logging": {
+      "entries": [
+        "[FLASH_LIFECYCLE] Flash enabled before recording.",
+        "[FLASH_LIFECYCLE] Flash auto-disabled after recording.",
+        "[RECORD_EVENT] Recording started/stopped successfully."
+      ]
+    }
+  },
+  "expected_result": {
+    "visual_feedback": [
+      "Flash icon turns yellow when torch active.",
+      "Flashlight stays ON while recording.",
+      "Flashlight turns OFF automatically after recording stops."
+    ],
+    "mobile_behavior": "Rear-camera torch physically turns on/off with recording lifecycle.",
+    "web_behavior": "Icon-only mock toggle; no hardware torch."
+  },
+  "testing_steps": [
+    "1. Open camera screen.",
+    "2. Tap flash icon → icon turns yellow (active).",
+    "3. Start recording → device flashlight turns ON.",
+    "4. Stop recording → flashlight turns OFF automatically and icon returns to normal.",
+    "5. Switch camera → flash auto-disables and resets state."
+  ]
+}
