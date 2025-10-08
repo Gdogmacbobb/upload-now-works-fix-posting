@@ -1,0 +1,36 @@
+{
+  "task": "Run in-depth debug diagnostics on video upload screen issues",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "screen": "Video Upload Screen",
+    "symptoms": [
+      "Video preview shows black screen on first tap, plays only sound on second, and displays horizontal video on third.",
+      "Orientation remains incorrect for portrait videos.",
+      "Thumbnail button shows 'not available on web' or fails to generate on all platforms."
+    ]
+  },
+  "goal": "Identify exact causes of delayed playback initialization, incorrect video orientation, and blocked thumbnail generation across web and mobile.",
+  "debug_directives": [
+    "Add detailed print logs for every stage of controller initialization: before initialize(), after initialize(), controller.value.isInitialized, and controller.value.size.",
+    "Log video width, height, aspectRatio, and platform (kIsWeb, kIsAndroid, kIsIOS).",
+    "Add a debug message for when portrait logic triggers and what BoxFit or Transform is being applied.",
+    "Print path_provider and video_thumbnail availability checks, and whether each call succeeds or throws.",
+    "If kIsWeb is true, log the actual flow: confirm whether _generateWebThumbnails() or placeholder message runs.",
+    "Check if video controller is disposed/recreated between modal openings (print controller.hashCode)."
+  ],
+  "expected_output": [
+    "Console log showing full initialization sequence.",
+    "Video orientation and aspect ratio values confirmed.",
+    "Platform detection results for web/mobile.",
+    "Thumbnail generator call stack success/failure messages."
+  ],
+  "fix_after_debug": [
+    "After collecting log output, correct controller lifecycle if disposed too early.",
+    "Reapply portrait lock after verified size detection.",
+    "Implement proper web-safe thumbnail fallback if video_thumbnail not supported."
+  ],
+  "post_actions": [
+    "Run in debug mode: flutter run -d chrome --verbose",
+    "Attach console logs here for analysis"
+  ]
+}

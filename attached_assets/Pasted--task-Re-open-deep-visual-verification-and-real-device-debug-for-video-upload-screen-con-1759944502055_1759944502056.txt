@@ -1,0 +1,31 @@
+{
+  "task": "Re-open deep visual verification and real-device debug for video upload screen",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "screen": "Video Upload Screen",
+    "issue": "AI reports success in logs, but real behavior still incorrect: video shows black screen or sound only on first load, orientation still horizontal for portrait videos, and Select Thumbnail does not generate or display thumbnails."
+  },
+  "clarification": "Do NOT assume functionality from logs. The [VIDEO_INIT], [PREVIEW], and [THUMBNAIL] messages only confirm initialization events — they do NOT confirm visual rendering, playback synchronization, or orientation correctness.",
+  "objectives": [
+    "Perform a live visual simulation or preview render to confirm that the video actually appears on screen on FIRST tap.",
+    "Verify that portrait videos display vertically (height-taller) inside the preview modal — not sideways or letterboxed.",
+    "Confirm that the 'Select Thumbnail' button displays thumbnail previews, not just a SnackBar message.",
+    "If the current environment prevents thumbnail rendering on web, simulate mobile environment in Replit (emulate Android) and verify full thumbnail generation there."
+  ],
+  "required_actions": [
+    "Compare controller.value.size vs rendered widget size in real preview to confirm aspect ratio alignment.",
+    "Log actual rendered container dimensions (MediaQuery height/width) alongside video dimensions.",
+    "Temporarily add a visible debug overlay (Text widget) showing 'aspectRatio', 'isPortrait', and 'isInitialized' values inside the video container so results can be visually confirmed.",
+    "If playback still fails to show video on first load, force controller.play() after initialize() with mounted check and add postFrameCallback to rebuild once."
+  ],
+  "expected_behavior": [
+    "Video shows up immediately on first tap.",
+    "Portrait videos fill vertical space with BoxFit.cover (no rotation).",
+    "Thumbnail selection produces visible image grid."
+  ],
+  "diagnostic_mode": "visual_verification_required",
+  "post_actions": [
+    "Rebuild and show screenshot in preview panel after running this diagnostic.",
+    "Do not mark as success until playback and orientation are visually correct."
+  ]
+}
