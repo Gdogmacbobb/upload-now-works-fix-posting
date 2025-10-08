@@ -1,0 +1,47 @@
+{
+  "task": "Fix persistent black screen despite Frame ✅ and Sound ✅; delay playback until texture layer is attached",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "The VideoPlayerController decodes frames (Frame ✅, Sound ✅, Pos advancing) but the screen stays black until the controller fully disposes/rebuilds. This confirms the Flutter texture is not yet attached when playback starts. We need to delay play() until controller.value.textureId becomes non-null and the first frame is rendered.",
+    "currentDebugOverlay": {
+      "Frame": "✅",
+      "Sound": "✅",
+      "Pos": "2702ms",
+      "Rotation": "90° (web fix)",
+      "Volume": "1.0"
+    },
+    "problems": [
+      "VideoPlayer texture ID is null when play() is first called.",
+      "Audio plays because the decoder starts, but no frame paints to the texture layer.",
+      "The widget tree never rebuilds after texture creation, leaving a black container."
+    ],
+    "requiredFixes": [
+      {
+        "1️⃣ Await Valid Texture ID": [
+          "Before calling controller.play(), poll controller.value.textureId until it becomes non-null:",
+          "while (controller.value.textureId == null) { await Future.delayed(Duration(milliseconds: 50)); }"
+        ]
+      },
+      {
+        "2️⃣ Rebuild After Texture Mount": [
+          "Once textureId is non-null, call setState(() {}) to rebuild the VideoPlayer widget so the texture can attach to the render tree."
+        ]
+      },
+      {
+        "3️⃣ Start Playback Post-Frame": [
+          "After the rebuild, call WidgetsBinding.instance.addPostFrameCallback((_) async { await controller.play(); controller.setVolume(1.0); });",
+          "This guarantees playback begins only after the widget has a valid texture layer."
+        ]
+      },
+      {
+        "4️⃣ Fallback Overlay": [
+          "Display a temporary Text('Rendering first frame...') or CircularProgressIndicator until controller.value.textureId != null."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "PreviewPlayback": "On the first Preview tap, the video texture appears immediately with synchronized audio.",
+      "NoBlackScreen": "No delay or blank frame before playback.",
+      "StablePlayback": "Subsequent playbacks remain consistent."
+    },
+    "note": "Do NOT add arbit
