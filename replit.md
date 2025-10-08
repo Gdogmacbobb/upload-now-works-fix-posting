@@ -2,10 +2,13 @@
 
 YNFNY is a cross-platform Flutter mobile application serving as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing, targeting both mobile and web deployment. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances.
 
-**Current Status**: ✅ **CAMERA SYSTEM PRODUCTION-READY** (Oct 8, 2025) - TikTok/Reels-style video recording with flash support, camera switching, and web compatibility. Navigation flow restored to production settings.
+**Current Status**: ✅ **VIDEO RECORDING & UPLOAD COMPLETE** (Oct 8, 2025) - Production-ready TikTok/Reels-style recording with full-screen preview modal and thumbnail selection in upload screen.
 
-**Recent Fixes (Oct 8, 2025)**:
-- **Continuous Torch Light**: Torch stays ON for full recording duration when flash enabled before start; auto-disables when recording stops. Platform-aware: hardware torch on native rear camera, visual-only feedback on web/front camera. Snackbar feedback ("Flash enabled for recording", "Flash disabled") on all platforms.
+**Recent Enhancements (Oct 8, 2025)**:
+- **Upload Screen Modernization**: Full-screen video preview modal (tap to expand), 8-thumbnail generation/selection with orange border (#FF8C00) on selected, platform-safe with web compatibility (blob URLs for web, File-based for mobile)
+- **Platform-Safe Video Controllers**: Proper `dart:io` import guards prevent web compilation errors; `VideoPlayerController.networkUrl()` for web, `VideoPlayerController.file()` for mobile
+- **Thumbnail Generation**: Mobile-only feature using `video_thumbnail` package (v0.5.6); web shows feedback snackbar "not available on web"
+- **Continuous Torch Light**: Torch stays ON for full recording duration when flash enabled before start; auto-disables when recording stops. Platform-aware: hardware torch on native rear camera, visual-only feedback on web/front camera
 - **Navigation Restored**: DEV_SKIP_GEO_AUTH set to false; authenticated users → /discovery-feed, non-authenticated → /login-screen
 - **Recording Stop Protection**: Added comprehensive null/state checks before stopRecording() to prevent crashes
 - **Flash Auto-Off Fix**: Platform-aware flash disable after recording - visual-only on web, hardware call on native to prevent NoSuchMethodError
@@ -26,13 +29,15 @@ Preferred communication style: Simple, everyday language.
 ## Frontend Architecture
 The application utilizes Flutter's standard architecture, focusing on a single codebase for mobile and web. Key features include:
 - **Environment Configuration**: Secure management of environment variables via `env.json` and `--dart-define-from-file`.
-- **Video Recording & Upload**: A TikTok/Reels-style UI for vertical video recording, optimized for maximum quality and web compatibility.
-  - Features include full-screen preview, portrait lock, maximum resolution, widest view start (minZoom), and responsive controls (back, mute, flash, camera switch).
-  - **Pinch-to-zoom**: 60fps-optimized zoom with throttling, GPU isolation, and hardware-aware zoom limits.
-  - **Debug Overlay**: On-screen diagnostics for camera parameters.
-  - **Enhanced Logging**: Comprehensive camera initialization and event diagnostics.
-  - **Error Handling**: SnackBar feedback for all camera operations.
-  - **Web Compatibility**: Conditional imports (`lib/platform/`) for platform-specific video controller implementations, supporting `dart:io` for mobile and network URLs for web.
+- **Video Recording & Upload**: A TikTok/Reels-style UI for vertical video recording and modernized upload screen, optimized for maximum quality and cross-platform compatibility.
+  - **Recording Screen**: Full-screen preview, portrait lock, maximum resolution, widest view start (minZoom), responsive controls (back, mute, flash, camera switch)
+  - **Upload Screen**: Full-screen video preview modal (tap to expand with TikTok-style overlay), 8-thumbnail generation/selection (mobile-only) with orange selection border, caption input, performance type chips, location card, privacy settings
+  - **Pinch-to-zoom**: 60fps-optimized zoom with throttling, GPU isolation, and hardware-aware zoom limits
+  - **Platform-Safe Controllers**: `dart:io` imports properly guarded; `VideoPlayerController.networkUrl()` for web blob URLs, `VideoPlayerController.file()` for mobile
+  - **Thumbnail Generation**: `video_thumbnail` package (v0.5.6) generates 8 preview frames on mobile; web displays "not available" snackbar
+  - **Debug Overlay**: On-screen diagnostics for camera parameters
+  - **Enhanced Logging**: Comprehensive camera initialization and event diagnostics
+  - **Error Handling**: SnackBar feedback for all camera operations
 - **Null Safety**: Extensive use of nullable types and `_isInitialized` flags with `mounted` checks for robust camera/video controller management.
 
 ## Backend Architecture
