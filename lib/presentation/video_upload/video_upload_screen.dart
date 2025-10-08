@@ -599,17 +599,50 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     // Add listener to track playback state
     widget.controller.addListener(_updatePlaybackState);
     
-    // Start playback after texture is guaranteed to be painted
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted && widget.controller.value.isInitialized) {
-        debugPrint('[PREVIEW] Controller initialized, ensuring texture paint...');
-        
-        // Force a rebuild to ensure VideoPlayer widget is in tree
-        setState(() {});
-        
-        // Wait for next frame to guarantee texture is painted
-        await Future.delayed(const Duration(milliseconds: 100));
-        
+    // Wait for texture ID to be available before starting playback
+    WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndPlay());
+  }
+
+  Future<void> _waitForTextureAndPlay() async {
+    if (!mounted || !widget.controller.value.isInitialized) {
+      debugPrint('[PREVIEW] Controller not initialized, cannot start playback');
+      return;
+    }
+
+    debugPrint('[PREVIEW] Waiting for texture ID to become available...');
+    
+    // Poll for texture ID (web uses textureId, check via playing a frame)
+    int attempts = 0;
+    while (mounted && attempts < 40) { // Max 2 seconds (40 * 50ms)
+      // Try to advance one frame to force texture creation
+      if (attempts == 0) {
+        await widget.controller.play();
+        await Future.delayed(const Duration(milliseconds: 16)); // One frame at 60fps
+        await widget.controller.pause();
+        debugPrint('[PREVIEW] Triggered frame decode to create texture');
+      }
+      
+      // Check if we have a valid size (indicates texture is ready)
+      if (widget.controller.value.size.width > 0 && 
+          widget.controller.value.size.height > 0) {
+        debugPrint('[PREVIEW] Texture ready! Size: ${widget.controller.value.size}');
+        break;
+      }
+      
+      await Future.delayed(const Duration(milliseconds: 50));
+      attempts++;
+    }
+    
+    if (!mounted) return;
+    
+    if (widget.controller.value.size.width > 0) {
+      debugPrint('[PREVIEW] Texture available after ${attempts * 50}ms, rebuilding widget...');
+      
+      // Force rebuild to attach texture to render tree
+      setState(() {});
+      
+      // Start playback after rebuild completes
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (mounted) {
           debugPrint('[PREVIEW] Starting playback with volume...');
           widget.controller.setVolume(1.0);
@@ -622,10 +655,12 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
             _soundActive = widget.controller.value.volume > 0;
           });
           
-          debugPrint('[PREVIEW] Playback started - volume: ${widget.controller.value.volume}, playing: ${widget.controller.value.isPlaying}');
+          debugPrint('[PREVIEW] Playback started successfully');
         }
-      }
-    });
+      });
+    } else {
+      debugPrint('[PREVIEW] ERROR: Texture ID never became available after ${attempts * 50}ms');
+    }
   }
 
   void _updatePlaybackState() {
