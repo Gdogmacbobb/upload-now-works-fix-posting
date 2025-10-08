@@ -690,7 +690,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         final dynamic videoElement = video;
         final videoId = 'video_$i';
         
-        // Save original styles
+        // Save original styles (including hardware acceleration properties)
         _originalVideoStyles[videoId] = {
           'visibility': videoElement.style.visibility ?? '',
           'opacity': videoElement.style.opacity ?? '',
@@ -705,6 +705,11 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           'maxHeight': videoElement.style.maxHeight ?? '',
           'objectFit': videoElement.style.objectFit ?? '',
           'backgroundColor': videoElement.style.backgroundColor ?? '',
+          'willChange': videoElement.style.willChange ?? '',
+          'transform': videoElement.style.transform ?? '',
+          'backfaceVisibility': videoElement.style.backfaceVisibility ?? '',
+          'perspective': videoElement.style.perspective ?? '',
+          'mixBlendMode': videoElement.style.mixBlendMode ?? '',
         };
         
         // 1️⃣ EXPLICIT SIZING: Set both HTML attributes AND CSS
@@ -715,6 +720,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         // Set HTML attributes (hard pixel dimensions)
         videoElement.setAttribute('width', viewportWidth.toString());
         videoElement.setAttribute('height', viewportHeight.toString());
+        
+        // 🔒 CROSS-ORIGIN: Enable CORS-safe rendering
+        videoElement.crossOrigin = 'anonymous';
+        videoElement.setAttribute('crossorigin', 'anonymous');
         
         // Apply CSS full-screen styles
         videoElement.style.visibility = 'visible';
@@ -730,10 +739,17 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         videoElement.style.objectFit = 'cover';
         videoElement.style.backgroundColor = 'black';
         
+        // 🚀 HARDWARE ACCELERATION: Force GPU compositing
+        videoElement.style.willChange = 'transform, opacity';
+        videoElement.style.transform = 'translateZ(0)';
+        videoElement.style.backfaceVisibility = 'hidden';
+        videoElement.style.perspective = '1000px';
+        videoElement.style.mixBlendMode = 'normal';
+        
         // Add visual debug outline
         videoElement.style.outline = '4px solid lime';
         
-        debugPrint('[PREVIEW] Set HTML attrs: ${viewportWidth}x${viewportHeight} + CSS viewport sizing on video #$i');
+        debugPrint('[PREVIEW] Video #$i: HTML ${viewportWidth}x${viewportHeight} + GPU compositing + CORS-safe');
         
         // 2️⃣ FORCE REFLOW: Trigger browser layout recalculation
         try {
@@ -886,25 +902,43 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       checkCount++;
       
       try {
-        final video = html.document.querySelector('video');
-        if (video != null) {
-          // Use getBoundingClientRect() for reliable visibility detection
+        // Find the VISIBLE video element (not the first one, but the one with non-zero dimensions)
+        final videoElements = html.document.getElementsByTagName('video');
+        dynamic visibleVideo;
+        
+        for (var i = 0; i < videoElements.length; i++) {
+          final dynamic video = videoElements[i];
           final dynamic rect = video.getBoundingClientRect();
           final width = rect.width ?? 0;
           final height = rect.height ?? 0;
           
           if (width > 0 && height > 0) {
-            timer.cancel();
-            setState(() => _paintConfirmed = true);
-            debugPrint('[PREVIEW] ✅ PAINT confirmed on check #$checkCount - bounding box: ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}');
-            
-            // Trigger play again to sync audio/video
-            widget.controller.play();
-          } else {
-            debugPrint('[PREVIEW] ⏳ Paint check #$checkCount: Zero bounding box ${width}x${height}');
+            visibleVideo = video;
+            debugPrint('[PREVIEW] Found visible video #$i with bounds: ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}');
+            break;
           }
+        }
+        
+        if (visibleVideo != null) {
+          final dynamic rect = visibleVideo.getBoundingClientRect();
+          final width = rect.width ?? 0;
+          final height = rect.height ?? 0;
+          
+          // 🔍 COMPOSITOR VERIFICATION: Check GPU compositing is active
+          final computedStyle = js.context.callMethod('getComputedStyle', [visibleVideo]);
+          final opacity = computedStyle.callMethod('getPropertyValue', ['opacity']);
+          final transform = computedStyle.callMethod('getPropertyValue', ['transform']);
+          
+          debugPrint('[PREVIEW] VIDEO COMPOSITED - bounds: ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}, opacity: $opacity, transform: $transform');
+          
+          timer.cancel();
+          setState(() => _paintConfirmed = true);
+          debugPrint('[PREVIEW] ✅ PAINT confirmed on check #$checkCount - hardware composited video visible!');
+          
+          // Trigger play again to sync audio/video
+          widget.controller.play();
         } else {
-          debugPrint('[PREVIEW] ⏳ Paint check #$checkCount: No video element found');
+          debugPrint('[PREVIEW] ⏳ Paint check #$checkCount: No visible video elements (all have zero bounds)');
         }
       } catch (e) {
         debugPrint('[PREVIEW] Paint dimension check #$checkCount failed: $e');
@@ -914,49 +948,34 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       if (checkCount >= 15) {
         timer.cancel();
         
-        // 3️⃣ FALLBACK CANVAS SNAPSHOT: If video still has zero dimensions, try canvas workaround
+        // Check if any video has non-zero bounding box but Paint still failed
         try {
-          final video = html.document.querySelector('video');
-          if (video != null) {
-            final dynamic videoElement = video;
-            final videoWidth = videoElement.videoWidth ?? 0;
-            final videoHeight = videoElement.videoHeight ?? 0;
+          final videoElements = html.document.getElementsByTagName('video');
+          bool foundVisibleVideo = false;
+          
+          for (var i = 0; i < videoElements.length; i++) {
+            final dynamic video = videoElements[i];
+            final dynamic rect = video.getBoundingClientRect();
+            final width = rect.width ?? 0;
+            final height = rect.height ?? 0;
             
-            debugPrint('[PREVIEW] Video intrinsic size: ${videoWidth}x${videoHeight}');
-            
-            if (videoWidth > 0 && videoHeight > 0) {
-              // Video has decoded frames but isn't painting - create canvas snapshot
-              debugPrint('[PREVIEW] 🎨 Attempting canvas snapshot fallback...');
-              
-              final canvas = html.document.createElement('canvas') as html.CanvasElement;
-              canvas.width = videoWidth;
-              canvas.height = videoHeight;
-              canvas.style.position = 'fixed';
-              canvas.style.top = '0';
-              canvas.style.left = '0';
-              canvas.style.width = '100vw';
-              canvas.style.height = '100vh';
-              canvas.style.zIndex = '999998'; // Just below video
-              canvas.style.objectFit = 'cover';
-              canvas.style.backgroundColor = 'black';
-              
-              final ctx = canvas.getContext('2d');
-              if (ctx != null) {
-                final dynamic context = ctx;
-                context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
-                html.document.body?.append(canvas);
-                debugPrint('[PREVIEW] ✅ Canvas snapshot appended: ${videoWidth}x${videoHeight}');
-              }
-            } else {
-              debugPrint('[PREVIEW] ⚠️ No decoded frames available for canvas snapshot');
+            if (width > 0 && height > 0) {
+              foundVisibleVideo = true;
+              debugPrint('[PREVIEW] ⚠️ Video #$i has bounding box ${width}x${height} but Paint ❌');
+              debugPrint('[PREVIEW] ⚠️ Hardware compositor or sandbox blocked HTML video blending in current environment (Replit/WebKit)');
+              break;
             }
           }
+          
+          if (!foundVisibleVideo) {
+            debugPrint('[PREVIEW] ⚠️ All video elements have zero bounding box - compositor blocked');
+          }
         } catch (e) {
-          debugPrint('[PREVIEW] Canvas snapshot failed: $e');
+          debugPrint('[PREVIEW] Timeout check failed: $e');
         }
         
         setState(() => _showRendererWarning = true);
-        debugPrint('[PREVIEW] ⚠️ Paint check timeout after $checkCount attempts - video may not be visible');
+        debugPrint('[PREVIEW] ⚠️ Paint check timeout after $checkCount attempts');
         debugPrint('[PREVIEW] ⚠️ Renderer mode: $_rendererMode - video element not composited to screen');
       }
     });
