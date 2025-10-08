@@ -2,9 +2,14 @@
 
 YNFNY is a cross-platform Flutter mobile application serving as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing, targeting both mobile and web deployment. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances.
 
-**Current Status**: ✅ **CAMERA SYSTEM PRODUCTION-READY** (Oct 7, 2025) - TikTok/Reels-style video recording with flash support, camera switching, and web compatibility.
+**Current Status**: ✅ **CAMERA SYSTEM PRODUCTION-READY** (Oct 8, 2025) - TikTok/Reels-style video recording with flash support, camera switching, and web compatibility. Navigation flow restored to production settings.
 
-**Recent Structural Fixes (Oct 7, 2025)**:
+**Recent Fixes (Oct 8, 2025)**:
+- **Navigation Restored**: DEV_SKIP_GEO_AUTH set to false; authenticated users → /discovery-feed, non-authenticated → /login-screen
+- **Recording Stop Protection**: Added comprehensive null/state checks before stopRecording() to prevent crashes
+- **Flash Auto-Off Fix**: Platform-aware flash disable after recording - visual-only on web, hardware call on native to prevent NoSuchMethodError
+
+**Previous Structural Fixes (Oct 7, 2025)**:
 - **Z-Index Layering**: Camera preview wrapped in RepaintBoundary+Positioned.fill, overlay elevated with Material(elevation:10) to force icons above browser <video> element
 - **Web Flash Mock**: kIsWeb check enables visual-only flash toggle on web (no hardware calls, preserves icon state for mobile)
 - **Navigation Safety**: DEV_SKIP_GEO_AUTH bypass uses addPostFrameCallback with mounted guard to prevent route stack corruption
