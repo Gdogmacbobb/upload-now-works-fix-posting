@@ -589,56 +589,52 @@ class _FullScreenVideoPreview extends StatefulWidget {
 
 class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   bool _isPlaying = false;
-  bool _firstFrameReady = false;
+  bool _frameDecoded = false;
+  bool _soundActive = false;
 
   @override
   void initState() {
     super.initState();
     
-    // Add listener to detect when first frame is actually decoded
-    widget.controller.addListener(_onControllerUpdate);
+    // Add listener to track playback state
+    widget.controller.addListener(_updatePlaybackState);
     
-    // Trigger first frame decode with play-pause sequence
+    // Start playback after texture is guaranteed to be painted
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted && widget.controller.value.isInitialized) {
-        debugPrint('[PREVIEW] Triggering first frame decode with play-pause...');
+        debugPrint('[PREVIEW] Controller initialized, ensuring texture paint...');
         
-        // Play then immediately pause to force first frame decode
-        await widget.controller.play();
-        await widget.controller.pause();
+        // Force a rebuild to ensure VideoPlayer widget is in tree
+        setState(() {});
         
-        debugPrint('[PREVIEW] Play-pause complete, waiting for position update...');
+        // Wait for next frame to guarantee texture is painted
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        if (mounted) {
+          debugPrint('[PREVIEW] Starting playback with volume...');
+          widget.controller.setVolume(1.0);
+          await widget.controller.play();
+          widget.controller.setLooping(true);
+          
+          setState(() {
+            _isPlaying = true;
+            _frameDecoded = true;
+            _soundActive = widget.controller.value.volume > 0;
+          });
+          
+          debugPrint('[PREVIEW] Playback started - volume: ${widget.controller.value.volume}, playing: ${widget.controller.value.isPlaying}');
+        }
       }
     });
   }
 
-  void _onControllerUpdate() {
-    if (!_firstFrameReady && mounted) {
-      _checkAndStartPlayback();
-    }
-  }
-
-  void _checkAndStartPlayback() {
-    // Only start playback when first frame has been decoded (position > 0)
-    if (widget.controller.value.isInitialized && 
-        widget.controller.value.position > Duration.zero &&
-        !_firstFrameReady) {
-      
-      debugPrint('[PREVIEW] First frame decoded - position: ${widget.controller.value.position}');
-      
-      _firstFrameReady = true;
-      
-      // Force rebuild to ensure texture is painted
-      setState(() {});
-      
-      // Start playback after texture paint
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          widget.controller.setVolume(1.0);
-          widget.controller.play();
-          widget.controller.setLooping(true);
-          setState(() => _isPlaying = true);
-          debugPrint('[PREVIEW] Playback started with texture painted');
+  void _updatePlaybackState() {
+    if (mounted) {
+      setState(() {
+        _isPlaying = widget.controller.value.isPlaying;
+        _soundActive = widget.controller.value.volume > 0 && widget.controller.value.isPlaying;
+        if (widget.controller.value.isPlaying && widget.controller.value.position > Duration.zero) {
+          _frameDecoded = true;
         }
       });
     }
@@ -646,7 +642,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
 
   @override
   void dispose() {
-    widget.controller.removeListener(_onControllerUpdate);
+    widget.controller.removeListener(_updatePlaybackState);
     widget.controller.pause();
     widget.controller.setLooping(false);
     super.dispose();
@@ -818,10 +814,59 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               ),
             ),
 
-            // Close button (top-left)
+            // PLAYBACK STATUS OVERLAY - Visual proof
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,
               left: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.75),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: (_frameDecoded && _soundActive) ? Colors.green : Colors.red,
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Frame: ${_frameDecoded ? '✅' : '❌'}',
+                      style: TextStyle(
+                        color: _frameDecoded ? Colors.green : Colors.red,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'Sound: ${_soundActive ? '✅' : '❌'}',
+                      style: TextStyle(
+                        color: _soundActive ? Colors.green : Colors.red,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'Pos: ${widget.controller.value.position.inMilliseconds}ms',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Close button (top-right, moved from left)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              right: 16,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
