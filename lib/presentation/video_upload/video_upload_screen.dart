@@ -600,11 +600,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   @override
   void initState() {
     super.initState();
-    // Auto-play when modal opens with explicit volume
-    widget.controller.setVolume(1.0);
-    widget.controller.play();
-    _isPlaying = true;
-    widget.controller.setLooping(true);
+    // Delay playback until VideoPlayer texture is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.controller.value.isInitialized) {
+        widget.controller.setVolume(1.0);
+        widget.controller.play();
+        setState(() => _isPlaying = true);
+        widget.controller.setLooping(true);
+        debugPrint('[PREVIEW] Playback started after texture mounted');
+      }
+    });
   }
 
   @override
@@ -622,19 +627,29 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     final double rotationCorrection = rotationCorrectionInt.toDouble();
     final int rotationDegrees = (rotationCorrection * 180 / 3.14159).round();
     
-    // Check portrait: either dimensions OR rotation metadata (90° or 270° = portrait)
+    // Check portrait: dimensions OR rotation metadata OR device orientation (for web landscape videos)
     final isPortraitByDimensions = videoSize.height > videoSize.width;
     final isPortraitByRotation = (rotationDegrees == 90 || rotationDegrees == 270 || rotationDegrees == -90 || rotationDegrees == -270);
-    final isPortrait = isPortraitByDimensions || isPortraitByRotation;
+    final deviceIsPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final videoIsLandscape = videoSize.width > videoSize.height;
+    
+    // Web records landscape even in portrait mode - detect and rotate
+    final needsRotation = deviceIsPortrait && videoIsLandscape && rotationDegrees == 0;
+    final isPortrait = isPortraitByDimensions || isPortraitByRotation || needsRotation;
+    
+    // Calculate final rotation angle (use 90° for web portrait videos)
+    final double finalRotation = needsRotation ? (3.14159 / 2) : rotationCorrection;
+    final int finalRotationDegrees = (finalRotation * 180 / 3.14159).round();
     
     final screenSize = MediaQuery.of(context).size;
     final isInitialized = widget.controller.value.isInitialized;
     
     debugPrint('[PREVIEW] Video size: $videoSize, isPortrait: $isPortrait');
-    debugPrint('[PREVIEW] Rotation correction: $rotationCorrection rad ($rotationDegrees°)');
-    debugPrint('[PREVIEW] Portrait by dimensions: $isPortraitByDimensions, by rotation: $isPortraitByRotation');
+    debugPrint('[PREVIEW] Device orientation: ${deviceIsPortrait ? "portrait" : "landscape"}');
+    debugPrint('[PREVIEW] Needs rotation: $needsRotation (device portrait + video landscape)');
+    debugPrint('[PREVIEW] Final rotation: $finalRotationDegrees° (metadata: $rotationDegrees°)');
+    debugPrint('[PREVIEW] Portrait by: dimensions=$isPortraitByDimensions, rotation=$isPortraitByRotation, device=$needsRotation');
     debugPrint('[PREVIEW] Screen size: ${screenSize.width}x${screenSize.height}');
-    debugPrint('[PREVIEW] Controller initialized: $isInitialized');
     
     return Dialog(
       backgroundColor: Colors.black,
@@ -656,7 +671,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                           width: videoSize.width,
                           height: videoSize.height,
                           child: Transform.rotate(
-                            angle: rotationCorrection,
+                            angle: finalRotation,
                             child: VideoPlayer(widget.controller),
                           ),
                         ),
@@ -665,7 +680,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                   : AspectRatio(
                       aspectRatio: widget.controller.value.aspectRatio,
                       child: Transform.rotate(
-                        angle: rotationCorrection,
+                        angle: finalRotation,
                         child: VideoPlayer(widget.controller),
                       ),
                     ),
@@ -720,15 +735,23 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                       ),
                     ),
                     Text(
-                      'Rotation: ${rotationDegrees}°',
-                      style: TextStyle(
-                        color: rotationDegrees != 0 ? Colors.yellow : Colors.white,
+                      'Device: ${deviceIsPortrait ? 'portrait' : 'landscape'}',
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 11,
                         fontFamily: 'monospace',
                       ),
                     ),
                     Text(
-                      'Portrait: ${isPortrait ? '✅' : '❌'} ${isPortraitByRotation ? '(rot)' : '(dim)'}',
+                      'Rotation: ${finalRotationDegrees}° ${needsRotation ? '(web fix)' : ''}',
+                      style: TextStyle(
+                        color: finalRotationDegrees != 0 ? Colors.yellow : Colors.white,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    Text(
+                      'Portrait: ${isPortrait ? '✅' : '❌'} ${needsRotation ? '(device)' : isPortraitByRotation ? '(rot)' : '(dim)'}',
                       style: TextStyle(
                         color: isPortrait ? Colors.green : Colors.amber,
                         fontSize: 11,
