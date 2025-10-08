@@ -1,0 +1,54 @@
+{
+  "task": "Fix black-screen compositing issue; ensure video texture layer is visible in Flutter tree",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "Frame ✅ and Sound ✅ confirm the controller is decoding and audio is active, but the video is never visually shown. This means the VideoPlayer texture is being composited underneath a black background or another container. The fix must guarantee that the texture layer is painted on top and fully visible on first Preview tap.",
+    "symptoms": {
+      "Frame": "✅",
+      "Sound": "✅",
+      "Pos": "advancing",
+      "Screen": "black",
+      "Rotation": "90° (web fix)",
+      "Volume": "1.0"
+    },
+    "rootCauseAnalysis": [
+      "The video texture widget is mounted but hidden behind a non-transparent parent container or overlay.",
+      "Stack/Container above the VideoPlayer uses a solid backgroundColor (black) that covers the texture.",
+      "VideoPlayer might not be given explicit size constraints, so it renders with zero size despite controller initialization."
+    ],
+    "requiredFixes": [
+      {
+        "1️⃣ Ensure Visibility and Layer Order": [
+          "Place the VideoPlayer widget at the TOP of the Stack (as the last child).",
+          "Wrap it in an Opacity(opacity: 1.0) and RepaintBoundary to force texture repaint.",
+          "Temporarily give it a visible backgroundColor: Colors.purpleAccent.withOpacity(0.3) so we can confirm it's actually visible."
+        ]
+      },
+      {
+        "2️⃣ Enforce Proper Sizing": [
+          "Ensure the VideoPlayer has fixed constraints using SizedBox.expand() or AspectRatio(aspectRatio: controller.value.aspectRatio).",
+          "Avoid using Flexible or Expanded inside FittedBox, as those can collapse the layer to 0x0 when inside Stack."
+        ]
+      },
+      {
+        "3️⃣ Transparent Background Enforcement": [
+          "Ensure no parent Container, Scaffold, or Stack layer has a black or opaque backgroundColor covering the texture.",
+          "If using a Container or Stack, set backgroundColor: Colors.transparent for all parent layers between Scaffold and VideoPlayer."
+        ]
+      },
+      {
+        "4️⃣ Visual Verification Overlay": [
+          "Add a temporary Positioned Text('🎥 VIDEO LAYER HERE') above the VideoPlayer with a semi-transparent white box behind it.",
+          "If this text is visible but the video is not, it confirms z-order or opacity issues.",
+          "If neither is visible, the video widget isn't in the render tree."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "VideoVisible": "Video texture appears visibly on first Preview tap with no black overlay.",
+      "OverlayCheck": "Temporary '🎥 VIDEO LAYER HERE' text confirms visible region.",
+      "PlaybackSync": "Video and audio run together in sync from the first attempt."
+    },
+    "note": "The previous fixes addressed timing; this one must fix the visibility and layer hierarchy. After confirming visibility, remove temporary colored overlays."
+  }
+}
