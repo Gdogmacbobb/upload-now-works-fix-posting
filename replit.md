@@ -2,9 +2,16 @@
 
 YNFNY is a cross-platform Flutter mobile application serving as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing, targeting both mobile and web deployment. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances.
 
-**Current Status**: ✅ **VIDEO RECORDING & UPLOAD COMPLETE** (Oct 8, 2025) - Production-ready TikTok/Reels-style recording with full-screen preview modal and thumbnail selection in upload screen.
+**Current Status**: ✅ **VIDEO UPLOAD FIXES COMPLETE** (Oct 8, 2025) - Portrait orientation, dynamic user handles, and enhanced thumbnail debugging fully implemented.
 
-**Recent Enhancements (Oct 8, 2025)**:
+**Latest Fixes (Oct 8, 2025 - Evening)**:
+- **Portrait Video Orientation**: Full-screen preview now detects vertical videos (aspectRatio < 1.0) and uses FittedBox with intrinsic video dimensions for proper portrait display. Landscape videos continue using AspectRatio widget.
+- **Dynamic User Handles**: Replaced hardcoded '@streetartist' with real-time username fetching from Supabase user_profiles table via ProfileService. Added _loadUserProfile() method with proper null checks and mounted guards.
+- **Thumbnail Generation Debugging**: Enhanced logging for thumbnail generation process, tracking individual thumbnail creation success/failure and final counts. Mobile-only feature works with video_thumbnail package (v0.5.6).
+- **Profile Integration**: VideoUploadScreen now imports supabase_flutter and ProfileService, fetches authenticated user's profile data, and passes username to full-screen preview overlay.
+- **Error Handling**: All profile fetching includes try-catch blocks with debug logging and graceful fallbacks to '@user' if profile unavailable.
+
+**Recent Enhancements (Oct 8, 2025 - Earlier)**:
 - **Asset Configuration Fixed**: Added Flutter assets declaration to pubspec.yaml with `uses-material-design: true` and proper asset paths (assets/, images/, fonts/)
 - **Service Worker Disabled for Replit**: SW registration fails in Replit's iframe sandbox, breaking Image.asset loading; disabled by setting `serviceWorkerVersion = null` in web/index.html
 - **HTML Renderer Configured**: Changed renderer from 'canvaskit' to 'html' in web/index.html buildConfig for non-WebGL environments
