@@ -1,0 +1,41 @@
+{
+  "task": "Implement reliable first-frame render detection for video preview playback",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "The current 150ms artificial delay after initialization does not guarantee the first video frame is decoded before playback. On the first Preview tap, the screen is still black. The video only displays on the second Preview tap with correct orientation and sound. The fix needs to await the actual texture/frame readiness event from VideoPlayerController rather than rely on a static delay.",
+    "currentBehavior": {
+      "FirstTap": "Black screen, no visible frame; sound triggers when exiting.",
+      "SecondTap": "Video plays with correct rotation and audio in sync."
+    },
+    "diagnosis": [
+      "controller.value.isInitialized == true is not enough; the texture may not yet have rendered a frame.",
+      "Fixed-duration delays are unreliable because frame decode time varies by device and browser.",
+      "The correct fix is to wait for the first non-null video size and a rendered frame before calling play()."
+    ],
+    "requiredFixes": [
+      {
+        "1️⃣ Replace Fixed Delay With Frame-Ready Listener": [
+          "Instead of Future.delayed(const Duration(milliseconds: 150)), attach a listener to the controller that triggers when controller.value.isInitialized && controller.value.size != null.",
+          "Once this condition is met, call setState(() {}) to rebuild the widget and then start controller.play()."
+        ]
+      },
+      {
+        "2️⃣ Guarantee Texture Mount Before Playback": [
+          "Use WidgetsBinding.instance.addPostFrameCallback to ensure the texture widget is built before checking controller.value.size.",
+          "Add a one-time flag like _firstFrameReady = true when the first non-null frame renders to prevent re-triggering playback."
+        ]
+      },
+      {
+        "3️⃣ Synchronize Audio Correctly": [
+          "Only call controller.setVolume(1.0) after _firstFrameReady is true, to ensure both audio and texture are active before playback begins."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "FirstTap": "Video and audio both start immediately on the first Preview tap.",
+      "BlackScreen": "No black screen or delay before video appears.",
+      "Sync": "Video texture and audio are perfectly synchronized from the first frame."
+    },
+    "note": "Do NOT use any arbitrary Future.delayed timing. Playback should begin only once controller.value.size is non-null and controller.value.isInitialized == true."
+  }
+}
