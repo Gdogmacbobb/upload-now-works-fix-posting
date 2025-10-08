@@ -2,11 +2,18 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment.
 
-**Current Status** (Oct 8, 2025): ✅ **VIDEO PREVIEW BLACK SCREEN FIXED** - Implemented comprehensive fix for Flutter web first-load black screen issue via DOM visibility detection, CSS enforcement with style restoration, and paint polling verification.
+**Current Status** (Oct 8, 2025): ✅ **VIDEO PREVIEW BLACK SCREEN DEBUGGING ENHANCED** - Implemented comprehensive renderer verification and visual debugging for Flutter web video preview black screen issue.
 
 ## Recent Video Preview Fixes (Oct 8, 2025)
 
-### Full-Screen Rendering Fix with Style Restoration (Latest)
+### Renderer Verification & Visual Debugging (Latest)
+- **Explicit HTML Renderer Mode**: Added `<meta name='flutter-web-renderer' content='html'>` to web/index.html to force HTML renderer
+- **Runtime Renderer Detection**: Checks `window.flutterWebRenderer` and logs active mode ("html", "canvaskit", or "unknown")
+- **Visual DOM Debugging**: Injects lime outline (`4px solid lime`) on video elements with bounding rect logging for visual confirmation
+- **Fallback Warning Overlay**: When paint check times out, displays orange warning in debug overlay showing renderer mode and compositing failure
+- **Complete Debug Flow**: DOM detected → Detect renderer → Apply lime outline → Log bounds → Poll paint → If timeout: Show "⚠️ Renderer: [mode] - Video not composited"
+
+### Full-Screen Rendering Fix with Style Restoration
 - **Fixed Positioning with Viewport Units**: Uses `position: fixed` (not absolute) with `100vw/100vh` to completely detach video from Flutter layout and force full-screen rendering
 - **Parent Overflow Reset**: Clears `overflow: hidden` on body/html/flt-glass-pane to prevent clipping
 - **Style Lifecycle Management**: Saves all original CSS before modification, restores in dispose() to prevent persistent full-screen video after dialog closes
