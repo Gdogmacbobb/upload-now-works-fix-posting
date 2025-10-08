@@ -1,0 +1,46 @@
+{
+  "task": "Fix invisible video texture (black screen while audio and frame are active) and temporarily disable geofencing",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "Video playback works internally (Frame ✅, Sound ✅, Pos increasing), but the video texture remains invisible (black screen). This means the VideoPlayer widget is not being rebuilt with a valid textureId, or a layout layer (like a Stack or ClipRRect) is painting over it. Geo-fencing logic is also blocking preview load and should be disabled for now.",
+    "currentDebugOverlay": {
+      "Frame": "✅",
+      "Sound": "✅",
+      "Pos": "778ms",
+      "Rotation": "90° (web fix)",
+      "Volume": "1.0"
+    },
+    "problems": [
+      "The VideoPlayerController is active and advancing position, but the video texture is not rendering to screen (black screen).",
+      "Possible cause: VideoPlayer widget not rebuilding after texture ID mount or is covered by an opaque container.",
+      "Geo-fence check may be preventing preview state rebuilds or pausing the controller prematurely."
+    ],
+    "requiredFixes": [
+      {
+        "1️⃣ Force Texture Rebuild": [
+          "Wrap the VideoPlayer widget inside a RepaintBoundary and a Visibility widget that toggles visible = controller.value.isInitialized && controller.value.isPlaying.",
+          "Add setState(() {}) immediately after the first Frame ✅ event to rebuild and expose the painted texture.",
+          "Ensure no Positioned(), Stack(), or Container() above the VideoPlayer uses a solid black background color or full-size overlay."
+        ]
+      },
+      {
+        "2️⃣ Guarantee Correct Z-Order": [
+          "If the black screen is a result of an overlay layer, explicitly set the VideoPlayer widget to be the bottom-most layer inside Stack(children: [...]).",
+          "Move the debug overlays into Positioned() widgets ABOVE the VideoPlayer but ensure their background is Colors.transparent."
+        ]
+      },
+      {
+        "3️⃣ Temporarily Disable Geo-fence Logic": [
+          "Bypass any conditional check related to geo-location or GPS permission gating video playback (e.g., skip geofenceReady or locationVerified conditions).",
+          "Return true or remove guards so that Preview initialization runs instantly for testing purposes."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "PreviewPlayback": "Video texture is visible on the first Preview tap, showing motion synchronized with sound.",
+      "DebugOverlay": "Frame ✅ and Sound ✅ appear within one second of tapping Preview.",
+      "GeoFenceBypass": "No location or geofence restrictions block Preview playback during testing."
+    },
+    "note": "Do NOT modify rotation or orientation logic. Focus only on texture visibility (repaint timing and z-order) and disable geo-fencing temporarily to isolate playback rendering behavior."
+  }
+}
