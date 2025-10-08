@@ -1,0 +1,43 @@
+{
+  "task": "Fix delayed video initialization on first preview tap",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "After the autoplay fix, the video now waits for Preview to be pressed, but it still requires multiple taps to display correctly. On the first tap, the preview shows a black screen with no sound; on the second tap, only sound plays; on the third tap, both video and sound appear with correct orientation. The issue is that the controller initialization and texture attachment are not fully awaited before playback begins.",
+    "observations": {
+      "FirstTap": "Black screen, no sound",
+      "SecondTap": "Audio only, no video",
+      "ThirdTap": "Video + sound, correct rotation and BoxFit.cover"
+    },
+    "diagnosis": [
+      "controller.initialize() completes asynchronously, but controller.play() is being triggered before the texture frame is rendered.",
+      "The VideoPlayer widget rebuild may be occurring before controller.value.isInitialized is true.",
+      "A race condition between rotation transform, texture creation, and first-frame rendering causes delayed visual output."
+    ],
+    "requiredFixes": [
+      {
+        "1️⃣ Ensure Complete Initialization Before Playback": [
+          "Wrap controller.initialize() in await and confirm controller.value.isInitialized == true before allowing playback.",
+          "Use a FutureBuilder or an async init() method that sets a local state variable (e.g., _isReady = true) only after the first frame renders."
+        ]
+      },
+      {
+        "2️⃣ Wait for First Frame Before Calling play()": [
+          "After initialization, use WidgetsBinding.instance.addPostFrameCallback((_) => controller.play()) to ensure the widget tree has built the texture.",
+          "If still delayed, add Future.delayed(const Duration(milliseconds: 150)) before play() to guarantee the first frame is ready."
+        ]
+      },
+      {
+        "3️⃣ Synchronize Audio and Video Playback": [
+          "Ensure controller.setVolume(1.0) is called only once after controller.play().",
+          "If audio plays first, call controller.pause(); await controller.seekTo(Duration.zero); then play() again after initialization completes."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "FirstTap": "On first press of Preview, the video displays and plays with sound immediately.",
+      "TextureReady": "No black screen or delayed texture rendering.",
+      "Sync": "Video and audio begin together without needing a second tap."
+    },
+    "note": "Keep the debug overlay active until the first-preview playback issue is fixed. Confirm success when Initialized ✅, Portrait ✅, and playback begins correctly on the first Preview tap."
+  }
+}
