@@ -730,70 +730,37 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               child: Container(color: Colors.black),
             ),
             
-            // 🎥 VIDEO VERIFICATION LAYER - Shows purple background to confirm layer is visible
+            // VIDEO LAYER - Force full-screen video element
             Positioned.fill(
-              child: Opacity(
-                opacity: 1.0,
-                child: RepaintBoundary(
-                  key: ValueKey('video_player_${widget.controller.hashCode}'),
-                  child: Container(
-                    color: Colors.purpleAccent.withOpacity(0.3), // TEMPORARY: Visual confirmation
-                    child: Visibility(
-                      visible: widget.controller.value.isInitialized,
-                      replacement: Container(
+              child: widget.controller.value.isInitialized
+                  ? RepaintBoundary(
+                      key: ValueKey('video_player_${widget.controller.hashCode}'),
+                      child: Container(
                         color: Colors.black,
-                        child: const Center(
-                          child: CircularProgressIndicator(color: Colors.orange),
+                        child: Center(
+                          child: AspectRatio(
+                            aspectRatio: isPortrait 
+                                ? (videoSize.height / videoSize.width) 
+                                : widget.controller.value.aspectRatio,
+                            child: isPortrait
+                                ? Transform.rotate(
+                                    angle: finalRotation,
+                                    child: AspectRatio(
+                                      aspectRatio: widget.controller.value.aspectRatio,
+                                      child: VideoPlayer(widget.controller),
+                                    ),
+                                  )
+                                : VideoPlayer(widget.controller),
+                          ),
                         ),
                       ),
-                      child: isPortrait
-                          ? Center(
-                              child: RotatedBox(
-                                quarterTurns: finalRotationDegrees ~/ 90,
-                                child: SizedBox(
-                                  width: videoSize.height,
-                                  height: videoSize.width,
-                                  child: VideoPlayer(widget.controller),
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: AspectRatio(
-                                aspectRatio: widget.controller.value.aspectRatio,
-                                child: Transform.rotate(
-                                  angle: finalRotation,
-                                  child: VideoPlayer(widget.controller),
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            
-            // 🎥 VISUAL VERIFICATION TEXT - Confirms this layer is in render tree
-            Positioned(
-              top: MediaQuery.of(context).size.height / 2 - 40,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    '🎥 VIDEO LAYER HERE',
-                    style: TextStyle(
+                    )
+                  : Container(
                       color: Colors.black,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      child: const Center(
+                        child: CircularProgressIndicator(color: Colors.orange),
+                      ),
                     ),
-                  ),
-                ),
-              ),
             ),
 
             // DEBUG OVERLAY - Visual verification
