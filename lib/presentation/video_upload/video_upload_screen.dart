@@ -730,29 +730,13 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               child: Container(color: Colors.black),
             ),
             
-            // VIDEO LAYER - Force full-screen video element
+            // VIDEO LAYER - BARE TEST: No rotation, no transforms, no sizing
             Positioned.fill(
               child: widget.controller.value.isInitialized
-                  ? RepaintBoundary(
-                      key: ValueKey('video_player_${widget.controller.hashCode}'),
-                      child: Container(
-                        color: Colors.black,
-                        child: Center(
-                          child: AspectRatio(
-                            aspectRatio: isPortrait 
-                                ? (videoSize.height / videoSize.width) 
-                                : widget.controller.value.aspectRatio,
-                            child: isPortrait
-                                ? Transform.rotate(
-                                    angle: finalRotation,
-                                    child: AspectRatio(
-                                      aspectRatio: widget.controller.value.aspectRatio,
-                                      child: VideoPlayer(widget.controller),
-                                    ),
-                                  )
-                                : VideoPlayer(widget.controller),
-                          ),
-                        ),
+                  ? Container(
+                      color: Colors.black,
+                      child: Center(
+                        child: VideoPlayer(widget.controller),
                       ),
                     )
                   : Container(
