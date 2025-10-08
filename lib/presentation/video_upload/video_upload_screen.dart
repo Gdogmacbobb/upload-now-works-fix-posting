@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/profile_service.dart';
 import '../../utils/web_dom_stub.dart' if (dart.library.html) 'dart:html' as html;
-import 'dart:js' as js if (dart.library.html) 'dart:js' as js;
+import 'dart:js' if (dart.library.html) 'dart:js' as js;
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
