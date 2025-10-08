@@ -1,0 +1,32 @@
+{
+  "task": "Force visible HTML video layer paint after DOM attachment",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "Audio now starts correctly on the first preview tap, confirming DOM readiness and playback start. However, the <video> texture is still invisible even though the controller is active. We need to explicitly force a repaint and visibility confirmation on the HTML video element to ensure the frame is drawn in the browser canvas.",
+    "requiredFixes": [
+      {
+        "1️⃣ Force Visibility": [
+          "After detecting that Frame ✅ and Sound ✅ are active, call js.context.callMethod('eval', ['document.querySelectorAll(\"video\").forEach(v => v.style.visibility = \"visible\")']) to make sure no CSS rule hides it.",
+          "Also set v.style.opacity = '1' and v.style.display = 'block' in the same loop."
+        ]
+      },
+      {
+        "2️⃣ Force Paint Refresh": [
+          "Call WidgetsBinding.instance.addPostFrameCallback after the DOM is visible and run controller.pause() then controller.play() again to trigger a texture repaint.",
+          "Add a short Future.delayed(Duration(milliseconds: 150)) before this step to let the browser apply visibility changes."
+        ]
+      },
+      {
+        "3️⃣ Debug Confirmation": [
+          "Add [PAINT ✅] indicator to debug overlay once at least one <video> element reports nonzero width and height via js.context.callMethod('eval', ['document.querySelector(\"video\").videoWidth']) > 0."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "VisibleTexture": "Video frame is visible on the first preview tap — no black screen.",
+      "AudioSync": "Audio remains in sync with video after forced repaint.",
+      "DebugOverlay": "Shows Frame ✅ Sound ✅ Paint ✅ when texture is drawn."
+    },
+    "note": "This issue is now strictly a browser paint/opacity layer problem — DOM and playback are confirmed functional. The fix should ensure the HTML video element is explicitly visible and repainted after initialization."
+  }
+}
