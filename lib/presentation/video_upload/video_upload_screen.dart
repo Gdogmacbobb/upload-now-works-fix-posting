@@ -702,27 +702,53 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           'width': videoElement.style.width ?? '',
           'height': videoElement.style.height ?? '',
           'outline': videoElement.style.outline ?? '',
+          'maxHeight': videoElement.style.maxHeight ?? '',
+          'objectFit': videoElement.style.objectFit ?? '',
+          'backgroundColor': videoElement.style.backgroundColor ?? '',
         };
         
-        // Apply temporary full-screen styles
+        // 1️⃣ EXPLICIT SIZING: Set both HTML attributes AND CSS
+        // Get viewport dimensions via JavaScript
+        final viewportWidth = js.context.callMethod('eval', ['window.innerWidth']);
+        final viewportHeight = js.context.callMethod('eval', ['window.innerHeight']);
+        
+        // Set HTML attributes (hard pixel dimensions)
+        videoElement.setAttribute('width', viewportWidth.toString());
+        videoElement.setAttribute('height', viewportHeight.toString());
+        
+        // Apply CSS full-screen styles
         videoElement.style.visibility = 'visible';
         videoElement.style.opacity = '1';
         videoElement.style.display = 'block';
         videoElement.style.position = 'fixed';
-        videoElement.style.zIndex = '99999';
+        videoElement.style.zIndex = '999999';
         videoElement.style.top = '0';
         videoElement.style.left = '0';
         videoElement.style.width = '100vw';
         videoElement.style.height = '100vh';
+        videoElement.style.maxHeight = '100vh';
+        videoElement.style.objectFit = 'cover';
+        videoElement.style.backgroundColor = 'black';
         
         // Add visual debug outline
         videoElement.style.outline = '4px solid lime';
         
+        debugPrint('[PREVIEW] Set HTML attrs: ${viewportWidth}x${viewportHeight} + CSS viewport sizing on video #$i');
+        
+        // 2️⃣ FORCE REFLOW: Trigger browser layout recalculation
+        try {
+          videoElement.pause();
+          // Read offsetHeight to force synchronous layout
+          final offsetHeight = videoElement.offsetHeight;
+          debugPrint('[PREVIEW] Forced reflow - offsetHeight: $offsetHeight');
+          videoElement.play();
+        } catch (e) {
+          debugPrint('[PREVIEW] Reflow sequence failed: $e');
+        }
+        
         // Log bounding rect for debugging
         final dynamic rect = videoElement.getBoundingClientRect();
-        debugPrint('[PREVIEW] Video #$i bounds: ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})');
-        
-        debugPrint('[PREVIEW] Set fixed positioning + viewport sizing on video #$i');
+        debugPrint('[PREVIEW] Video #$i bounds after reflow: ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})');
       }
       debugPrint('[PREVIEW] 🎨 Forced full-screen rendering on ${videoElements.length} video element(s)');
     } catch (e, stackTrace) {
@@ -887,6 +913,48 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       // Timeout after 3 seconds (15 attempts at 200ms)
       if (checkCount >= 15) {
         timer.cancel();
+        
+        // 3️⃣ FALLBACK CANVAS SNAPSHOT: If video still has zero dimensions, try canvas workaround
+        try {
+          final video = html.document.querySelector('video');
+          if (video != null) {
+            final dynamic videoElement = video;
+            final videoWidth = videoElement.videoWidth ?? 0;
+            final videoHeight = videoElement.videoHeight ?? 0;
+            
+            debugPrint('[PREVIEW] Video intrinsic size: ${videoWidth}x${videoHeight}');
+            
+            if (videoWidth > 0 && videoHeight > 0) {
+              // Video has decoded frames but isn't painting - create canvas snapshot
+              debugPrint('[PREVIEW] 🎨 Attempting canvas snapshot fallback...');
+              
+              final canvas = html.document.createElement('canvas') as html.CanvasElement;
+              canvas.width = videoWidth;
+              canvas.height = videoHeight;
+              canvas.style.position = 'fixed';
+              canvas.style.top = '0';
+              canvas.style.left = '0';
+              canvas.style.width = '100vw';
+              canvas.style.height = '100vh';
+              canvas.style.zIndex = '999998'; // Just below video
+              canvas.style.objectFit = 'cover';
+              canvas.style.backgroundColor = 'black';
+              
+              final ctx = canvas.getContext('2d');
+              if (ctx != null) {
+                final dynamic context = ctx;
+                context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
+                html.document.body?.append(canvas);
+                debugPrint('[PREVIEW] ✅ Canvas snapshot appended: ${videoWidth}x${videoHeight}');
+              }
+            } else {
+              debugPrint('[PREVIEW] ⚠️ No decoded frames available for canvas snapshot');
+            }
+          }
+        } catch (e) {
+          debugPrint('[PREVIEW] Canvas snapshot failed: $e');
+        }
+        
         setState(() => _showRendererWarning = true);
         debugPrint('[PREVIEW] ⚠️ Paint check timeout after $checkCount attempts - video may not be visible');
         debugPrint('[PREVIEW] ⚠️ Renderer mode: $_rendererMode - video element not composited to screen');
