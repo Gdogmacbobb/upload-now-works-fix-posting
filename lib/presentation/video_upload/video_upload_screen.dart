@@ -90,7 +90,10 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       debugPrint('[VIDEO_INIT] Video aspect ratio: ${_controller!.value.aspectRatio}');
       debugPrint('[VIDEO_INIT] Video duration: ${_controller!.value.duration}');
       
+      // Force playback to start immediately after initialization
       if (mounted) {
+        await _controller!.play();
+        debugPrint('[VIDEO_INIT] Playback started automatically');
         setState(() {});
       }
     } catch (e) {
