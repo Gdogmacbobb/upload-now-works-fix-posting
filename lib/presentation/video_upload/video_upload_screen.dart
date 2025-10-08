@@ -91,21 +91,14 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       debugPrint('[VIDEO_INIT] Video duration: ${_controller!.value.duration}');
       debugPrint('[VIDEO_INIT] Rotation correction: ${_controller!.value.rotationCorrection}');
       
-      // Set volume and prepare for playback
+      // Set volume and pause - user must tap Preview to start playback
       if (mounted) {
         _controller!.setVolume(1.0);
-        debugPrint('[VIDEO_INIT] Volume set to 1.0');
+        _controller!.pause();
+        debugPrint('[VIDEO_INIT] Volume set to 1.0, video paused (awaiting user tap)');
         
-        // Force UI update to ensure texture is painted before showing
+        // Force UI update to ensure texture is ready
         setState(() {});
-        
-        // Start playback after frame is rendered
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _controller != null) {
-            _controller!.play();
-            debugPrint('[VIDEO_INIT] Playback started after frame callback');
-          }
-        });
       }
     } catch (e) {
       debugPrint('[VIDEO_INIT] Controller initialization failed: $e');
