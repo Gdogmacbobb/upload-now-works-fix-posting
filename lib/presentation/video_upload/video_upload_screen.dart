@@ -595,6 +595,8 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   bool _frameDecoded = false;
   bool _soundActive = false;
   bool _paintConfirmed = false;
+  bool _showRendererWarning = false;
+  String _rendererMode = 'unknown';
   
   // DOM visibility retry logic
   int _retryCount = 0;
@@ -648,10 +650,13 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       // Detect and log renderer mode
       try {
         final renderer = js.context['flutterWebRenderer'];
-        debugPrint('[PREVIEW] 🖥️ Renderer Mode: ${renderer ?? "unknown"}');
-        if (renderer == 'canvaskit') {
+        setState(() {
+          _rendererMode = renderer?.toString() ?? 'unknown';
+        });
+        debugPrint('[PREVIEW] 🖥️ Renderer Mode: $_rendererMode');
+        if (_rendererMode == 'canvaskit') {
           debugPrint('[PREVIEW] ⚠️ WARNING: CanvasKit renderer detected - video may not composite correctly');
-        } else if (renderer == 'html') {
+        } else if (_rendererMode == 'html') {
           debugPrint('[PREVIEW] ✅ HTML renderer active - video should composite correctly');
         }
       } catch (e) {
@@ -882,7 +887,9 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       // Timeout after 3 seconds (15 attempts at 200ms)
       if (checkCount >= 15) {
         timer.cancel();
+        setState(() => _showRendererWarning = true);
         debugPrint('[PREVIEW] ⚠️ Paint check timeout after $checkCount attempts - video may not be visible');
+        debugPrint('[PREVIEW] ⚠️ Renderer mode: $_rendererMode - video element not composited to screen');
       }
     });
   }
@@ -934,6 +941,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           videoElement.style.left = originalStyles['left'] ?? '';
           videoElement.style.width = originalStyles['width'] ?? '';
           videoElement.style.height = originalStyles['height'] ?? '';
+          videoElement.style.outline = originalStyles['outline'] ?? '';
         }
       }
       debugPrint('[PREVIEW] Restored ${_originalVideoStyles.length} video element style(s)');
@@ -1197,6 +1205,19 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'monospace',
+                        ),
+                      ),
+                    if (kIsWeb && _showRendererWarning)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '⚠️ Renderer: $_rendererMode\nVideo not composited',
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace',
+                          ),
                         ),
                       ),
                     Text(
