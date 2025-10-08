@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:io' show File;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../theme/app_theme.dart';
@@ -34,29 +34,47 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     final videoPath = ModalRoute.of(context)!.settings.arguments as String?;
     if (videoPath != null && _videoPath == null) {
       _videoPath = videoPath;
-      try {
-        // Mobile-only: Use File-based video controller
+      _initializeVideoController(videoPath);
+    }
+  }
+
+  void _initializeVideoController(String videoPath) {
+    try {
+      // Platform-specific video controller initialization
+      if (kIsWeb) {
+        // Web: Use network-based controller (video path is a blob URL on web)
+        _controller = VideoPlayerController.networkUrl(Uri.parse(videoPath));
+      } else {
+        // Mobile: Use file-based controller
         _controller = VideoPlayerController.file(File(videoPath));
-        _controller!.initialize().then((_) {
-          if (mounted) {
-            setState(() => _isInitialized = true);
-          }
-        }).catchError((error) {
-          debugPrint('Video player initialization failed: $error');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to load video')),
-            );
-          }
-        });
-      } catch (e) {
-        debugPrint('Video controller creation failed: $e');
       }
+      
+      _controller!.initialize().then((_) {
+        if (mounted) {
+          setState(() => _isInitialized = true);
+        }
+      }).catchError((error) {
+        debugPrint('Video player initialization failed: $error');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to load video')),
+          );
+        }
+      });
+    } catch (e) {
+      debugPrint('Video controller creation failed: $e');
     }
   }
 
   Future<void> _generateThumbnails() async {
-    if (_videoPath == null || kIsWeb) {
+    if (_videoPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No video loaded')),
+      );
+      return;
+    }
+
+    if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Thumbnail generation not available on web')),
       );
@@ -96,7 +114,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         _thumbnails = generatedThumbnails;
         _isGeneratingThumbnails = false;
         if (_thumbnails.isNotEmpty) {
-          _selectedThumbnailIndex = 0; // Select first thumbnail by default
+          _selectedThumbnailIndex = 0;
         }
       });
     } catch (e) {
@@ -156,7 +174,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                     children: [
                       // Show selected thumbnail or video frame
                       if (_selectedThumbnailIndex >= 0 && 
-                          _selectedThumbnailIndex < _thumbnails.length)
+                          _selectedThumbnailIndex < _thumbnails.length &&
+                          !kIsWeb)
                         Image.file(
                           File(_thumbnails[_selectedThumbnailIndex]),
                           fit: BoxFit.cover,
@@ -218,8 +237,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
             const SizedBox(height: 16),
 
-            // Select Thumbnail button
-            if (_isInitialized && !kIsWeb)
+            // Select Thumbnail button (visible on all platforms, shows feedback on web)
+            if (_isInitialized)
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryOrange,
@@ -245,8 +264,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                 onPressed: _isGeneratingThumbnails ? null : _generateThumbnails,
               ),
 
-            // Thumbnail selection list
-            if (_thumbnails.isNotEmpty) ...[
+            // Thumbnail selection list (mobile only)
+            if (_thumbnails.isNotEmpty && !kIsWeb) ...[
               const SizedBox(height: 12),
               SizedBox(
                 height: 80,
