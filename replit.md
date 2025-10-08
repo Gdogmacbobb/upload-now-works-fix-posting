@@ -2,9 +2,14 @@
 
 YNFNY is a cross-platform Flutter mobile application serving as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing, targeting both mobile and web deployment. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances.
 
-**Current Status**: ✅ **VIDEO UPLOAD STABILIZATION COMPLETE** (Oct 8, 2025) - FutureBuilder initialization, portrait orientation with BoxFit.cover, and robust thumbnail generation fully implemented.
+**Current Status**: ✅ **VIDEO PLAYBACK STABILIZATION COMPLETE** (Oct 8, 2025) - First-frame decode delay, autoplay disabled, and preview modal initialization fully optimized.
 
-**Latest Stabilization Fixes (Oct 8, 2025 - Late Evening)**:
+**Latest Playback Fixes (Oct 8, 2025 - Night)**:
+- **First-Frame Decode Delay**: Fixed race condition where first Preview tap showed black screen, second tap audio-only, third tap video+audio. Added 150ms delay after postFrameCallback in preview modal to ensure VideoPlayer texture renders and first frame decodes before playback starts. Single tap now plays video+audio immediately.
+- **Autoplay Disabled**: Changed upload screen initialization from `controller.play()` to `controller.pause()`, preventing automatic playback on entry. Video stays paused as still frame until user explicitly taps Preview button.
+- **Async PostFrameCallback**: Made preview modal's postFrameCallback async to support await, with mounted guards preventing state updates after dispose.
+
+**Previous Stabilization Fixes (Oct 8, 2025 - Evening)**:
 - **FutureBuilder Video Initialization**: Refactored video controller to use async/await pattern with FutureBuilder, eliminating race conditions. Controller assigned before awaiting initialization, ensuring proper UI rendering with loading/error/success states.
 - **Portrait Orientation Fix**: Changed detection from aspectRatio to height > width comparison. Updated BoxFit from `contain` to `cover` to properly fill screen height for vertical videos without letterboxing.
 - **Thumbnail Generation Platform Guard**: Fixed MissingPluginException on web by checking `kIsWeb` BEFORE calling `path_provider.getTemporaryDirectory()`. Web now shows clean "Thumbnail selection not available on web" message without crashes. Mobile thumbnail generation preserved in dedicated `_generateMobileThumbnails()` helper method.
