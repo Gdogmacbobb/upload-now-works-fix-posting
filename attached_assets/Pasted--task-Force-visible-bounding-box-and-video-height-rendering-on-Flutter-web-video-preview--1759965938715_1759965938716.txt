@@ -1,0 +1,55 @@
+{
+  "task": "Force visible bounding box and video height rendering on Flutter web video preview",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "Frame ✅, Sound ✅, DOM ✅ confirm playback. Paint ❌ and a thin lime outline mean the <video> element is in the DOM but has zero or near-zero height. We need to give it hard physical dimensions and a forced paint refresh.",
+    "requiredFixes": [
+      {
+        "1️⃣ Explicit Sizing": [
+          "After detecting the <video> element, set both CSS and HTML attributes to fixed viewport sizing:",
+          "document.querySelectorAll('video').forEach(v => {",
+          "v.width = window.innerWidth;",
+          "v.height = window.innerHeight;",
+          "v.style.width = '100vw';",
+          "v.style.height = '100vh';",
+          "v.style.maxHeight = '100vh';",
+          "v.style.objectFit = 'cover';",
+          "v.style.backgroundColor = 'black';",
+          "v.style.zIndex = '999999';",
+          "v.style.position = 'fixed';",
+          "v.style.top = '0';",
+          "v.style.left = '0';",
+          "});"
+        ]
+      },
+      {
+        "2️⃣ Force Video Reflow": [
+          "Trigger a browser reflow and repaint:",
+          "document.querySelectorAll('video').forEach(v => {",
+          "v.pause();",
+          "void v.offsetHeight;",
+          "v.play();",
+          "});"
+        ]
+      },
+      {
+        "3️⃣ Fallback Canvas Snapshot": [
+          "If getBoundingClientRect().height <= 2 after 1 second, capture a frame via drawImage to canvas and append to DOM to confirm visible pixels:",
+          "const v = document.querySelector('video');",
+          "if (v && v.videoWidth > 0 && v.videoHeight > 0) {",
+          "const c = document.createElement('canvas');",
+          "c.width = v.videoWidth; c.height = v.videoHeight;",
+          "c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);",
+          "document.body.appendChild(c);",
+          "}"
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "VideoVisible": "The <video> element fully covers the viewport and displays frames visibly.",
+      "AspectRatio": "The video maintains correct rotation and aspect ratio.",
+      "PaintFlag": "Debug overlay updates to Paint ✅ after bounding box height > 0."
+    },
+    "note": "Do not change rotation or orientation logic. The issue is purely due to the browser collapsing the <video> element’s height. This fix forces physical layout size and triggers a repaint."
+  }
+}
