@@ -1,0 +1,35 @@
+{
+  "task": "Force visible bounding box and full-screen rendering of HTML video element",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "Frame ✅ and Sound ✅ confirm playback works. Paint ❌ means the HTML video element is still zero-sized or clipped. We need to explicitly set its width/height to 100% of the viewport and ensure no parent containers apply overflow or clipping.",
+    "requiredFixes": [
+      {
+        "1️⃣ Fullscreen CSS Enforcement": [
+          "After detecting the video in the DOM, execute:",
+          "js.context.callMethod('eval', ['document.querySelectorAll(\"video\").forEach(v => {v.style.position=\"fixed\"; v.style.top=\"0\"; v.style.left=\"0\"; v.style.width=\"100vw\"; v.style.height=\"100vh\"; v.style.zIndex=\"99999\"; v.style.visibility=\"visible\"; v.style.opacity=\"1\"; v.style.display=\"block\";})']);",
+          "Use fixed instead of absolute to detach it from Flutter layout and ensure visibility above the canvas."
+        ]
+      },
+      {
+        "2️⃣ Parent Overflow Reset": [
+          "Run:",
+          "js.context.callMethod('eval', ['document.querySelectorAll(\"body,html,flt-glass-pane\").forEach(e => {e.style.overflow=\"visible\"; e.style.position=\"relative\";})']);",
+          "This prevents Flutter’s root layer from clipping the promoted video element."
+        ]
+      },
+      {
+        "3️⃣ Bounding Box Recheck": [
+          "Re-run getBoundingClientRect() every 200ms until both width and height > 0.",
+          "Once true, trigger controller.play() again and set debug overlay Paint ✅."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "PaintVisible": "The HTML video element occupies full viewport space and Paint ✅ turns green.",
+      "NoClipping": "No overflow:hidden containers obscure the video.",
+      "SyncPlayback": "Audio and video remain in sync after promotion."
+    },
+    "note": "Do not change rotation or portrait handling. This is purely a CSS composition and layout enforcement fix to make the <video> layer physically visible."
+  }
+}
