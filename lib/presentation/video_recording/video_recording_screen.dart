@@ -123,6 +123,56 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
           _recordingSeconds = 0;
         });
         
+        // Enable torch if flash was turned ON before recording
+        if (_isFlashOn) {
+          debugPrint('🔦 [FLASH_LIFECYCLE] Flash enabled before recording - activating torch');
+          
+          // Web: Visual feedback only (no hardware torch)
+          if (kIsWeb) {
+            debugPrint('🌐 [FLASH_LIFECYCLE] Web mode - visual flash indication only');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Flash enabled for recording'),
+                  backgroundColor: Colors.green.shade900,
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            }
+          } else {
+            // Native: Enable hardware torch (rear camera only)
+            if (_hasFlashSupport && _lensDirection == 'back') {
+              try {
+                await _controller!.setFlashMode(FlashMode.torch);
+                debugPrint('✅ [FLASH_LIFECYCLE] Torch enabled for recording duration');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Flash enabled for recording'),
+                      backgroundColor: Colors.green.shade900,
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [FLASH_LIFECYCLE] Failed to enable torch: $e');
+              }
+            } else {
+              // Front camera or unsupported: Visual feedback only
+              debugPrint('ℹ️ [FLASH_LIFECYCLE] Front camera or unsupported - visual flash indication only');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Flash enabled for recording'),
+                    backgroundColor: Colors.green.shade900,
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
+              }
+            }
+          }
+        }
+        
         // Start timer
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
           if (mounted) {
@@ -161,24 +211,42 @@ class _VideoRecordingScreenState extends State<VideoRecordingScreen> {
         debugPrint('✅ [RECORD_LIFECYCLE] Recording stopped successfully. File: $filePath');
         
         // Auto-turn off flash when recording stops
-        if (_isFlashOn && _hasFlashSupport) {
-          debugPrint('🔦 [RECORD_LIFECYCLE] Auto-disabling flash after recording stopped');
+        if (_isFlashOn) {
+          debugPrint('🔦 [FLASH_LIFECYCLE] Flash auto-disabled after recording stopped');
           
           // Web: Visual-only state update (no hardware call)
           if (kIsWeb) {
-            debugPrint('🌐 [RECORD_LIFECYCLE] Web mode - visual flash state reset only');
+            debugPrint('🌐 [FLASH_LIFECYCLE] Web mode - visual flash state reset only');
             setState(() {
               _isFlashOn = false;
             });
           } else {
-            // Native: Turn off hardware flash
-            await _controller!.setFlashMode(FlashMode.off);
+            // Native: Turn off hardware flash if supported
+            if (_hasFlashSupport) {
+              try {
+                await _controller!.setFlashMode(FlashMode.off);
+                debugPrint('✅ [FLASH_LIFECYCLE] Hardware torch disabled');
+              } catch (e) {
+                debugPrint('⚠️ [FLASH_LIFECYCLE] Failed to disable torch: $e');
+              }
+            }
             setState(() {
               _isFlashOn = false;
             });
           }
           
-          debugPrint('✅ [RECORD_LIFECYCLE] Flash auto-off completed');
+          debugPrint('✅ [FLASH_LIFECYCLE] Flash auto-off completed');
+          
+          // Always show flash disabled feedback
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Flash disabled'),
+                backgroundColor: Colors.green.shade900,
+                duration: const Duration(milliseconds: 800),
+              ),
+            );
+          }
         }
         
         setState(() {
