@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/profile_service.dart';
 import '../../utils/web_dom_stub.dart' if (dart.library.html) 'dart:html' as html;
+import 'dart:js' as js if (dart.library.html) 'dart:js' as js;
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -644,6 +645,19 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     debugPrint('[PREVIEW] 🎨 Attempting CSS visibility enforcement...');
     
     try {
+      // Detect and log renderer mode
+      try {
+        final renderer = js.context['flutterWebRenderer'];
+        debugPrint('[PREVIEW] 🖥️ Renderer Mode: ${renderer ?? "unknown"}');
+        if (renderer == 'canvaskit') {
+          debugPrint('[PREVIEW] ⚠️ WARNING: CanvasKit renderer detected - video may not composite correctly');
+        } else if (renderer == 'html') {
+          debugPrint('[PREVIEW] ✅ HTML renderer active - video should composite correctly');
+        }
+      } catch (e) {
+        debugPrint('[PREVIEW] Could not detect renderer mode: $e');
+      }
+      
       // First: Reset parent overflow to prevent clipping (save original styles)
       final rootElements = html.document.querySelectorAll('body, html, flt-glass-pane');
       for (var i = 0; i < rootElements.length; i++) {
@@ -682,6 +696,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           'left': videoElement.style.left ?? '',
           'width': videoElement.style.width ?? '',
           'height': videoElement.style.height ?? '',
+          'outline': videoElement.style.outline ?? '',
         };
         
         // Apply temporary full-screen styles
@@ -694,6 +709,13 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         videoElement.style.left = '0';
         videoElement.style.width = '100vw';
         videoElement.style.height = '100vh';
+        
+        // Add visual debug outline
+        videoElement.style.outline = '4px solid lime';
+        
+        // Log bounding rect for debugging
+        final dynamic rect = videoElement.getBoundingClientRect();
+        debugPrint('[PREVIEW] Video #$i bounds: ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})');
         
         debugPrint('[PREVIEW] Set fixed positioning + viewport sizing on video #$i');
       }
