@@ -8,12 +8,15 @@ set -e
 echo "🧹 Cleaning previous build..."
 flutter clean
 
+echo "🗑️  Removing build and .dart_tool directories..."
+rm -rf build .dart_tool
+
 echo "📦 Getting dependencies..."
 flutter pub get
 
 echo "🌐 Building for web (preserving Material Icons)..."
-flutter build web --release --no-tree-shake-icons
+flutter build web --no-tree-shake-icons
 
-echo "✅ Build complete! Icons preserved."
-echo "📊 MaterialIcons font bundled:"
-ls -lh build/web/assets/fonts/MaterialIcons-Regular.otf 2>/dev/null || echo "⚠️ Warning: MaterialIcons font not found!"
+echo "✅ Build complete! Icons, images, and fonts preserved."
+echo "📊 Build output:"
+ls -lh build/web/*.js | head -3

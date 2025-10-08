@@ -76,7 +76,11 @@ A serverless approach leveraging external services:
 
 ## Development Tools
 - **Flutter Framework**: Version 3.32.0 (Nix package) with Dart SDK 3.8.0.
-- **Build Tools**: Standard Flutter build system; web builds require `flutter build web --release --no-tree-shake-icons`.
+- **Build Tools**: Automated build system via `build_web.sh` script ensures clean rebuilds with icon/font preservation.
+  - **Clean Rebuild Script**: `./build_web.sh` performs `flutter clean`, removes build artifacts, runs `flutter pub get`, and builds with `--no-tree-shake-icons` flag
+  - **Icon Preservation**: `--no-tree-shake-icons` flag required to prevent Material Icons tree-shaking on web builds
+  - **Deployment Build**: Replit deployment automatically runs `build_web.sh` for consistent production builds
+  - **Manual Rebuilds**: Run `./build_web.sh` after merges, dependency updates, or when icons/fonts don't render correctly
 - **Package Management**: Flutter Pub for Dart packages (173 dependencies) and NPM for Node.js (Express, Stripe).
 - **Web Server**: Node.js Express server (`server.js`) for serving static Flutter web builds.
 
