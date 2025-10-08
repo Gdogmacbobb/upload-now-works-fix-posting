@@ -618,8 +618,9 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   @override
   Widget build(BuildContext context) {
     final videoSize = widget.controller.value.size;
-    final rotationCorrection = widget.controller.value.rotationCorrection;
-    final rotationDegrees = (rotationCorrection * 180 / 3.14159).round();
+    final int rotationCorrectionInt = widget.controller.value.rotationCorrection;
+    final double rotationCorrection = rotationCorrectionInt.toDouble();
+    final int rotationDegrees = (rotationCorrection * 180 / 3.14159).round();
     
     // Check portrait: either dimensions OR rotation metadata (90° or 270° = portrait)
     final isPortraitByDimensions = videoSize.height > videoSize.width;
