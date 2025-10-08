@@ -123,68 +123,82 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
       debugPrint('[THUMBNAIL] Video duration: $duration');
       
-      // Attempt thumbnail generation (works on mobile, may fail gracefully on web)
-      final List<String> generatedThumbnails = [];
-      final int thumbnailCount = 8;
-      
+      // Platform-specific thumbnail generation
       if (kIsWeb) {
-        debugPrint('[THUMBNAIL] Web platform detected - attempting generation with fallback');
-      }
-      
-      final tempDir = await getTemporaryDirectory();
-      
-      for (int i = 0; i < thumbnailCount; i++) {
-        final timeMs = (duration.inMilliseconds / (thumbnailCount + 1) * (i + 1)).round();
-        
-        try {
-          final thumbnail = await VideoThumbnail.thumbnailFile(
-            video: _videoPath!,
-            thumbnailPath: tempDir.path,
-            imageFormat: ImageFormat.PNG,
-            maxWidth: 200,
-            timeMs: timeMs,
-            quality: 75,
-          );
-          
-          if (thumbnail != null) {
-            generatedThumbnails.add(thumbnail);
-            debugPrint('[THUMBNAIL] ✓ Generated thumbnail $i at $timeMs ms: $thumbnail');
-          } else {
-            debugPrint('[THUMBNAIL] ✗ Null result for thumbnail $i at $timeMs ms');
-          }
-        } catch (thumbnailError) {
-          debugPrint('[THUMBNAIL] ✗ Error generating thumbnail $i: $thumbnailError');
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _thumbnails = generatedThumbnails;
-          _isGeneratingThumbnails = false;
-          if (_thumbnails.isNotEmpty) {
-            _selectedThumbnailIndex = 0;
-            debugPrint('[THUMBNAIL] Successfully generated ${_thumbnails.length} thumbnails');
-          } else {
-            debugPrint('[THUMBNAIL] No thumbnails generated - platform may not support it');
-          }
-        });
-      }
-      
-      if (generatedThumbnails.isEmpty && kIsWeb) {
+        // Web: Thumbnail generation not supported (no path_provider support)
+        debugPrint('[THUMBNAIL] Web platform - thumbnail generation not available');
         if (mounted) {
+          setState(() => _isGeneratingThumbnails = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thumbnail generation not supported on web')),
+            const SnackBar(content: Text('Thumbnail selection not available on web')),
           );
         }
+      } else {
+        // Mobile: Use video_thumbnail package
+        await _generateMobileThumbnails(duration);
       }
     } catch (e) {
       debugPrint('[THUMBNAIL] Thumbnail generation failed: $e');
       if (mounted) {
         setState(() => _isGeneratingThumbnails = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Thumbnail generation failed: $e')),
-        );
+        
+        // Handle MissingPluginException specifically
+        if (e.toString().contains('MissingPluginException')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Thumbnail feature not available on this platform')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Thumbnail generation failed: $e')),
+          );
+        }
       }
+    }
+  }
+
+  Future<void> _generateMobileThumbnails(Duration duration) async {
+    final List<String> generatedThumbnails = [];
+    final int thumbnailCount = 8;
+    
+    debugPrint('[THUMBNAIL] Generating $thumbnailCount thumbnails for mobile...');
+    
+    final tempDir = await getTemporaryDirectory();
+    
+    for (int i = 0; i < thumbnailCount; i++) {
+      final timeMs = (duration.inMilliseconds / (thumbnailCount + 1) * (i + 1)).round();
+      
+      try {
+        final thumbnail = await VideoThumbnail.thumbnailFile(
+          video: _videoPath!,
+          thumbnailPath: tempDir.path,
+          imageFormat: ImageFormat.PNG,
+          maxWidth: 200,
+          timeMs: timeMs,
+          quality: 75,
+        );
+        
+        if (thumbnail != null) {
+          generatedThumbnails.add(thumbnail);
+          debugPrint('[THUMBNAIL] ✓ Generated thumbnail $i at $timeMs ms: $thumbnail');
+        } else {
+          debugPrint('[THUMBNAIL] ✗ Null result for thumbnail $i at $timeMs ms');
+        }
+      } catch (thumbnailError) {
+        debugPrint('[THUMBNAIL] ✗ Error generating thumbnail $i: $thumbnailError');
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _thumbnails = generatedThumbnails;
+        _isGeneratingThumbnails = false;
+        if (_thumbnails.isNotEmpty) {
+          _selectedThumbnailIndex = 0;
+          debugPrint('[THUMBNAIL] Successfully generated ${_thumbnails.length} thumbnails');
+        } else {
+          debugPrint('[THUMBNAIL] No thumbnails generated');
+        }
+      });
     }
   }
 
