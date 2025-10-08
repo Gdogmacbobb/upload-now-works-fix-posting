@@ -1,0 +1,36 @@
+{
+  "task": "Enhance and modernize the upload screen UI without altering any other screens, backend logic, or routes.",
+  "goal": "Transform the upload screen into a complete, TikTok-style upload preview with full-screen video playback, caption overlay, and thumbnail selection while preserving the repo’s existing UI design and upload flow.",
+  "instructions": [
+    "Modify only the file: lib/presentation/video_upload/video_upload_screen.dart.",
+    "Keep the entire layout, theme, typography, and color scheme exactly as in the current repository — dark mode background (#1C1C1E) with orange accent (#FF8C00).",
+    "Do not modify discovery_feed, following_feed, performer_profile, or any services such as Supabase or AuthService.",
+    "When the user taps the video preview box, open a full-screen modal (portrait orientation) using video_player.",
+    "The full-screen view must look like the discovery/following feed: vertical video filling the screen, user handle, performance type, and caption text overlaid at the bottom-left in white text with subtle shadow.",
+    "Show a small circular profile image next to the handle, identical to the discovery screen layout.",
+    "Add a close (X) button at the top-left corner of the modal to exit full-screen mode and return to the upload screen.",
+    "Below the video preview box on the upload screen, add a 'Select Thumbnail' button styled with AppTheme.primaryOrange.",
+    "When pressed, generate 6–8 evenly spaced thumbnails from the uploaded video using the video_thumbnail package.",
+    "Display these thumbnails in a horizontally scrollable list beneath the preview.",
+    "When a thumbnail is selected, highlight it with an orange border (#FF8C00) and use it as the static preview image for the video box.",
+    "Ensure the caption input, performance type selector, hashtags, and upload button remain exactly as they are in the repo (do not move or restyle).",
+    "If the user taps on the caption or any text field while in the full-screen preview, ignore inputs and require them to exit preview first.",
+    "Maintain null-safety and stability: if the video file is missing, show a placeholder container with the text 'Video preview unavailable' but do not crash.",
+    "Retain all existing upload logic: same Supabase storage upload, file path saving, and navigation flow after successful upload.",
+    "Do not modify app routing or main.dart initialization.",
+    "After completion, run a build check to confirm that no other presentation files have changed."
+  ],
+  "files_to_update": {
+    "lib/presentation/video_upload/video_upload_screen.dart": "Rewrite or extend this file to implement full-screen video preview and thumbnail selection, preserving all existing layout and functionality."
+  },
+  "dependencies": {
+    "video_player": ">=2.8.1",
+    "video_thumbnail": ">=0.5.3"
+  },
+  "post_actions": [
+    "Run: flutter clean && flutter pub get",
+    "Run: flutter build web --no-tree-shake-icons",
+    "Test the flow: record video → navigate to upload screen → tap preview → full-screen playback with caption overlay → close → select thumbnail → upload.",
+    "Visually confirm that all other app screens remain unchanged."
+  ]
+}

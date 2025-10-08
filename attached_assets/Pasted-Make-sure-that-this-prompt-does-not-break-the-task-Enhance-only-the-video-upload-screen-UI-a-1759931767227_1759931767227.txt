@@ -1,0 +1,32 @@
+Make sure that this prompt does not break the {
+  "task": "Enhance only the video upload screen UI and logic without modifying any other screens, routes, or global files.",
+  "goal": "Improve the lib/presentation/video_upload/video_upload_screen.dart to include full-screen video playback preview, thumbnail selection, and a realistic post-style preview with the user's handle, caption, and performance type.",
+  "instructions": [
+    "⚠️ Do not modify any file outside of lib/presentation/video_upload/video_upload_screen.dart.",
+    "Keep all existing navigation flows intact — the screen still appears immediately after the recording screen and continues to the existing post/upload logic when the user taps 'Drop Content' or the upload button.",
+    "When the user taps the video preview box, open a full-screen modal that plays the selected recording vertically (portrait mode) using the video_player package.",
+    "Overlay a top app bar with a back (X) icon to exit the full-screen playback and return to the upload screen.",
+    "In full-screen mode, show the preview as it would appear on the discovery/following screen: include the user's handle, caption, performance type, and profile image at the bottom left, exactly like a posted video.",
+    "Allow the user to tap anywhere outside the overlay to close the full-screen modal.",
+    "Below the video preview box on the upload screen, add a 'Select Thumbnail' button.",
+    "When the user taps it, generate 6–8 evenly spaced frames from the video using the video_thumbnail package.",
+    "Display these thumbnails in a horizontal scrollable row. When the user selects one, highlight it with an orange border (#FF8C00) and use it as the thumbnail for the preview box.",
+    "Ensure the thumbnail persists through state updates and does not affect the video playback logic.",
+    "Above the caption text field, display the user's handle, profile photo, and selected performance type with consistent styling from the discovery feed.",
+    "Do not modify Supabase integration, authentication, or backend upload functions — only UI elements.",
+    "Keep the dark theme, padding, and button hierarchy consistent with the rest of the app.",
+    "Handle all errors gracefully: if the video file is missing or cannot be played, show a non-blocking error message (e.g., 'Unable to preview video') without crashing the app."
+  ],
+  "files_to_update": {
+    "lib/presentation/video_upload/video_upload_screen.dart": "REWRITE this file following the above guidelines while maintaining all existing backend logic and navigation callbacks. Do not alter imports unrelated to video_player or video_thumbnail."
+  },
+  "dependencies": {
+    "video_player": ">=2.8.1",
+    "video_thumbnail": ">=0.5.3"
+  },
+  "post_actions": [
+    "Run: flutter clean && flutter pub get",
+    "Test by recording a video and confirming the following flow: recording screen → upload screen → full-screen playback preview → thumbnail selection → normal post submission.",
+    "Verify that all other screens (discovery, following, profile, registration, etc.) remain visually and functionally unchanged."
+  ]
+}
