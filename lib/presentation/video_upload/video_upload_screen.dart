@@ -599,6 +599,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   int _retryCount = 0;
   bool _domAttached = false;
   Timer? _retryTimer;
+  Timer? _paintCheckTimer;
   String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
 
   @override
@@ -796,26 +797,48 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   void _checkPaintDimensions() {
     if (!kIsWeb || !mounted) return;
     
-    try {
-      final video = html.document.querySelector('video');
-      if (video != null) {
-        // Use getBoundingClientRect() for more reliable visibility detection
-        final dynamic rect = video.getBoundingClientRect();
-        final width = rect.width ?? 0;
-        final height = rect.height ?? 0;
-        
-        if (width > 0 && height > 0) {
-          setState(() => _paintConfirmed = true);
-          debugPrint('[PREVIEW] ✅ PAINT confirmed - bounding box: ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}');
-        } else {
-          debugPrint('[PREVIEW] ⚠️ Video element has zero bounding box: ${width}x${height}');
-        }
-      } else {
-        debugPrint('[PREVIEW] ⚠️ No video element found for paint check');
+    _paintCheckTimer?.cancel();
+    int checkCount = 0;
+    
+    _paintCheckTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
       }
-    } catch (e) {
-      debugPrint('[PREVIEW] Paint dimension check failed: $e');
-    }
+      
+      checkCount++;
+      
+      try {
+        final video = html.document.querySelector('video');
+        if (video != null) {
+          // Use getBoundingClientRect() for reliable visibility detection
+          final dynamic rect = video.getBoundingClientRect();
+          final width = rect.width ?? 0;
+          final height = rect.height ?? 0;
+          
+          if (width > 0 && height > 0) {
+            timer.cancel();
+            setState(() => _paintConfirmed = true);
+            debugPrint('[PREVIEW] ✅ PAINT confirmed on check #$checkCount - bounding box: ${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)}');
+            
+            // Trigger play again to sync audio/video
+            widget.controller.play();
+          } else {
+            debugPrint('[PREVIEW] ⏳ Paint check #$checkCount: Zero bounding box ${width}x${height}');
+          }
+        } else {
+          debugPrint('[PREVIEW] ⏳ Paint check #$checkCount: No video element found');
+        }
+      } catch (e) {
+        debugPrint('[PREVIEW] Paint dimension check #$checkCount failed: $e');
+      }
+      
+      // Timeout after 3 seconds (15 attempts at 200ms)
+      if (checkCount >= 15) {
+        timer.cancel();
+        debugPrint('[PREVIEW] ⚠️ Paint check timeout after $checkCount attempts - video may not be visible');
+      }
+    });
   }
 
   void _updatePlaybackState() {
@@ -833,6 +856,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   @override
   void dispose() {
     _retryTimer?.cancel();
+    _paintCheckTimer?.cancel();
     widget.controller.removeListener(_updatePlaybackState);
     widget.controller.pause();
     widget.controller.setLooping(false);
