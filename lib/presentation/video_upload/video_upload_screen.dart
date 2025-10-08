@@ -5,6 +5,8 @@ import '../../theme/app_theme.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/profile_service.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -22,11 +24,14 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   String _privacy = 'Public';
   bool _isInitialized = false;
   String? _videoPath;
+  String _userHandle = '@user';
   
   // Thumbnail selection
   List<String> _thumbnails = [];
   int _selectedThumbnailIndex = -1;
   bool _isGeneratingThumbnails = false;
+  
+  final ProfileService _profileService = ProfileService();
 
   @override
   void didChangeDependencies() {
@@ -35,6 +40,28 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     if (videoPath != null && _videoPath == null) {
       _videoPath = videoPath;
       _initializeVideoController(videoPath);
+      _loadUserProfile();
+    }
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        debugPrint('No authenticated user found');
+        return;
+      }
+
+      final profile = await _profileService.getUserProfile(user.id);
+      if (profile != null && profile['username'] != null) {
+        if (mounted) {
+          setState(() {
+            _userHandle = '@${profile['username']}';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to load user profile: $e');
     }
   }
 
@@ -107,6 +134,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         
         if (thumbnail != null) {
           generatedThumbnails.add(thumbnail);
+          debugPrint('Generated thumbnail $i at $timeMs ms: $thumbnail');
+        } else {
+          debugPrint('Failed to generate thumbnail $i at $timeMs ms');
         }
       }
 
@@ -115,6 +145,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         _isGeneratingThumbnails = false;
         if (_thumbnails.isNotEmpty) {
           _selectedThumbnailIndex = 0;
+          debugPrint('Generated ${_thumbnails.length} thumbnails, selected index 0');
+        } else {
+          debugPrint('No thumbnails were generated');
         }
       });
     } catch (e) {
@@ -139,6 +172,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         caption: _caption ?? '',
         performanceType: _performanceType,
         location: _location,
+        userHandle: _userHandle,
       ),
     );
   }
@@ -464,12 +498,14 @@ class _FullScreenVideoPreview extends StatefulWidget {
   final String caption;
   final String performanceType;
   final String location;
+  final String userHandle;
 
   const _FullScreenVideoPreview({
     required this.controller,
     required this.caption,
     required this.performanceType,
     required this.location,
+    required this.userHandle,
   });
 
   @override
@@ -498,6 +534,9 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
 
   @override
   Widget build(BuildContext context) {
+    final videoAspectRatio = widget.controller.value.aspectRatio;
+    final isPortrait = videoAspectRatio < 1.0;
+    
     return Dialog(
       backgroundColor: Colors.black,
       insetPadding: EdgeInsets.zero,
@@ -506,12 +545,25 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         height: MediaQuery.of(context).size.height,
         child: Stack(
           children: [
-            // Full-screen video
+            // Full-screen video with portrait orientation support
             Center(
-              child: AspectRatio(
-                aspectRatio: widget.controller.value.aspectRatio,
-                child: VideoPlayer(widget.controller),
-              ),
+              child: isPortrait
+                  ? SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(
+                          width: widget.controller.value.size.width,
+                          height: widget.controller.value.size.height,
+                          child: VideoPlayer(widget.controller),
+                        ),
+                      ),
+                    )
+                  : AspectRatio(
+                      aspectRatio: videoAspectRatio,
+                      child: VideoPlayer(widget.controller),
+                    ),
             ),
 
             // Close button (top-left)
@@ -561,9 +613,9 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        '@streetartist',
-                        style: TextStyle(
+                      Text(
+                        widget.userHandle,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
