@@ -671,7 +671,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     final screenSize = MediaQuery.of(context).size;
     final isInitialized = widget.controller.value.isInitialized;
     
+    // Texture debugging
+    final textureId = widget.controller.textureId;
     debugPrint('[PREVIEW] Video size: $videoSize, isPortrait: $isPortrait');
+    debugPrint('[PREVIEW] Texture ID: $textureId (null means not mounted)');
     debugPrint('[PREVIEW] Device orientation: ${deviceIsPortrait ? "portrait" : "landscape"}');
     debugPrint('[PREVIEW] Needs rotation: $needsRotation (device portrait + video landscape)');
     debugPrint('[PREVIEW] Final rotation: $finalRotationDegrees° (metadata: $rotationDegrees°)');
@@ -687,30 +690,36 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         child: Stack(
           children: [
             // Full-screen video with portrait orientation support and rotation correction
+            // Wrapped in RepaintBoundary with ValueKey to force texture repaint
             Center(
-              child: isPortrait
-                  ? SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height,
-                      child: FittedBox(
-                        fit: BoxFit.cover,
-                        child: SizedBox(
-                          width: videoSize.width,
-                          height: videoSize.height,
+              child: RepaintBoundary(
+                key: ValueKey('video_player_${widget.controller.hashCode}'),
+                child: Visibility(
+                  visible: widget.controller.value.isInitialized,
+                  replacement: Container(
+                    color: Colors.black,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.orange),
+                    ),
+                  ),
+                  child: isPortrait
+                      ? RotatedBox(
+                          quarterTurns: finalRotationDegrees ~/ 90,
+                          child: SizedBox(
+                            width: videoSize.height,
+                            height: videoSize.width,
+                            child: VideoPlayer(widget.controller),
+                          ),
+                        )
+                      : AspectRatio(
+                          aspectRatio: widget.controller.value.aspectRatio,
                           child: Transform.rotate(
                             angle: finalRotation,
                             child: VideoPlayer(widget.controller),
                           ),
                         ),
-                      ),
-                    )
-                  : AspectRatio(
-                      aspectRatio: widget.controller.value.aspectRatio,
-                      child: Transform.rotate(
-                        angle: finalRotation,
-                        child: VideoPlayer(widget.controller),
-                      ),
-                    ),
+                ),
+              ),
             ),
 
             // DEBUG OVERLAY - Visual verification
