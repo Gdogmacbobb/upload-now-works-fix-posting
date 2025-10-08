@@ -1,0 +1,63 @@
+{
+  "task": "Restore navigation flow and fix recording stop crash",
+  "issues": [
+    "Splash navigation no longer routes correctly after previous AI patch",
+    "Camera screen throws NoSuchMethodError: gF when stopping recording",
+    "Flash button still non-functional on mobile"
+  ],
+  "actions": [
+    {
+      "restore_navigation": {
+        "description": "Restore the original route flow: Splash → Login/Geo → Home → RecordingScreen (only navigated to via main app flow)",
+        "implementation": [
+          "Remove DEV_SKIP_GEO_AUTH from splash_screen.dart",
+          "Reinstate Navigator.pushReplacementNamed('/home') or your previous route name in splash",
+          "Ensure main.dart contains named routes for '/', '/home', and '/record'"
+        ],
+        "expected": "App opens with splash, transitions to geo/auth flow, and only enters camera screen when user explicitly navigates there"
+      }
+    },
+    {
+      "fix_stop_recording_error": {
+        "description": "Resolve NoSuchMethodError: gF when stopping recording",
+        "analysis": "Error caused by null reference or JS bridge mismatch in web_camera_controller.dart — method gF points to stopRecording() on uninitialized controller",
+        "implementation": [
+          "Add null-check before calling stopRecording()",
+          "Wrap await controller.stopVideoRecording() in try/catch",
+          "Guard condition: if (!controller.value.isRecordingVideo) return safely;",
+          "Log camera state at start and stop: [RECORD_LIFECYCLE] Recording started/stopped"
+        ],
+        "expected": "Stop button safely ends recording without error; returns video file path correctly"
+      }
+    },
+    {
+      "fix_flash_button": {
+        "description": "Ensure flash toggle actually triggers hardware torch on iOS/Android and provides visual feedback on web",
+        "implementation": [
+          "For mobile: use setFlashMode(FlashMode.torch/off)",
+          "For web: mock visual state toggle without throwing exceptions",
+          "Ensure flash button is always visible and state resets after recording"
+        ],
+        "expected": "Flash icon toggles brightness visually; torch works on mobile rear camera; no web errors"
+      }
+    }
+  ],
+  "debug_logging": {
+    "add_logs": [
+      "[NAV_STATE] Route flow confirmed",
+      "[RECORD_LIFECYCLE] start/stop event success",
+      "[FLASH_TOGGLE] Flash toggled, state:true/false"
+    ]
+  },
+  "build_instructions": [
+    "flutter clean",
+    "flutter pub get",
+    "flutter build web --no-tree-shake-icons",
+    "flutter run -d chrome --web-renderer html"
+  ],
+  "expected_outcome": {
+    "navigation": "App opens correctly through splash → home → recording screen",
+    "recording": "Start/stop works without NoSuchMethodError",
+    "flash": "Flash toggle functional and consistent across mobile and web"
+  }
+}
