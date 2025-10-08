@@ -1,0 +1,39 @@
+{
+  "task": "Fix first-load black screen by forcing HTML video DOM re-attachment and playback retry",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "description": "The video plays with sound and correct rotation after two or three re-entries, proving the <video> element eventually attaches to the DOM. The issue is that on first Preview tap, the HTML video texture is created before the platform view is composited, resulting in a black screen. We need to explicitly detect when the HTML element becomes visible and retry initialization and playback.",
+    "requiredFixes": [
+      {
+        "1️⃣ Add DOM Visibility Check": [
+          "For web (kIsWeb == true), use a periodic Timer every 200ms after controller.initialize() to check if the video element is attached to the DOM.",
+          "You can check via js.context.callMethod('document.getElementsByTagName', ['video']).length > 0.",
+          "Once at least one <video> element exists, trigger controller.play() and set volume to 1.0."
+        ]
+      },
+      {
+        "2️⃣ Add Retry Limit": [
+          "Stop the timer after 3 seconds or once the video frame becomes visible (controller.value.isInitialized && controller.value.size != null && controller.value.size.width > 0).",
+          "If still black, perform controller.dispose(), reinitialize it, and retry one more time."
+        ]
+      },
+      {
+        "3️⃣ Ensure Texture Refresh": [
+          "Wrap the VideoPlayer in a RepaintBoundary(ValueKey('video_refresh_${DateTime.now().millisecondsSinceEpoch}')).",
+          "This forces Flutter to rebuild the texture each retry instead of using a cached invisible one."
+        ]
+      },
+      {
+        "4️⃣ Debug Overlay Update": [
+          "Add an indicator [RETRY #, Attached ✅/❌] to the overlay so we can see which retry succeeded."
+        ]
+      }
+    ],
+    "completionCriteria": {
+      "FirstTryPlayback": "Video and audio play correctly on the first tap, no more black screen.",
+      "RetryLog": "If first DOM attachment fails, retry within 1–2 seconds and succeed automatically.",
+      "Stability": "Subsequent previews do not require exiting or re-entering the screen."
+    },
+    "note": "Do not remove rotation or portrait handling — those were correct. The fix should focus only on detecting and re-attaching the HTML video DOM element when it fails to appear on the first load."
+  }
+}
