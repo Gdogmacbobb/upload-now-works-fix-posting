@@ -2,9 +2,16 @@
 
 YNFNY is a cross-platform Flutter mobile application serving as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing, targeting both mobile and web deployment. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances.
 
-**Current Status**: ✅ **VIDEO TEXTURE VISIBILITY FIX COMPLETE** (Oct 8, 2025) - RepaintBoundary isolation and simplified rotation structure ensure video texture renders correctly when preview modal opens.
+**Current Status**: ⏳ **VIDEO TEXTURE PLAYBACK SEQUENCING IN PROGRESS** (Oct 8, 2025) - Implementing texture-paint-then-play sequence to eliminate black screen during preview playback.
 
-**Latest Texture Rendering Fix (Oct 8, 2025 - Night)**:
+**Latest Playback Sequencing Fix (Oct 8, 2025 - Late Night)**:
+- **Fixed-Delay Texture Attachment**: Implemented 250ms delay after widget rebuild to allow platform texture (mobile) or HTML <video> element (web) to attach to render tree
+- **First Frame Decode**: Triggers play-pause-seek sequence to populate texture with initial frame before actual playback starts
+- **Multi-Stage Rebuild**: Uses setState() before and after texture attachment, with postFrameCallback for final playback to ensure proper paint order
+- **Comprehensive Logging**: Added 5-step debug logging (render tree → delay → frame decode → rebuild → playback) for troubleshooting
+- **Known Limitation**: Fixed delays may be insufficient on slower devices; proper texture readiness polling (textureId on mobile, readyState on web) would be more robust but requires platform-specific implementation
+
+**Previous Texture Rendering Fixes (Oct 8, 2025 - Earlier Night)**:
 - **RepaintBoundary Isolation**: Wrapped VideoPlayer in RepaintBoundary with ValueKey based on controller.hashCode to force Flutter to create fresh texture layer on each controller instance, preventing stale texture references
 - **Simplified Rotation Structure**: Replaced complex FittedBox(cover) + nested SizedBox structure with RotatedBox for portrait orientation, eliminating zero-constraint scenarios that were hiding HTML texture on web
 - **Visibility Widget Guard**: Added Visibility widget showing loading indicator when controller not initialized, preventing premature DOM attachment/removal cycles that left video black

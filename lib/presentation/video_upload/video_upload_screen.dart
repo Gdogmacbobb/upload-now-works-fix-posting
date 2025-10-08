@@ -599,68 +599,69 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     // Add listener to track playback state
     widget.controller.addListener(_updatePlaybackState);
     
-    // Wait for texture ID to be available before starting playback
-    WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndPlay());
+    // Wait for texture to be ready before starting playback
+    WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
   }
 
-  Future<void> _waitForTextureAndPlay() async {
+  Future<void> _waitForTextureAndStartPlayback() async {
     if (!mounted || !widget.controller.value.isInitialized) {
-      debugPrint('[PREVIEW] Controller not initialized, cannot start playback');
+      debugPrint('[PREVIEW] Controller not initialized, aborting');
       return;
     }
 
-    debugPrint('[PREVIEW] Waiting for texture ID to become available...');
+    debugPrint('[PREVIEW] Step 1: Adding VideoPlayer to render tree');
     
-    // Poll for texture ID (web uses textureId, check via playing a frame)
-    int attempts = 0;
-    while (mounted && attempts < 40) { // Max 2 seconds (40 * 50ms)
-      // Try to advance one frame to force texture creation
-      if (attempts == 0) {
-        await widget.controller.play();
-        await Future.delayed(const Duration(milliseconds: 16)); // One frame at 60fps
-        await widget.controller.pause();
-        debugPrint('[PREVIEW] Triggered frame decode to create texture');
-      }
-      
-      // Check if we have a valid size (indicates texture is ready)
-      if (widget.controller.value.size.width > 0 && 
-          widget.controller.value.size.height > 0) {
-        debugPrint('[PREVIEW] Texture ready! Size: ${widget.controller.value.size}');
-        break;
-      }
-      
-      await Future.delayed(const Duration(milliseconds: 50));
-      attempts++;
+    // Force rebuild to add VideoPlayer widget to tree
+    setState(() {});
+    
+    // Platform-specific texture attachment delay
+    // Web: HTML <video> element needs time to mount in DOM
+    // Mobile: Platform texture needs 2-3 frames to attach
+    debugPrint('[PREVIEW] Step 2: Waiting 250ms for texture layer to attach...');
+    await Future.delayed(const Duration(milliseconds: 250));
+    
+    if (!mounted) return;
+    
+    // Trigger first frame decode to ensure texture is populated
+    debugPrint('[PREVIEW] Step 3: Triggering first frame decode');
+    try {
+      await widget.controller.play();
+      await Future.delayed(const Duration(milliseconds: 32)); // 2 frames at 60fps
+      await widget.controller.pause();
+      await widget.controller.seekTo(Duration.zero);
+      debugPrint('[PREVIEW] First frame decoded successfully');
+    } catch (e) {
+      debugPrint('[PREVIEW] First frame decode failed: $e');
     }
     
     if (!mounted) return;
     
-    if (widget.controller.value.size.width > 0) {
-      debugPrint('[PREVIEW] Texture available after ${attempts * 50}ms, rebuilding widget...');
-      
-      // Force rebuild to attach texture to render tree
-      setState(() {});
-      
-      // Start playback after rebuild completes
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        if (mounted) {
-          debugPrint('[PREVIEW] Starting playback with volume...');
-          widget.controller.setVolume(1.0);
-          await widget.controller.play();
-          widget.controller.setLooping(true);
-          
-          setState(() {
-            _isPlaying = true;
-            _frameDecoded = true;
-            _soundActive = widget.controller.value.volume > 0;
-          });
-          
-          debugPrint('[PREVIEW] Playback started successfully');
-        }
-      });
-    } else {
-      debugPrint('[PREVIEW] ERROR: Texture ID never became available after ${attempts * 50}ms');
-    }
+    // Give texture one more frame to stabilize
+    await Future.delayed(const Duration(milliseconds: 16));
+    
+    if (!mounted) return;
+    
+    // Final rebuild to ensure texture is fresh in tree
+    debugPrint('[PREVIEW] Step 4: Final rebuild before playback');
+    setState(() {});
+    
+    // Start playback in next frame
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        debugPrint('[PREVIEW] Step 5: Starting playback with audio');
+        widget.controller.setVolume(1.0);
+        await widget.controller.play();
+        widget.controller.setLooping(true);
+        
+        setState(() {
+          _isPlaying = true;
+          _frameDecoded = true;
+          _soundActive = widget.controller.value.volume > 0;
+        });
+        
+        debugPrint('[PREVIEW] ✅ Playback started - isPlaying: ${widget.controller.value.isPlaying}, volume: ${widget.controller.value.volume}');
+      }
+    });
   }
 
   void _updatePlaybackState() {
