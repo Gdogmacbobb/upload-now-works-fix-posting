@@ -593,6 +593,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   bool _isPlaying = false;
   bool _frameDecoded = false;
   bool _soundActive = false;
+  bool _paintConfirmed = false;
   
   // DOM visibility retry logic
   int _retryCount = 0;
@@ -632,6 +633,31 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     }
   }
   
+  void _forceVideoVisibility() {
+    if (!kIsWeb) return;
+    
+    debugPrint('[PREVIEW] 🎨 Attempting CSS visibility enforcement...');
+    
+    try {
+      final videoElements = html.document.getElementsByTagName('video');
+      debugPrint('[PREVIEW] Found ${videoElements.length} video elements to modify');
+      
+      for (var i = 0; i < videoElements.length; i++) {
+        final video = videoElements[i];
+        // Access style property directly without type casting
+        final dynamic videoElement = video;
+        videoElement.style.visibility = 'visible';
+        videoElement.style.opacity = '1';
+        videoElement.style.display = 'block';
+        debugPrint('[PREVIEW] Set visibility on video #$i');
+      }
+      debugPrint('[PREVIEW] 🎨 Forced CSS visibility on ${videoElements.length} video element(s)');
+    } catch (e, stackTrace) {
+      debugPrint('[PREVIEW] CSS visibility enforcement failed: $e');
+      debugPrint('[PREVIEW] Stack trace: $stackTrace');
+    }
+  }
+  
   void _startDomVisibilityCheck() {
     _retryTimer?.cancel();
     
@@ -645,12 +671,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       
       // Check if <video> element exists in DOM
       try {
-        final videoElements = html.document.getElementsByTagName('video').length;
+        final videoElements = html.document.getElementsByTagName('video');
         
-        if (videoElements > 0) {
-          debugPrint('[PREVIEW] ✅ DOM Check: Found $videoElements <video> element(s) on retry #$_retryCount');
+        if (videoElements.length > 0) {
+          debugPrint('[PREVIEW] ✅ DOM Check: Found ${videoElements.length} <video> element(s) on retry #$_retryCount');
           setState(() => _domAttached = true);
           timer.cancel();
+          
+          // Force CSS visibility on all video elements
+          _forceVideoVisibility();
+          
           _startPlayback();
         } else {
           debugPrint('[PREVIEW] ⏳ DOM Check: No <video> elements yet (retry #$_retryCount)');
@@ -706,6 +736,56 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     });
     
     debugPrint('[PREVIEW] ✅ Playback active - isPlaying: ${widget.controller.value.isPlaying}');
+    
+    // Web: Force paint refresh after CSS visibility enforcement
+    if (kIsWeb && _domAttached) {
+      _forcePaintRefresh();
+    }
+  }
+  
+  Future<void> _forcePaintRefresh() async {
+    if (!mounted) return;
+    
+    debugPrint('[PREVIEW] 🖌️ Forcing paint refresh...');
+    
+    // Wait for browser to apply CSS changes
+    await Future.delayed(const Duration(milliseconds: 150));
+    
+    if (!mounted) return;
+    
+    // Trigger repaint via pause/play cycle in postFrameCallback
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      
+      try {
+        await widget.controller.pause();
+        await Future.delayed(const Duration(milliseconds: 16));
+        await widget.controller.play();
+        
+        // Check if video has actual dimensions (paint confirmed)
+        _checkPaintDimensions();
+        
+        debugPrint('[PREVIEW] 🖌️ Paint refresh complete');
+      } catch (e) {
+        debugPrint('[PREVIEW] Paint refresh failed: $e');
+      }
+    });
+  }
+  
+  void _checkPaintDimensions() {
+    if (!kIsWeb || !mounted) return;
+    
+    try {
+      final video = html.document.querySelector('video') as html.VideoElement?;
+      if (video != null && video.videoWidth > 0 && video.videoHeight > 0) {
+        setState(() => _paintConfirmed = true);
+        debugPrint('[PREVIEW] ✅ PAINT confirmed - dimensions: ${video.videoWidth}x${video.videoHeight}');
+      } else {
+        debugPrint('[PREVIEW] ⚠️ Video element has zero dimensions');
+      }
+    } catch (e) {
+      debugPrint('[PREVIEW] Paint dimension check failed: $e');
+    }
   }
 
   void _updatePlaybackState() {
@@ -937,7 +1017,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                   color: Colors.black.withOpacity(0.75),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: (_frameDecoded && _soundActive) ? Colors.green : Colors.red,
+                    color: (_frameDecoded && _soundActive && (!kIsWeb || _paintConfirmed)) ? Colors.green : Colors.red,
                     width: 2,
                   ),
                 ),
@@ -963,6 +1043,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                         fontFamily: 'monospace',
                       ),
                     ),
+                    if (kIsWeb)
+                      Text(
+                        'Paint: ${_paintConfirmed ? '✅' : '❌'}',
+                        style: TextStyle(
+                          color: _paintConfirmed ? Colors.green : Colors.red,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
                     Text(
                       'Pos: ${widget.controller.value.position.inMilliseconds}ms',
                       style: const TextStyle(
