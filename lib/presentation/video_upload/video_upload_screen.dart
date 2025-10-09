@@ -284,59 +284,59 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                                   ),
                                 ),
                                 
-                                // Transparent tap overlay (above video on web)
+                                // Transparent tap overlay (above video on web, intercepts pointer events)
                                 PointerInterceptor(
                                   child: Material(
                                     color: Colors.transparent,
                                     child: InkWell(
                                       onTap: _showFullScreenPreview,
-                                      child: Container(
-                                        color: Colors.transparent,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                
-                                // Centered play icon overlay (above tap area)
-                                PointerInterceptor(
-                                  child: IgnorePointer(
-                                    child: Center(
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.3),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        padding: const EdgeInsets.all(12),
-                                        child: Icon(
-                                          Icons.play_circle_filled,
-                                          color: Colors.white.withOpacity(0.75),
-                                          size: 56,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                
-                                // Duration badge (bottom-right, above tap area)
-                                Positioned(
-                                  right: 10,
-                                  bottom: 10,
-                                  child: PointerInterceptor(
-                                    child: IgnorePointer(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.7),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          _formatDuration(_controller!.value.duration),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          // Transparent container
+                                          Container(color: Colors.transparent),
+                                          
+                                          // Centered play icon overlay (non-interactive, just visual)
+                                          IgnorePointer(
+                                            child: Center(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withOpacity(0.3),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                padding: const EdgeInsets.all(12),
+                                                child: Icon(
+                                                  Icons.play_circle_filled,
+                                                  color: Colors.white.withOpacity(0.75),
+                                                  size: 56,
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                          
+                                          // Duration badge (bottom-right, non-interactive visual)
+                                          Positioned(
+                                            right: 10,
+                                            bottom: 10,
+                                            child: IgnorePointer(
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withOpacity(0.7),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  _formatDuration(_controller!.value.duration),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
