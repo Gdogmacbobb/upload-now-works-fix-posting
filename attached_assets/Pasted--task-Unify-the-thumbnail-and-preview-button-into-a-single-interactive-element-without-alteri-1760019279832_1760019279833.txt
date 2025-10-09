@@ -1,0 +1,62 @@
+{
+  "task": "Unify the thumbnail and preview button into a single interactive element without altering or breaking existing video preview, thumbnail generation, or scrub selection features.",
+  "context": "Currently, the upload page includes a working preview feature and a functional thumbnail selection system. Both must remain fully operational. The goal is to visually and functionally merge them into one element where the current thumbnail image acts as the preview button. The user should see the auto-generated first frame thumbnail in the same container used for preview, tap it to preview the full video, and use the existing 'Select Thumbnail' button to change that frame. No logic, controller, or playback mechanism should be modified—only the layout and bindings should be safely merged.",
+  "fix": {
+    "implementation": [
+      "Keep the existing videoController and preview logic exactly as they are—do not modify playback or state management methods.",
+      "Keep the current thumbnail generation code unchanged (auto-generate the first frame on upload).",
+      "Replace the static black container or empty preview box with a Stack that displays the current thumbnail image as the background.",
+      "Overlay a centered play icon (white, semi-transparent) to indicate interactivity, but do not change the play handler—use the existing onPreview function.",
+      "Wrap this container in an InkWell or GestureDetector that calls the existing preview function when tapped.",
+      "When 'Select Thumbnail' is pressed, use the existing scrub selection process and ensure it updates the same thumbnail image displayed in this container.",
+      "Maintain the same aspect ratio, alignment, and responsive sizing as the existing preview box, but visually shrink it slightly (≈80–85% of current height) for a cleaner fit within the upload page layout.",
+      "Ensure all orientation and video rotation fixes are preserved by referencing the existing videoController state.",
+      "Ensure the thumbnail refresh triggers a setState or equivalent UI update only—no backend or controller resets."
+    ],
+    "ui_design": {
+      "thumbnail_preview_button": {
+        "type": "Stack",
+        "alignment": "center",
+        "aspectRatio": 0.8,
+        "width": "85% of available width",
+        "margin": { "top": 12, "bottom": 8 },
+        "borderRadius": 10,
+        "child_layers": [
+          "CurrentThumbnailImage(fit: BoxFit.cover, borderRadius: 10)",
+          "Center(Icon(Icons.play_circle_filled, size: 56, color: 'rgba(255,255,255,0.75)'))"
+        ],
+        "onTap": "use existing preview function (no new handler)"
+      },
+      "select_thumbnail_button": {
+        "type": "ElevatedButton",
+        "label": "Select Thumbnail",
+        "backgroundColor": "#FF8C00",
+        "textStyle": { "fontWeight": "bold", "fontSize": 14 },
+        "padding": { "vertical": 10, "horizontal": 16 },
+        "margin": { "top": 10, "bottom": 6 },
+        "alignment": "center",
+        "onPressed": "use existing openThumbnailSelector() logic"
+      }
+    },
+    "state_management": {
+      "thumbnail_state": {
+        "defaultThumbnailFrame": "keep current auto-capture from first frame",
+        "selectedThumbnailFrame": "update using existing scrub selector",
+        "thumbnailDisplay": "bind directly to same thumbnailImage variable already used for current display",
+        "onSelectThumbnail": "keep same frame extraction + setState logic"
+      },
+      "preview_state": {
+        "controller": "use existing videoController instance",
+        "onTap": "trigger existing preview logic without modification"
+      }
+    }
+  },
+  "constraints": [
+    "Do NOT alter videoController methods, playback logic, or Supabase upload flow.",
+    "Do NOT modify thumbnail generation functions or existing scrub selector.",
+    "Do NOT create new state variables—reuse existing thumbnail and preview states.",
+    "Do NOT change any file upload or video path references.",
+    "Ensure orientation, scaling, and aspect ratio fixes remain active.",
+    "The final implementation should only refactor the layout and event bindings, not backend or controller logic."
+  ]
+}
