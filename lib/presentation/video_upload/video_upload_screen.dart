@@ -655,22 +655,33 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           // Create raw HTML video element
           final videoElement = html.VideoElement()
             ..src = controller.dataSource
-            ..style.objectFit = 'cover'
             ..setAttribute('playsinline', 'true')
             ..setAttribute('autoplay', 'true')
             ..setAttribute('loop', 'true')
             ..setAttribute('muted', 'false')
             ..controls = false;
           
-          // Apply rotation for landscape videos to display as portrait
+          // Apply centered portrait rotation for landscape videos (TikTok-style)
           if (isLandscape) {
-            videoElement.style.transform = 'rotate(90deg)';
+            videoElement.style.position = 'absolute';
+            videoElement.style.top = '50%';
+            videoElement.style.left = '50%';
+            videoElement.style.transform = 'translate(-50%, -50%) rotate(90deg)';
             videoElement.style.width = '100vh';
             videoElement.style.height = '100vw';
-            debugPrint('🎥 Video rotated to portrait (HtmlElementView)');
+            videoElement.style.objectFit = 'cover';
+            videoElement.style.pointerEvents = 'none';
+            debugPrint('🌀 Applied forced portrait rotation');
           } else {
-            videoElement.style.width = '100%';
-            videoElement.style.height = '100%';
+            // Portrait videos: centered without rotation
+            videoElement.style.position = 'absolute';
+            videoElement.style.top = '50%';
+            videoElement.style.left = '50%';
+            videoElement.style.transform = 'translate(-50%, -50%)';
+            videoElement.style.width = '100vw';
+            videoElement.style.height = '100vh';
+            videoElement.style.objectFit = 'cover';
+            videoElement.style.pointerEvents = 'none';
           }
           
           // Start playback
