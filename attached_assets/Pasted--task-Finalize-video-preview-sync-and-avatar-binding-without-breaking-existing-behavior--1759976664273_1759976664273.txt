@@ -1,0 +1,40 @@
+{
+  "task": "Finalize video preview sync and avatar binding without breaking existing behavior",
+  "context": "Video preview currently loops automatically but audio does not restart, and the overlay still shows a placeholder profile photo.",
+  "fixes": [
+    {
+      "name": "Stop auto-looping to keep audio/video sync",
+      "steps": [
+        "Set controller.setLooping(false) for the VideoPlayerController.",
+        "Add a listener for when playback completes (controller.value.position >= controller.value.duration).",
+        "On completion, call controller.pause() and display a small overlay play button centered on screen.",
+        "When the user taps the play button, call controller.seekTo(Duration.zero) then controller.play(); this ensures both audio and video restart together.",
+        "In the HtmlElementView fallback, add: video.onended = () => { video.pause(); showPlayOverlay = true; }; then resume playback on tap with video.currentTime = 0; video.play();"
+      ],
+      "result": "Video ends, pauses cleanly, user taps once to replay, and audio/video always remain synchronized."
+    },
+    {
+      "name": "Display real user profile photo",
+      "steps": [
+        "Fetch the logged-in user's profile from Supabase table 'user_profiles' where id = currentUser.id.",
+        "Use the 'profile_image_url' field (already used in other screens).",
+        "In the preview overlay's CircleAvatar, replace placeholder icon with: backgroundImage: NetworkImage(profile.profile_image_url ?? defaultAvatar).",
+        "Add null safety: if no profile image exists, fallback to current orange placeholder icon."
+      ],
+      "result": "The preview now shows each user’s real profile picture pulled from Supabase."
+    }
+  ],
+  "acceptance_tests": [
+    "Press Preview → video plays portrait with synced audio.",
+    "When video ends, playback stops; audio stops; user sees a play overlay.",
+    "Tap play overlay → both audio and video restart together.",
+    "Profile photo in bottom-left shows the actual Supabase user’s image.",
+    "No other regressions: caption, location, and handle still display correctly."
+  ],
+  "constraints": [
+    "Do NOT modify Supabase auth or upload logic.",
+    "Do NOT alter preview UI layout except adding the play overlay.",
+    "Do NOT re-enable debug or sandbox overlays.",
+    "Maintain existing portrait orientation, object-fit: cover, and touch behavior."
+  ]
+}
