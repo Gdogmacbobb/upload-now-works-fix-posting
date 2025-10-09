@@ -21,7 +21,6 @@ class VideoUploadScreen extends StatefulWidget {
 
 class _VideoUploadScreenState extends State<VideoUploadScreen> {
   VideoPlayerController? _controller;
-  VideoPlayerController? _thumbnailController;
   Future<void>? _initializeVideoPlayerFuture;
   bool _isPlaying = false;
   String? _caption;
@@ -36,7 +35,6 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   bool _isSelectingThumbnail = false;
   double _thumbnailFramePosition = 0.0; // Position in milliseconds (live scrubbing value)
   double? _selectedThumbnailFramePosition; // Confirmed timestamp to be saved
-  bool _thumbnailNeedsRotation = false; // Track if 90° rotation is needed for landscape videos
   
   final ProfileService _profileService = ProfileService();
 
@@ -119,49 +117,11 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   }
   
 
-  Future<void> _initializeThumbnailController() async {
-    if (_videoPath == null) return;
-    
-    try {
-      // Dispose existing controller to prevent leaks
-      await _thumbnailController?.dispose();
-      _thumbnailController = null;
-      
-      final VideoPlayerController thumbnailController;
-      if (kIsWeb) {
-        thumbnailController = VideoPlayerController.networkUrl(Uri.parse(_videoPath!));
-      } else {
-        thumbnailController = VideoPlayerController.file(File(_videoPath!));
-      }
-      
-      _thumbnailController = thumbnailController;
-      await _thumbnailController!.initialize();
-      
-      if (mounted) {
-        _thumbnailController!.setVolume(0.0); // Mute thumbnail preview
-        _thumbnailController!.pause();
-        
-        // Detect if video is landscape and needs 90° rotation
-        final videoSize = _thumbnailController!.value.size;
-        _thumbnailNeedsRotation = videoSize.width > videoSize.height;
-        
-        setState(() {});
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to initialize thumbnail: $e')),
-        );
-      }
-    }
-  }
-
-  void _startThumbnailSelection() async {
-    await _initializeThumbnailController();
+  void _startThumbnailSelection() {
     if (mounted) {
       setState(() {
         _isSelectingThumbnail = true;
-        _thumbnailFramePosition = 0.0;
+        _thumbnailFramePosition = _controller?.value.position.inMilliseconds.toDouble() ?? 0.0;
       });
     }
   }
@@ -230,7 +190,6 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   @override
   void dispose() {
     _controller?.dispose();
-    _thumbnailController?.dispose();
     super.dispose();
   }
 
