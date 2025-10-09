@@ -1,5 +1,6 @@
 import 'dart:io' show File;
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../theme/app_theme.dart';
@@ -37,6 +38,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   double _thumbnailFramePosition = 0.0; // Position in milliseconds (live scrubbing value)
   double? _selectedThumbnailFramePosition; // Confirmed timestamp to be saved
   bool _thumbnailNeedsRotation = false; // Track if 90° rotation is needed for landscape videos
+  Uint8List? _thumbnailImageBytes; // The actual thumbnail image to display
   
   final ProfileService _profileService = ProfileService();
 
@@ -90,6 +92,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         _controller!.setVolume(1.0);
         _controller!.pause();
         setState(() {});
+        
+        // Generate initial thumbnail from first frame
+        await _generateThumbnailAtPosition(0);
       }
     } catch (e) {
       if (mounted) {
@@ -98,6 +103,29 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         );
       }
       rethrow;
+    }
+  }
+  
+  /// Generate thumbnail at given timestamp (in milliseconds)
+  Future<void> _generateThumbnailAtPosition(int timeMs) async {
+    if (_videoPath == null) return;
+    
+    try {
+      final uint8list = await VideoThumbnail.thumbnailData(
+        video: _videoPath!,
+        imageFormat: ImageFormat.PNG,
+        timeMs: timeMs,
+        quality: 75,
+      );
+      
+      if (mounted && uint8list != null) {
+        setState(() {
+          _thumbnailImageBytes = uint8list;
+        });
+      }
+    } catch (e) {
+      // Silently fail thumbnail generation - preview will still work
+      debugPrint('Failed to generate thumbnail: $e');
     }
   }
 
@@ -148,17 +176,25 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
 
-  void _confirmThumbnailSelection() {
+  void _confirmThumbnailSelection() async {
+    final selectedTime = _thumbnailFramePosition.round();
+    
     setState(() {
       _selectedThumbnailFramePosition = _thumbnailFramePosition;
       _isSelectingThumbnail = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Thumbnail set at ${(_thumbnailFramePosition / 1000).toStringAsFixed(1)}s'),
-        backgroundColor: AppTheme.primaryOrange,
-      ),
-    );
+    
+    // Regenerate thumbnail at selected position
+    await _generateThumbnailAtPosition(selectedTime);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Thumbnail set at ${(_thumbnailFramePosition / 1000).toStringAsFixed(1)}s'),
+          backgroundColor: AppTheme.primaryOrange,
+        ),
+      );
+    }
   }
 
 
@@ -209,7 +245,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Video preview with FutureBuilder (tappable for full-screen)
+            // Unified thumbnail-preview button
             FutureBuilder<void>(
               future: _initializeVideoPlayerFuture,
               builder: (context, snapshot) {
@@ -219,7 +255,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                     height: 300,
                     decoration: BoxDecoration(
                       color: Colors.black26,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
                       child: Text(
@@ -231,47 +267,89 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                 } else if (snapshot.connectionState == ConnectionState.done &&
                            _controller != null &&
                            _controller!.value.isInitialized) {
-                  return GestureDetector(
-                    onTap: _showFullScreenPreview,
-                    child: AspectRatio(
-                      aspectRatio: _controller!.value.aspectRatio,
-                      child: Stack(
-                        children: [
-                          VideoPlayer(_controller!),
-                          
-                          // Play icon overlay
-                          Center(
-                            child: Icon(
-                              Icons.play_circle,
-                              color: Colors.white.withOpacity(0.8),
-                              size: 64,
+                  // Unified thumbnail-preview element
+                  return Center(
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.85,
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: GestureDetector(
+                        onTap: _showFullScreenPreview,
+                        child: AspectRatio(
+                          aspectRatio: 0.8, // 4:5 TikTok-style ratio
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  // Thumbnail image background
+                                  if (_thumbnailImageBytes != null)
+                                    Image.memory(
+                                      _thumbnailImageBytes!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  else
+                                    Container(
+                                      color: Colors.black87,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white54,
+                                        ),
+                                      ),
+                                    ),
+                                  
+                                  // Centered play icon overlay
+                                  Center(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.3),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(12),
+                                      child: Icon(
+                                        Icons.play_circle_filled,
+                                        color: Colors.white.withOpacity(0.75),
+                                        size: 56,
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                  // Duration badge (bottom-right)
+                                  Positioned(
+                                    right: 10,
+                                    bottom: 10,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        _formatDuration(_controller!.value.duration),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          
-                          // Refresh icon
-                          Positioned(
-                            right: 12,
-                            top: 12,
-                            child: Icon(Icons.refresh, color: Colors.white),
-                          ),
-                          
-                          // Duration badge
-                          Positioned(
-                            right: 12,
-                            bottom: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                _formatDuration(_controller!.value.duration),
-                                style: const TextStyle(color: Colors.white, fontSize: 12),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   );
@@ -281,7 +359,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                     height: 300,
                     decoration: BoxDecoration(
                       color: Colors.black26,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Center(
                       child: CircularProgressIndicator(
