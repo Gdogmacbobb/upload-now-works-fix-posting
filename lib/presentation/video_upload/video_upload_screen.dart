@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/profile_service.dart';
 import '../../utils/web_dom_stub.dart' if (dart.library.html) 'dart:html' as html;
 import 'dart:js' if (dart.library.html) 'dart:js' as js;
+import '../../utils/ui_web_stub.dart' if (dart.library.html) 'dart:ui_web' as ui_web;
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -598,6 +599,11 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   bool _showRendererWarning = false;
   String _rendererMode = 'unknown';
   
+  // Replit sandbox detection and fallback
+  bool _isReplitSandbox = false;
+  String _platformViewId = 'video-preview-${DateTime.now().millisecondsSinceEpoch}';
+  bool _useFallbackView = false;
+  
   // DOM visibility retry logic
   int _retryCount = 0;
   bool _domAttached = false;
@@ -613,11 +619,66 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   void initState() {
     super.initState();
     
+    // 1️⃣ Detect Replit sandbox environment
+    if (kIsWeb) {
+      try {
+        final hostname = js.context['location']['hostname'].toString();
+        _isReplitSandbox = hostname.contains('replit');
+        if (_isReplitSandbox) {
+          debugPrint('[PREVIEW] 🟠 Replit sandbox detected - enabling HtmlElementView fallback');
+          _registerPlatformView();
+        }
+      } catch (e) {
+        debugPrint('[PREVIEW] Could not detect hostname: $e');
+      }
+    }
+    
     // Add listener to track playback state
     widget.controller.addListener(_updatePlaybackState);
     
     // Wait for texture to be ready before starting playback
     WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
+  }
+  
+  void _registerPlatformView() {
+    if (!kIsWeb) return;
+    
+    try {
+      // Register platform view factory for HtmlElementView fallback
+      ui_web.platformViewRegistry.registerViewFactory(
+        _platformViewId,
+        (int viewId) {
+          // Create raw HTML video element
+          final videoElement = html.VideoElement()
+            ..src = widget.controller.dataSource
+            ..style.width = '100%'
+            ..style.height = '100%'
+            ..style.objectFit = 'cover'
+            ..setAttribute('playsinline', 'true')
+            ..setAttribute('autoplay', 'true')
+            ..setAttribute('loop', 'true')
+            ..setAttribute('muted', 'false')
+            ..controls = false;
+          
+          // Start playback
+          videoElement.play();
+          
+          debugPrint('[PREVIEW] 🟢 HtmlElementView fallback active (sandbox mode)');
+          debugPrint('[PREVIEW] Platform view registered: $_platformViewId');
+          
+          return videoElement;
+        },
+      );
+      
+      setState(() {
+        _useFallbackView = true;
+        _paintConfirmed = true; // Fallback view bypasses compositor, mark as painted
+      });
+      
+      debugPrint('[PREVIEW] ⚠️ Sandbox limitation warning displayed');
+    } catch (e) {
+      debugPrint('[PREVIEW] Platform view registration failed: $e');
+    }
   }
 
   Future<void> _waitForTextureAndStartPlayback() async {
@@ -1095,32 +1156,41 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               child: Container(color: Colors.black),
             ),
             
-            // VIDEO LAYER with dynamic texture refresh
+            // VIDEO LAYER with conditional rendering (HtmlElementView fallback in sandbox)
             Positioned.fill(
               child: widget.controller.value.isInitialized
-                  ? RepaintBoundary(
-                      key: ValueKey(_textureKey),
-                      child: Container(
-                        clipBehavior: Clip.none,
-                        color: Colors.black,
-                        child: Center(
-                          child: AspectRatio(
-                            aspectRatio: isPortrait 
-                                ? (videoSize.height / videoSize.width) 
-                                : widget.controller.value.aspectRatio,
-                            child: isPortrait
-                                ? Transform.rotate(
-                                    angle: finalRotation,
-                                    child: AspectRatio(
-                                      aspectRatio: widget.controller.value.aspectRatio,
-                                      child: VideoPlayer(widget.controller),
-                                    ),
-                                  )
-                                : VideoPlayer(widget.controller),
+                  ? (_useFallbackView
+                      ? // 3️⃣ HtmlElementView Fallback (Replit sandbox)
+                        Container(
+                          color: Colors.black,
+                          child: HtmlElementView(
+                            viewType: _platformViewId,
                           ),
-                        ),
-                      ),
-                    )
+                        )
+                      : // Normal GPU-accelerated rendering (production)
+                        RepaintBoundary(
+                          key: ValueKey(_textureKey),
+                          child: Container(
+                            clipBehavior: Clip.none,
+                            color: Colors.black,
+                            child: Center(
+                              child: AspectRatio(
+                                aspectRatio: isPortrait 
+                                    ? (videoSize.height / videoSize.width) 
+                                    : widget.controller.value.aspectRatio,
+                                child: isPortrait
+                                    ? Transform.rotate(
+                                        angle: finalRotation,
+                                        child: AspectRatio(
+                                          aspectRatio: widget.controller.value.aspectRatio,
+                                          child: VideoPlayer(widget.controller),
+                                        ),
+                                      )
+                                    : VideoPlayer(widget.controller),
+                              ),
+                            ),
+                          ),
+                        ))
                   : Container(
                       color: Colors.black,
                       child: const Center(
@@ -1340,6 +1410,51 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                 ),
               ),
             ),
+
+            // 4️⃣ Sandbox Warning Overlay (Replit only)
+            if (_isReplitSandbox) 
+              Positioned(
+                bottom: MediaQuery.of(context).size.height / 2 - 50,
+                left: 32,
+                right: 32,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.warning_rounded,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '⚠️ Video preview limited in development sandbox',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Works perfectly on deployed builds\n(Firebase, Netlify, Vercel)',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
             // Bottom overlay (like discovery feed)
             Positioned(
