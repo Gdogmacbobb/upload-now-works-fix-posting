@@ -1,0 +1,58 @@
+{
+  "task": "Reposition scrub bar below performance location and ensure precise synchronization with video playback",
+  "context": "The current video preview UI shows a TikTok-style layout with a scrub bar slightly above or overlapping the performance location text. The user wants the scrub bar moved just below that location text, visually clean and consistently bound to the video playback position. Audio and video must always stay perfectly in sync when playing, pausing, or scrubbing.",
+  "fix": {
+    "implementation": [
+      "Identify the scrubber Slider widget (currently positioned near the bottom overlay).",
+      "Wrap the Slider in a Padding or Positioned widget with 'top' spacing calculated so that it appears directly below the performance location text, maintaining approximately 8–12px of vertical gap for aesthetic balance.",
+      "Ensure the Slider container uses full device width via MediaQuery.of(context).size.width — not constrained by the video frame.",
+      "Bind the Slider’s value to the videoController.value.position.inMilliseconds / videoController.value.duration.inMilliseconds.",
+      "In the onChanged callback, call: await videoController.seekTo(Duration(milliseconds: newValue.round())); and ensure the audioController (if separate) is updated to the same position.",
+      "In the onChangeEnd callback, call play() again only if the video was previously playing, to maintain playback continuity.",
+      "Add a listener to the videoController that continuously updates the scrubber’s position in real time while the video plays.",
+      "Confirm that if the video restarts, the scrubber resets to 0 and stays synced from the beginning.",
+      "Maintain current replay overlay, avatar, handle, caption, and close button positioning — no shifts in layout or z-index.",
+      "Preserve pointer-events and touch behavior; scrubbing must remain smooth and responsive on mobile devices."
+    ],
+    "style": {
+      "alignment": "bottomCenter",
+      "margin": {
+        "top": 12,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "trackHeight": 3,
+      "thumbShape": "RoundSliderThumbShape(enabledThumbRadius: 6)",
+      "activeColor": "#FF8C00",
+      "inactiveColor": "#444444",
+      "overlayColor": "Colors.transparent",
+      "width": "MediaQuery.of(context).size.width"
+    },
+    "syncBehavior": {
+      "bindToVideo": true,
+      "bindToAudio": true,
+      "onSeek": "update both controllers simultaneously",
+      "onLoopRestart": "reset scrubber to 0",
+      "onPause": "scrubber stops advancing immediately",
+      "onPlay": "scrubber resumes advancing in perfect sync"
+    },
+    "testing": [
+      "Preview video: scrubber appears below location text with clean spacing.",
+      "Play video: scrubber moves smoothly and matches video/audio exactly.",
+      "Pause/resume: scrubber freezes/resumes instantly with no desync.",
+      "Scrub manually: both video and audio jump to the selected position immediately and play correctly.",
+      "Replay video: scrubber resets to 0 at the start and resumes tracking perfectly.",
+      "Confirm all UI overlays remain aligned and visible — no layout regressions."
+    ]
+  },
+  "constraints": [
+    "Do NOT alter video orientation logic or Transform.rotate code.",
+    "Do NOT rename or recreate the videoController or audioController variables.",
+    "Do NOT modify avatar, caption, handle, or location widget positions other than vertical spacing below the location text.",
+    "Do NOT change replay overlay behavior, color scheme, or button placement.",
+    "Do NOT modify Supabase profile image retrieval logic.",
+    "Do NOT reintroduce debug overlays or sandbox warnings.",
+    "Ensure this update does not affect portrait rendering or web/mobile cross-compatibility."
+  ]
+}
