@@ -1,5 +1,5 @@
 # Overview
-YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services, Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment. The application features a production-ready video preview with TikTok-style chrome, optimized for deployment.
+YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services, Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment. The application features a production-ready video preview with TikTok-style chrome and synchronized audio replay, optimized for deployment.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 The application uses Flutter for a single codebase across mobile and web. Key features include:
 - **Environment Configuration**: Secure management of environment variables via `env.json` and `--dart-define-from-file`.
 - **Video Recording & Upload**: TikTok/Reels-style UI for vertical video recording and a modernized upload screen, optimized for quality and cross-platform compatibility, including full-screen preview, portrait lock, maximum resolution, responsive controls, and pinch-to-zoom.
+- **Video Preview with Audio Replay**: Production-ready video preview with manual replay system that fully reinitializes the VideoPlayerController on each replay to ensure synchronized audio/video playback. Uses controller disposal and recreation instead of seekTo() to restore complete audio context. HtmlElementView fallback uses video.load() to force browser media stream reload.
 - **Thumbnail Generation**: Mobile-only feature using `video_thumbnail` for generating 8 preview frames; web displays a "not available" message.
 - **Null Safety**: Extensive use of nullable types, FutureBuilder patterns, and `mounted` checks for robust camera/video controller management.
 - **UI/UX**: Focus on a polished, intuitive user experience, especially for video recording interactions.
