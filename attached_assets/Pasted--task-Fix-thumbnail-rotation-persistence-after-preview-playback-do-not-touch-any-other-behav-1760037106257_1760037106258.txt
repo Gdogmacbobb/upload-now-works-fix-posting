@@ -1,0 +1,62 @@
+{
+  "task": "Fix thumbnail rotation persistence after preview playback (do not touch any other behavior).",
+  "constraints": {
+    "must_not_change": [
+      "Upload screen layout, padding, and buttons",
+      "Supabase upload or backend schema",
+      "Caption field, scrubber, and video duration badge",
+      "Preview playback audio or timing logic",
+      "Controller reuse pattern or initialization flow"
+    ],
+    "platforms": ["Flutter Web", "iOS/Android"],
+    "goal": "Maintain correct, upright thumbnail orientation after exiting preview."
+  },
+  "bugs_observed": [
+    "When exiting full-screen preview, the thumbnail inside the upload screen reappears rotated."
+  ],
+  "requirements": {
+    "R1_orientation_consistency": "Thumbnail orientation must match the video's natural orientation at all times, regardless of preview interactions.",
+    "R2_controller_stability": "Continue using the shared controller; do not reinitialize it or dispose it prematurely.",
+    "R3_safe_cleanup": "When preview closes, fully remove or restore any rotation transforms applied to HTMLVideoElement or widget wrappers."
+  },
+  "implementation_plan": [
+    {
+      "name": "Centralize orientation value",
+      "steps": [
+        "Read the correct rotation angle once from the video metadata during initialization (controller.value.size.aspectRatio and Exif orientation).",
+        "Store it in a shared variable `fixedOrientationDeg` accessible to both the upload screen and preview overlay.",
+        "Wrap the VideoPlayer with `Transform.rotate(angle: fixedOrientationDeg * pi / 180)` instead of applying transient CSS transforms."
+      ]
+    },
+    {
+      "name": "Preview close cleanup",
+      "steps": [
+        "Add `clearWebVideoTransforms()` that runs on preview `onDispose` or `onPop` event.",
+        "Inside that function, for Flutter Web only, select the active HTML `<video>` tag using the `controller.textureId` or `document.querySelector('video')` fallback.",
+        "Execute:",
+        "  el.style.removeProperty('transform');",
+        "  el.style.removeProperty('will-change');",
+        "  el.style.removeProperty('rotate');",
+        "After cleanup, call `_primeThumbnail(thumbnailPosition)` to repaint the correct upright frame."
+      ]
+    },
+    {
+      "name": "Orientation verify and reapply",
+      "steps": [
+        "When returning from preview, always call `setState(() { _currentRotation = fixedOrientationDeg; });` to reapply the known rotation.",
+        "If `controller.value.isInitialized` is true, perform a no-audio seek-play-pause (100ms) to repaint the thumbnail with correct transform."
+      ]
+    }
+  ],
+  "validation_tests": [
+    "1. Enter upload screen → first frame shows upright.",
+    "2. Press Select Thumbnail → scrub and confirm → frame stays upright.",
+    "3. Press Preview → watch full video → exit preview → thumbnail orientation unchanged.",
+    "4. Repeat steps on mobile and web; orientation consistent in all runs."
+  ],
+  "logging": [
+    "[ROTATION] fixedOrientationDeg set = {value}",
+    "[ROTATION] preview closed — cleared transforms",
+    "[ROTATION] re-applied orientation {value}°"
+  ]
+}

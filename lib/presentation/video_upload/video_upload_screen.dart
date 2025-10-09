@@ -215,12 +215,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   }
 
 
-  void _showFullScreenPreview() {
+  Future<void> _showFullScreenPreview() async {
     if (_controller == null || !_controller!.value.isInitialized) {
       return;
     }
 
-    showDialog(
+    await showDialog(
       context: context,
       barrierColor: Colors.black,
       builder: (context) => _FullScreenVideoPreview(
@@ -233,6 +233,17 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         orientationRadians: _orientationRadians, // Pass shared orientation state
       ),
     );
+    
+    // After preview closes, refresh thumbnail to ensure correct orientation
+    if (mounted && _controller != null && _controller!.value.isInitialized) {
+      if (kDebugMode) print('[ROTATION] preview closed — refreshing thumbnail');
+      final thumbnailPosition = _selectedThumbnailFramePosition != null 
+          ? Duration(milliseconds: _selectedThumbnailFramePosition!.round())
+          : Duration.zero;
+      await _primeThumbnail(thumbnailPosition);
+      if (kDebugMode) print('[ROTATION] re-applied orientation ${(_orientationRadians * 180 / 3.14159).round()}°');
+      setState(() {}); // Force rebuild with correct orientation
+    }
   }
 
   @override
