@@ -1,0 +1,61 @@
+{
+  "task": "Extend video scrub bar to full screen width on preview player for all devices.",
+  "goal": "Ensure that in the PREVIEW screen, the scrub (progress) bar spans the entire visible width of the screen, perfectly aligned from left to right edge on all device sizes and orientations.",
+  "constraints": {
+    "must_not_break": [
+      "Video playback or controller logic",
+      "Existing player layout (avatar, captions, buttons)",
+      "Upload screen, performer screen, or discovery feed layouts",
+      "Scrub bar styling, colors, or animation logic"
+    ]
+  },
+  "requirements": {
+    "R1_full_width": "Scrub bar must use the full width of the viewport (edge-to-edge) on all devices (iPhone SE → iPhone 15 Pro Max, Android, web).",
+    "R2_responsive": "Use MediaQuery.of(context).size.width or LayoutBuilder to dynamically size the scrub bar instead of fixed-width containers.",
+    "R3_safe_area_alignment": "Respect SafeArea insets to avoid overlapping with gesture bars or screen cutouts.",
+    "R4_visual_consistency": "Keep existing height, colors, and progress behavior identical to current version."
+  },
+  "implementation_steps": [
+    {
+      "name": "Modify Scrub Bar Container in Preview Screen",
+      "details": [
+        "Locate the scrub bar container within the preview screen widget (likely under the Stack with the VideoPlayer).",
+        "Replace any fixed width or padding like EdgeInsets.symmetric(horizontal: 16) with EdgeInsets.zero.",
+        "Wrap the scrub bar (Slider or LinearProgressIndicator) in a SizedBox:",
+        "SizedBox(width: MediaQuery.of(context).size.width, child: yourScrubBarWidget)"
+      ]
+    },
+    {
+      "name": "Ensure Alignment to Screen Edges",
+      "details": [
+        "If the scrub bar is within a Column or Stack with padding, use Positioned(left: 0, right: 0, bottom: X) for absolute alignment.",
+        "Alternatively, wrap the entire bar in Align(alignment: Alignment.bottomCenter) with full-width constraints."
+      ]
+    },
+    {
+      "name": "Keep Current Functionality Intact",
+      "details": [
+        "Do NOT alter GestureDetector or SliderTheme functionality.",
+        "Ensure the onChanged, onChangeStart, and onChangeEnd callbacks remain untouched.",
+        "Confirm that controller.value.position and duration linkage stays consistent."
+      ]
+    },
+    {
+      "name": "Cross-Device Testing",
+      "details": [
+        "Test on iPhone SE, iPhone 14 Pro Max, Pixel 7, and web simulator.",
+        "Ensure scrub bar touches both edges with zero clipping or overflow.",
+        "Verify that SafeArea prevents overlap with bottom gesture area."
+      ]
+    }
+  ],
+  "expected_result": [
+    "✅ Scrub bar is flush to both edges of the screen in preview mode.",
+    "✅ No change in existing features, layout, or playback functionality.",
+    "✅ Works identically on all screen sizes and web viewports."
+  ],
+  "expected_logs": [
+    "[SCRUBBAR_PREVIEW] Full-width layout applied successfully",
+    "[SCRUBBAR_PREVIEW] Width set to ${MediaQuery.of(context).size.width}"
+  ]
+}
