@@ -87,18 +87,26 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       await _controller!.initialize();
       
       if (mounted) {
-        _controller!.setVolume(1.0);
-        _controller!.pause();
-        
         // Seek to first frame for thumbnail display
         await _controller!.seekTo(Duration.zero);
         
-        // Wait for video texture to render the frame
-        await Future.delayed(const Duration(milliseconds: 150));
+        // Mute before playing to avoid audio blip
+        _controller!.setVolume(0.0);
         
-        if (mounted) {
-          setState(() {});
-        }
+        // Play briefly to force texture rendering (especially important on web)
+        await _controller!.play();
+        await Future.delayed(const Duration(milliseconds: 200));
+        await _controller!.pause();
+        
+        // Restore volume after pausing
+        _controller!.setVolume(1.0);
+        
+        // Use post-frame callback for reliable UI update
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {});
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -169,9 +177,24 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     // Seek main controller to selected thumbnail position for display
     if (_controller != null && _controller!.value.isInitialized) {
       await _controller!.seekTo(Duration(milliseconds: selectedTime));
-      if (mounted) {
-        setState(() {});
-      }
+      
+      // Mute before playing to avoid audio blip
+      _controller!.setVolume(0.0);
+      
+      // Play briefly to force texture rendering of selected frame
+      await _controller!.play();
+      await Future.delayed(const Duration(milliseconds: 200));
+      await _controller!.pause();
+      
+      // Restore volume after pausing
+      _controller!.setVolume(1.0);
+      
+      // Use post-frame callback for reliable UI update
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
     }
     
     if (mounted) {
