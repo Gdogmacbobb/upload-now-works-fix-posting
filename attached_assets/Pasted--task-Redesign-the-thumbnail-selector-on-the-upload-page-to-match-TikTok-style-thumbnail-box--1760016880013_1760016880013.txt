@@ -1,0 +1,63 @@
+{
+  "task": "Redesign the thumbnail selector on the upload page to match TikTok-style thumbnail box proportions, add a frame overlay, and preserve existing preview/scrubber functionality.",
+  "context": "The thumbnail selection area currently takes up too much vertical space and does not match the design proportions seen in TikTok’s upload flow. The new version should shrink the video preview to fit proportionally within a compact container like in the provided reference (third screenshot). A subtle white or gray frame overlay should outline the visible thumbnail area to show the user exactly what portion of the video will appear in the final grid thumbnail. Below this, the existing orange scrub bar should remain and allow real-time frame selection without breaking rotation or sync behavior.",
+  "fix": {
+    "implementation": [
+      "Wrap the video preview in an AspectRatio widget matching the desired thumbnail proportions (e.g., 1:1.25 or 4:5).",
+      "Resize the thumbnail container to be roughly 65% of its current height for better alignment with TikTok-like spacing.",
+      "Overlay a semi-transparent frame border using a Stack with Positioned.fill and a Container containing a Border.all(color: Colors.white30, width: 2).",
+      "Ensure the frame overlay scales dynamically with the video preview size (responsive).",
+      "Retain the play button centered over the video preview.",
+      "Ensure that scrubbing below the preview updates the visible frame in real time (no black frames).",
+      "Preserve the ✓ confirm button in the bottom-right corner but shrink its size slightly to match the new container dimensions.",
+      "Ensure that the rotation fix remains applied so portrait videos display upright.",
+      "Keep the scrub bar below the container, fully synchronized with the video controller."
+    ],
+    "ui_design": {
+      "thumbnail_container": {
+        "alignment": "center",
+        "aspectRatio": 0.8,
+        "decoration": {
+          "color": "#000000",
+          "borderRadius": 8
+        },
+        "child": {
+          "type": "Stack",
+          "children": [
+            "VideoFramePreview(fit: BoxFit.cover)",
+            "Center(PlayButtonOverlay())",
+            "Positioned.fill(Container(decoration: Border.all(color: Colors.white30, width: 2, strokeAlign: inside)))"
+          ]
+        }
+      },
+      "scrub_bar": {
+        "type": "Slider",
+        "activeColor": "#FF8C00",
+        "inactiveColor": "#444444",
+        "trackHeight": 3,
+        "margin": { "top": 8, "bottom": 8, "left": 8, "right": 8 },
+        "sync": "videoController.position"
+      },
+      "confirm_button": {
+        "alignment": "bottomRight",
+        "icon": "check",
+        "size": 30,
+        "backgroundColor": "rgba(255,140,0,0.85)",
+        "foregroundColor": "white",
+        "padding": 6
+      }
+    },
+    "state_management": {
+      "selectedFrameTime": "store the currently selected timestamp from scrub bar",
+      "onScrubChange": "seekTo(Duration(milliseconds: newValue.round())) and update preview frame",
+      "onConfirm": "store selectedFrameTime to Supabase or local variable"
+    }
+  },
+  "constraints": [
+    "Do NOT alter upload flow, caption field, or Supabase integration.",
+    "Do NOT break orientation or GPU rendering fixes.",
+    "Ensure full mobile compatibility and responsive scaling.",
+    "Keep all accent colors and styles consistent with current design.",
+    "Do NOT reintroduce debug overlays or sandbox warnings."
+  ]
+}
