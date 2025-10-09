@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ynfny/utils/responsive_scale.dart';
 import 'package:ynfny/core/constants/performance_categories.dart';
+import 'package:ynfny/widgets/performance_type_badge.dart';
 
 import '../../../core/app_export.dart';
 
@@ -30,16 +31,6 @@ class PerformerSpecificFields extends StatefulWidget {
 }
 
 class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
-  Widget _getIconForType(String category, bool isSelected) {
-    return Text(
-      PerformanceCategories.getEmoji(category),
-      style: TextStyle(
-        fontSize: 32,
-        height: 1.0,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final mainCategories = PerformanceCategories.getMainCategories();
@@ -158,73 +149,22 @@ class _PerformerSpecificFieldsState extends State<PerformerSpecificFields> {
         ),
         SizedBox(height: 2.h),
 
-        // Main Category Grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 3.w,
-            mainAxisSpacing: 2.h,
-            childAspectRatio: 2.2,
-          ),
-          itemCount: mainCategories.length,
-          itemBuilder: (context, index) {
-            final category = mainCategories[index];
+        // Main Category Wrap with unified badges
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: mainCategories.map((category) {
             final isSelected = widget.selectedPerformanceTypes.contains(category);
-
-            return GestureDetector(
+            
+            return PerformanceTypeBadge(
+              label: category,
+              isActive: isSelected,
+              isSelectable: true,
               onTap: () {
                 widget.onCategoryToggled(category, !isSelected);
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF2A2A2D)
-                      : const Color(0xFF1C1C1E),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFFFF8C00)
-                        : const Color(0xFF3A3A3D),
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFFFF8C00).withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 0,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _getIconForType(category, isSelected),
-                    SizedBox(height: 6),
-                    Text(
-                      category,
-                      style: AppTheme.darkTheme.textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w400,
-                        height: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
             );
-          },
+          }).toList(),
         ),
 
         SizedBox(height: 4.h),

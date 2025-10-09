@@ -11,6 +11,7 @@ import '../../utils/web_dom_stub.dart' if (dart.library.html) 'dart:html' as htm
 import 'dart:js' if (dart.library.html) 'dart:js' as js;
 import '../../utils/ui_web_stub.dart' if (dart.library.html) 'dart:ui_web' as ui_web;
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import '../../widgets/performance_type_badge.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -598,14 +599,15 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
             Text("Performance Type", style: _labelStyle()),
             const SizedBox(height: 8),
             Wrap(
-              spacing: 12,
+              spacing: 6,
+              runSpacing: 6,
               children: ["Music", "Dance", "Visual Arts", "Comedy"].map((type) {
                 final selected = _performanceType == type;
-                return ChoiceChip(
-                  label: Text(type),
-                  selected: selected,
-                  selectedColor: AppTheme.primaryOrange,
-                  onSelected: (_) => setState(() => _performanceType = type),
+                return PerformanceTypeBadge(
+                  label: type,
+                  isActive: selected,
+                  isSelectable: true,
+                  onTap: () => setState(() => _performanceType = type),
                 );
               }).toList(),
             ),
