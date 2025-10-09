@@ -655,6 +655,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
   String? _videoDataSource; // Store video path for controller recreation
   VideoPlayerController? _currentController; // Track current controller for proper disposal
+  Map<html.VideoElement, String> _originalTransforms = {}; // Store original transforms to restore on dispose
   
 
   @override
@@ -671,6 +672,9 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         _isReplitSandbox = hostname.contains('replit');
         if (_isReplitSandbox) {
           _registerPlatformView(widget.controller);
+        } else {
+          // Standard Flutter web: store current transforms to restore on dispose
+          _storeVideoTransforms();
         }
       } catch (e) {
         // Silently fail hostname detection
@@ -682,6 +686,21 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     widget.controller.addListener(_updatePlaybackState);
     
     WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
+  }
+  
+  void _storeVideoTransforms() {
+    if (!kIsWeb) return;
+    try {
+      final videoElements = html.document.querySelectorAll('video');
+      for (var i = 0; i < videoElements.length; i++) {
+        final videoElement = videoElements[i] as html.VideoElement;
+        final transform = videoElement.style.getPropertyValue('transform');
+        // Store transform even if empty - we need to restore to original state
+        _originalTransforms[videoElement] = transform;
+      }
+    } catch (e) {
+      // Silently handle storage errors
+    }
   }
   
   void _registerPlatformView(VideoPlayerController controller) {
@@ -965,19 +984,25 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       _currentController!.setLooping(false);
     }
     
-    // Clean up web-specific transforms to prevent rotation persistence
+    // Clean up transforms to prevent rotation persistence
     if (kIsWeb) {
       try {
-        final videoElements = html.document.querySelectorAll('video');
-        for (var i = 0; i < videoElements.length; i++) {
-          final dynamic videoElement = videoElements[i];
-          videoElement.style.removeProperty('transform');
-          videoElement.style.removeProperty('will-change');
-          videoElement.style.removeProperty('position');
-          videoElement.style.removeProperty('top');
-          videoElement.style.removeProperty('left');
-          videoElement.style.removeProperty('width');
-          videoElement.style.removeProperty('height');
+        if (_htmlVideoElement != null) {
+          // Replit sandbox: clean up HTML element view
+          _htmlVideoElement!.style.removeProperty('transform');
+          _htmlVideoElement!.style.removeProperty('will-change');
+          _htmlVideoElement!.style.removeProperty('object-fit');
+        } else {
+          // Standard Flutter web: restore original transforms
+          for (final entry in _originalTransforms.entries) {
+            if (entry.value.isEmpty) {
+              // Original was empty - remove the property to clear rotation
+              entry.key.style.removeProperty('transform');
+            } else {
+              // Restore original transform value
+              entry.key.style.setProperty('transform', entry.value);
+            }
+          }
         }
       } catch (e) {
         // Silently handle cleanup errors
