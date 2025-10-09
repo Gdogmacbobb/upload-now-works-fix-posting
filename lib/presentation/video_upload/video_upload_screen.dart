@@ -315,34 +315,31 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                   onPressed: _startThumbnailSelection,
                 )
               else ...[
-                // Thumbnail selector container
+                // Thumbnail selector container - Compact TikTok-style
                 if (_thumbnailController != null && _thumbnailController!.value.isInitialized) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        children: [
-                          // Thumbnail preview with proper aspect ratio and rotation
-                          AspectRatio(
-                            aspectRatio: _thumbnailNeedsRotation 
-                              ? 1.0 / _thumbnailController!.value.aspectRatio  // Invert for rotated landscape
-                              : _thumbnailController!.value.aspectRatio,        // Use as-is for portrait
-                            child: _thumbnailNeedsRotation
-                              ? Transform.rotate(
-                                  angle: 1.5708, // 90 degrees clockwise (pi/2)
-                                  child: AspectRatio(
-                                    aspectRatio: _thumbnailController!.value.aspectRatio,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: AspectRatio(
+                        aspectRatio: 0.8, // Fixed 4:5 TikTok-style thumbnail ratio
+                        child: Stack(
+                          children: [
+                            // Video preview (with rotation if needed)
+                            Positioned.fill(
+                              child: _thumbnailNeedsRotation
+                                ? Transform.rotate(
+                                    angle: 1.5708, // 90 degrees clockwise (pi/2)
                                     child: FittedBox(
                                       fit: BoxFit.cover,
                                       child: SizedBox(
@@ -351,40 +348,53 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                                         child: VideoPlayer(_thumbnailController!),
                                       ),
                                     ),
+                                  )
+                                : FittedBox(
+                                    fit: BoxFit.cover,
+                                    child: SizedBox(
+                                      width: _thumbnailController!.value.size.width,
+                                      height: _thumbnailController!.value.size.height,
+                                      child: VideoPlayer(_thumbnailController!),
+                                    ),
                                   ),
-                                )
-                              : FittedBox(
-                                  fit: BoxFit.cover,
-                                  child: SizedBox(
-                                    width: _thumbnailController!.value.size.width,
-                                    height: _thumbnailController!.value.size.height,
-                                    child: VideoPlayer(_thumbnailController!),
-                                  ),
-                                ),
-                          ),
-                          
-                          // Confirm button (bottom-right)
-                          Positioned(
-                            bottom: 12,
-                            right: 12,
-                            child: GestureDetector(
-                              onTap: _confirmThumbnailSelection,
+                            ),
+                            
+                            // Frame border overlay to show thumbnail boundary
+                            Positioned.fill(
                               child: Container(
-                                width: 36,
-                                height: 36,
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryOrange.withOpacity(0.85),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 20,
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                            
+                            // Confirm button (bottom-right, slightly smaller)
+                            Positioned(
+                              bottom: 10,
+                              right: 10,
+                              child: GestureDetector(
+                                onTap: _confirmThumbnailSelection,
+                                child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryOrange.withOpacity(0.85),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
