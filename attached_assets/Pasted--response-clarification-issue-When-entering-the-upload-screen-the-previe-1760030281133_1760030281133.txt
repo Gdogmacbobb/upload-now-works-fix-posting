@@ -1,0 +1,35 @@
+{
+  "response": {
+    "clarification": {
+      "issue": "When entering the upload screen, the preview container shows a black screen instead of the first frame. When 'Select Thumbnail' is pressed, a second thumbnail container appears and shows frames correctly. After selecting a frame, the preview container finally updates — but its orientation is incorrect and the second container remains.",
+      "confirmed_behavior": [
+        "Black preview on first load.",
+        "Second thumbnail container appears after clicking 'Select Thumbnail'.",
+        "Orientation mismatch when returning to preview container."
+      ]
+    },
+    "request": {
+      "objective": "Ensure that only one unified preview container exists. The first frame of the video should display immediately upon entering the upload screen (as the default thumbnail) within the preview container itself. When the user selects a thumbnail, it must update that same preview container — not create a new one — while preserving correct video orientation and playback functionality.",
+      "required_fixes": [
+        "1. The preview button container should use the same VideoPlayerController instance for both the default preview and thumbnail selection.",
+        "2. Remove any secondary or duplicate thumbnail container that is created during 'Select Thumbnail'. The scrubber UI should only allow selecting a frame; once confirmed, the chosen frame should update the same preview container.",
+        "3. On initialization, automatically seek the controller to Duration.zero, use the silent play-pause technique (volume = 0 → play for 200ms → pause → volume = 1.0), then call setState() to render the first frame properly.",
+        "4. Ensure that the video frame used for thumbnail preview retains its correct orientation (portrait or landscape) by respecting the original aspect ratio and rotation metadata of the uploaded file.",
+        "5. When 'Select Thumbnail' is used, update the displayed frame by seeking the same VideoPlayerController to the selected position, pausing, and refreshing the same container. Do not spawn or display any new widgets below the preview area.",
+        "6. Confirm that tapping the preview container still opens the full-screen player with audio and proper orientation."
+      ],
+      "constraints": [
+        "Do not alter upload flow, Supabase logic, caption input, or performance type components.",
+        "Do not modify any working event listeners or UI hierarchy beyond the video preview behavior.",
+        "Preserve all existing layouts, animations, and icon placements.",
+        "Ensure this fix works consistently across Flutter web and mobile (iOS/Android)."
+      ],
+      "goal": "When the upload screen loads, the preview container immediately shows the first frame as the default thumbnail. Pressing 'Select Thumbnail' allows the user to change it, and that change updates the same preview container. No additional thumbnail box should appear, and orientation should always remain correct."
+    },
+    "debug_info": {
+      "platforms_tested": ["Web", "Mobile"],
+      "current_result": "Black preview on load, duplicate thumbnail container, and orientation mismatch.",
+      "expected_result": "Single preview container that always displays the correct video frame (default or selected) with proper orientation."
+    }
+  }
+}
