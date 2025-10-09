@@ -1,6 +1,5 @@
 import 'dart:io' show File;
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../theme/app_theme.dart';
@@ -12,6 +11,7 @@ import '../../services/profile_service.dart';
 import '../../utils/web_dom_stub.dart' if (dart.library.html) 'dart:html' as html;
 import 'dart:js' if (dart.library.html) 'dart:js' as js;
 import '../../utils/ui_web_stub.dart' if (dart.library.html) 'dart:ui_web' as ui_web;
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({Key? key}) : super(key: key);
@@ -255,75 +255,93 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.85,
                       margin: const EdgeInsets.only(top: 12, bottom: 8),
-                      child: GestureDetector(
-                        onTap: _showFullScreenPreview,
-                        child: AspectRatio(
-                          aspectRatio: 0.8, // 4:5 TikTok-style ratio
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                      child: AspectRatio(
+                        aspectRatio: 0.8, // 4:5 TikTok-style ratio
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // Video frame as thumbnail background
+                                FittedBox(
+                                  fit: BoxFit.cover,
+                                  child: SizedBox(
+                                    width: _controller!.value.size.width,
+                                    height: _controller!.value.size.height,
+                                    child: VideoPlayer(_controller!),
+                                  ),
                                 ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  // Video frame as thumbnail background
-                                  FittedBox(
-                                    fit: BoxFit.cover,
-                                    child: SizedBox(
-                                      width: _controller!.value.size.width,
-                                      height: _controller!.value.size.height,
-                                      child: VideoPlayer(_controller!),
-                                    ),
-                                  ),
-                                  
-                                  // Centered play icon overlay
-                                  Center(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.3),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      padding: const EdgeInsets.all(12),
-                                      child: Icon(
-                                        Icons.play_circle_filled,
-                                        color: Colors.white.withOpacity(0.75),
-                                        size: 56,
+                                
+                                // Transparent tap overlay (above video on web)
+                                PointerInterceptor(
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _showFullScreenPreview,
+                                      child: Container(
+                                        color: Colors.transparent,
                                       ),
                                     ),
                                   ),
-                                  
-                                  // Duration badge (bottom-right)
-                                  Positioned(
-                                    right: 10,
-                                    bottom: 10,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.7),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        _formatDuration(_controller!.value.duration),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
+                                ),
+                                
+                                // Centered play icon overlay (above tap area)
+                                PointerInterceptor(
+                                  child: IgnorePointer(
+                                    child: Center(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.3),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        padding: const EdgeInsets.all(12),
+                                        child: Icon(
+                                          Icons.play_circle_filled,
+                                          color: Colors.white.withOpacity(0.75),
+                                          size: 56,
                                         ),
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                                
+                                // Duration badge (bottom-right, above tap area)
+                                Positioned(
+                                  right: 10,
+                                  bottom: 10,
+                                  child: PointerInterceptor(
+                                    child: IgnorePointer(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.7),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          _formatDuration(_controller!.value.duration),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

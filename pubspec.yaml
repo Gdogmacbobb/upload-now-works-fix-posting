@@ -22,6 +22,7 @@ dependencies:
   path_provider: ^2.1.5
   pay: ^3.2.1
   permission_handler: ^11.1.0
+  pointer_interceptor: ^0.10.1
   record: ^6.0.0
   shared_preferences: ^2.2.2
   stripe_platform_interface: ^11.5.0
@@ -35,11 +36,3 @@ dev_dependencies:
   flutter_lints: 4.0.0
   flutter_test:
     sdk: flutter
-
-flutter:
-  uses-material-design: true
-  
-  assets:
-    - assets/
-    - assets/images/
-    - assets/fonts/
