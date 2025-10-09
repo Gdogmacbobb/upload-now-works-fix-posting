@@ -572,9 +572,6 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   String? _videoDataSource; // Store video path for controller recreation
   VideoPlayerController? _currentController; // Track current controller for proper disposal
   
-  final GlobalKey _overlayKey = GlobalKey();
-  double _overlayHeight = 0.0;
-  double _scrubberBottom = 15.0; // Default, will be updated after measurement
 
   @override
   void initState() {
@@ -600,21 +597,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     widget.controller.setLooping(false);
     widget.controller.addListener(_updatePlaybackState);
     
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _waitForTextureAndStartPlayback();
-      _measureOverlayHeight();
-    });
-  }
-  
-  void _measureOverlayHeight() {
-    final RenderBox? renderBox = _overlayKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null && mounted) {
-      setState(() {
-        _overlayHeight = renderBox.size.height;
-        // Position scrubber 8px above the top of the overlay (overlay is at bottom: 40)
-        _scrubberBottom = 40 + _overlayHeight + 8;
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
   }
   
   void _registerPlatformView(VideoPlayerController controller) {
@@ -1032,7 +1015,6 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               left: 16,
               right: 80,
               child: Column(
-                key: _overlayKey,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1137,56 +1119,59 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-
-            // Full-width video scrubber timeline (positioned separately for edge-to-edge span)
-            Positioned(
-              bottom: _scrubberBottom,
-              left: 0,
-              right: 0,
-              child: ValueListenableBuilder(
-                valueListenable: controller,
-                builder: (context, VideoPlayerValue value, child) {
-                  final position = value.position.inMilliseconds.toDouble();
-                  final duration = value.duration.inMilliseconds.toDouble();
-                  final progress = duration > 0 ? position / duration : 0.0;
                   
-                  return SliderTheme(
-                    data: SliderThemeData(
-                      trackHeight: 3,
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                      activeTrackColor: const Color(0xFFFF8C00),
-                      inactiveTrackColor: const Color(0xFF333333),
-                      thumbColor: const Color(0xFFFF8C00),
-                      overlayColor: Colors.transparent,
-                    ),
-                    child: Slider(
-                      value: progress.clamp(0.0, 1.0),
-                      min: 0.0,
-                      max: 1.0,
-                      onChanged: (newValue) {
-                        if (duration > 0) {
-                          final seekPosition = Duration(milliseconds: (newValue * duration).toInt());
-                          controller.seekTo(seekPosition);
+                  const SizedBox(height: 12),
+                  
+                  // Full-width video scrubber timeline (positioned below location text)
+                  Transform.translate(
+                    offset: const Offset(-16, 0), // Compensate for parent's left: 16 offset
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: ValueListenableBuilder(
+                        valueListenable: controller,
+                        builder: (context, VideoPlayerValue value, child) {
+                          final position = value.position.inMilliseconds.toDouble();
+                          final duration = value.duration.inMilliseconds.toDouble();
+                          final progress = duration > 0 ? position / duration : 0.0;
                           
-                          // For HtmlElementView fallback, also update HTML video element with sub-second precision
-                          if (_useFallbackView && _htmlVideoElement != null) {
-                            _htmlVideoElement!.currentTime = seekPosition.inMilliseconds / 1000.0;
-                          }
-                        }
-                      },
-                      onChangeEnd: (newValue) {
-                        // Resume playback after seeking
-                        controller.play();
-                        if (_useFallbackView && _htmlVideoElement != null) {
-                          _htmlVideoElement!.play();
-                        }
-                      },
+                          return SliderTheme(
+                            data: SliderThemeData(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                              activeTrackColor: const Color(0xFFFF8C00),
+                              inactiveTrackColor: const Color(0xFF444444),
+                              thumbColor: const Color(0xFFFF8C00),
+                              overlayColor: Colors.transparent,
+                            ),
+                            child: Slider(
+                              value: progress.clamp(0.0, 1.0),
+                              min: 0.0,
+                              max: 1.0,
+                              onChanged: (newValue) {
+                                if (duration > 0) {
+                                  final seekPosition = Duration(milliseconds: (newValue * duration).toInt());
+                                  controller.seekTo(seekPosition);
+                                  
+                                  // For HtmlElementView fallback, also update HTML video element with sub-second precision
+                                  if (_useFallbackView && _htmlVideoElement != null) {
+                                    _htmlVideoElement!.currentTime = seekPosition.inMilliseconds / 1000.0;
+                                  }
+                                }
+                              },
+                              onChangeEnd: (newValue) {
+                                // Resume playback after seeking
+                                controller.play();
+                                if (_useFallbackView && _htmlVideoElement != null) {
+                                  _htmlVideoElement!.play();
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ],
