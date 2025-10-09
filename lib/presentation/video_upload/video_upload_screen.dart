@@ -85,26 +85,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       await _controller!.initialize();
       
       if (mounted) {
-        // Seek to first frame for thumbnail display
-        await _controller!.seekTo(Duration.zero);
-        
-        // Mute before playing to avoid audio blip
-        _controller!.setVolume(0.0);
-        
-        // Play briefly to force texture rendering (especially important on web)
-        await _controller!.play();
-        await Future.delayed(const Duration(milliseconds: 300));
-        await _controller!.pause();
-        
-        // Restore volume after pausing
-        _controller!.setVolume(1.0);
-        
-        // Use post-frame callback for reliable UI update
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            setState(() {});
-          }
-        });
+        // Prime thumbnail to display first frame
+        await _primeThumbnail(Duration.zero);
       }
     } catch (e) {
       if (mounted) {
@@ -113,6 +95,33 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         );
       }
       rethrow;
+    }
+  }
+
+  Future<void> _primeThumbnail(Duration position) async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+    
+    try {
+      // Seek to target frame
+      await _controller!.seekTo(position);
+      
+      // Mute to avoid audio blip during paint
+      _controller!.setVolume(0.0);
+      
+      // Play briefly to force texture rendering (critical for web)
+      await _controller!.play();
+      await Future.delayed(const Duration(milliseconds: 180));
+      await _controller!.pause();
+      
+      // Restore volume
+      _controller!.setVolume(1.0);
+      
+      // Update UI after texture is ready
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      // Silently handle priming errors
     }
   }
   
