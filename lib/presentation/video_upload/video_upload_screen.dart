@@ -571,6 +571,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
   String? _videoDataSource; // Store video path for controller recreation
   VideoPlayerController? _currentController; // Track current controller for proper disposal
+  
+  final GlobalKey _overlayKey = GlobalKey();
+  double _overlayHeight = 0.0;
+  double _scrubberBottom = 15.0; // Default, will be updated after measurement
 
   @override
   void initState() {
@@ -596,7 +600,21 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     widget.controller.setLooping(false);
     widget.controller.addListener(_updatePlaybackState);
     
-    WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _waitForTextureAndStartPlayback();
+      _measureOverlayHeight();
+    });
+  }
+  
+  void _measureOverlayHeight() {
+    final RenderBox? renderBox = _overlayKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && mounted) {
+      setState(() {
+        _overlayHeight = renderBox.size.height;
+        // Position scrubber 8px above the top of the overlay (overlay is at bottom: 40)
+        _scrubberBottom = 40 + _overlayHeight + 8;
+      });
+    }
   }
   
   void _registerPlatformView(VideoPlayerController controller) {
@@ -1014,6 +1032,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               left: 16,
               right: 80,
               child: Column(
+                key: _overlayKey,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1124,7 +1143,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
 
             // Full-width video scrubber timeline (positioned separately for edge-to-edge span)
             Positioned(
-              bottom: 20,
+              bottom: _scrubberBottom,
               left: 0,
               right: 0,
               child: ValueListenableBuilder(
