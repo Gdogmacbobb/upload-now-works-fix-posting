@@ -4,6 +4,20 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 # User Preferences
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes (October 9, 2025)
+
+## Video Player Enhancements
+- **Full-width scrub bar in preview**: Scrub bar now spans edge-to-edge using independent Positioned widget (left: 0, right: 0, bottom: 16) instead of Transform.translate hack. Debug logging with `[SCRUBBAR_PREVIEW]` prefix confirms width application.
+- **End-frame capture fix**: Added re-seek after 200ms playback cycle in `_primeThumbnail` to prevent overshoot that caused black thumbnails at video end.
+
+## UI Consistency Updates
+- **Unified performance type badges**: Created shared `PerformanceTypeBadge` widget replacing inconsistent implementations across registration, performer profile, and upload screens. All badges now use:
+  - Oval/capsule shape (BorderRadius.circular(20))
+  - Active: solid orange (#FF8C00), Inactive: dark gray (#1C1C1E)
+  - Material Icons (music_note, directions_run, brush, theater_comedy, auto_awesome, star)
+  - Consistent typography (14px bold white text) and spacing (12px horizontal, 6px vertical padding)
+  - Backend integration preserved: no changes to Supabase schema, API calls, or performance type values
+
 # System Architecture
 
 ## Frontend Architecture
