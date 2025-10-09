@@ -21,6 +21,7 @@ class VideoUploadScreen extends StatefulWidget {
 
 class _VideoUploadScreenState extends State<VideoUploadScreen> {
   VideoPlayerController? _controller;
+  VideoPlayerController? _thumbnailController;
   Future<void>? _initializeVideoPlayerFuture;
   bool _isPlaying = false;
   String? _caption;
@@ -32,9 +33,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   String? _userProfileImageUrl;
   
   // Thumbnail selection
-  List<String> _thumbnails = [];
-  int _selectedThumbnailIndex = -1;
-  bool _isGeneratingThumbnails = false;
+  bool _isSelectingThumbnail = false;
+  double _thumbnailFramePosition = 0.0; // Position in milliseconds
   
   final ProfileService _profileService = ProfileService();
 
@@ -99,86 +99,56 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
 
-  Future<void> _generateThumbnails() async {
-    if (_videoPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No video loaded')),
-      );
-      return;
-    }
-
-    setState(() => _isGeneratingThumbnails = true);
-
+  Future<void> _initializeThumbnailController() async {
+    if (_videoPath == null) return;
+    
     try {
-      final duration = _controller?.value.duration;
-      if (duration == null) {
-        throw Exception('Video duration not available');
+      final VideoPlayerController thumbnailController;
+      if (kIsWeb) {
+        thumbnailController = VideoPlayerController.networkUrl(Uri.parse(_videoPath!));
+      } else {
+        thumbnailController = VideoPlayerController.file(File(_videoPath!));
       }
       
-      if (kIsWeb) {
-        if (mounted) {
-          setState(() => _isGeneratingThumbnails = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thumbnail selection not available on web')),
-          );
-        }
-      } else {
-        await _generateMobileThumbnails(duration);
+      _thumbnailController = thumbnailController;
+      await _thumbnailController!.initialize();
+      
+      if (mounted) {
+        _thumbnailController!.setVolume(0.0); // Mute thumbnail preview
+        _thumbnailController!.pause();
+        setState(() {});
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isGeneratingThumbnails = false);
-        
-        if (e.toString().contains('MissingPluginException')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thumbnail feature not available on this platform')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Thumbnail generation failed: $e')),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to initialize thumbnail: $e')),
+        );
       }
     }
   }
 
-  Future<void> _generateMobileThumbnails(Duration duration) async {
-    final List<String> generatedThumbnails = [];
-    final int thumbnailCount = 8;
-    
-    final tempDir = await getTemporaryDirectory();
-    
-    for (int i = 0; i < thumbnailCount; i++) {
-      final timeMs = (duration.inMilliseconds / (thumbnailCount + 1) * (i + 1)).round();
-      
-      try {
-        final thumbnail = await VideoThumbnail.thumbnailFile(
-          video: _videoPath!,
-          thumbnailPath: tempDir.path,
-          imageFormat: ImageFormat.PNG,
-          maxWidth: 200,
-          timeMs: timeMs,
-          quality: 75,
-        );
-        
-        if (thumbnail != null) {
-          generatedThumbnails.add(thumbnail);
-        }
-      } catch (thumbnailError) {
-        // Silently skip failed thumbnails
-      }
-    }
-
+  void _startThumbnailSelection() async {
+    await _initializeThumbnailController();
     if (mounted) {
       setState(() {
-        _thumbnails = generatedThumbnails;
-        _isGeneratingThumbnails = false;
-        if (_thumbnails.isNotEmpty) {
-          _selectedThumbnailIndex = 0;
-        }
+        _isSelectingThumbnail = true;
+        _thumbnailFramePosition = 0.0;
       });
     }
   }
+
+  void _confirmThumbnailSelection() {
+    setState(() {
+      _isSelectingThumbnail = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Thumbnail set at ${(_thumbnailFramePosition / 1000).toStringAsFixed(1)}s'),
+        backgroundColor: AppTheme.primaryOrange,
+      ),
+    );
+  }
+
 
   void _showFullScreenPreview() {
     if (_controller == null || !_controller!.value.isInitialized) {
@@ -197,6 +167,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         profileImageUrl: _userProfileImageUrl,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    _thumbnailController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -248,17 +225,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                       aspectRatio: _controller!.value.aspectRatio,
                       child: Stack(
                         children: [
-                          // Show selected thumbnail or video frame
-                          if (_selectedThumbnailIndex >= 0 && 
-                              _selectedThumbnailIndex < _thumbnails.length &&
-                              !kIsWeb)
-                            Image.file(
-                              File(_thumbnails[_selectedThumbnailIndex]),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            )
-                          else
-                            VideoPlayer(_controller!),
+                          VideoPlayer(_controller!),
                           
                           // Play icon overlay
                           Center(
@@ -316,69 +283,107 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
             const SizedBox(height: 16),
 
-            // Select Thumbnail button (visible after video loads)
-            if (_controller != null && _controller!.value.isInitialized)
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryOrange,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            // Thumbnail Selection UI
+            if (_controller != null && _controller!.value.isInitialized) ...[
+              if (!_isSelectingThumbnail)
+                // Select Thumbnail button
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryOrange,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                icon: _isGeneratingThumbnails
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.image, color: Colors.white),
-                label: Text(
-                  _isGeneratingThumbnails ? 'Generating...' : 'Select Thumbnail',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onPressed: _isGeneratingThumbnails ? null : _generateThumbnails,
-              ),
-
-            // Thumbnail selection list (mobile only)
-            if (_thumbnails.isNotEmpty && !kIsWeb) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 80,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _thumbnails.length,
-                  itemBuilder: (context, index) {
-                    final isSelected = _selectedThumbnailIndex == index;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedThumbnailIndex = index);
-                      },
-                      child: Container(
-                        width: 60,
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: isSelected ? AppTheme.primaryOrange : Colors.transparent,
-                            width: 3,
-                          ),
+                  icon: const Icon(Icons.image, color: Colors.white),
+                  label: const Text(
+                    'Select Thumbnail',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: _startThumbnailSelection,
+                )
+              else ...[
+                // Thumbnail selector container
+                Container(
+                  height: MediaQuery.of(context).size.width / 1.25,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Thumbnail preview
+                      if (_thumbnailController != null && _thumbnailController!.value.isInitialized)
+                        ClipRRect(
                           borderRadius: BorderRadius.circular(8),
+                          child: Center(
+                            child: AspectRatio(
+                              aspectRatio: _thumbnailController!.value.aspectRatio,
+                              child: VideoPlayer(_thumbnailController!),
+                            ),
+                          ),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.file(
-                            File(_thumbnails[index]),
-                            fit: BoxFit.cover,
+                      
+                      // Confirm button (bottom-right)
+                      Positioned(
+                        bottom: 12,
+                        right: 12,
+                        child: GestureDetector(
+                          onTap: _confirmThumbnailSelection,
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryOrange.withOpacity(0.85),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
-              ),
+                
+                const SizedBox(height: 12),
+                
+                // Thumbnail scrub bar
+                SliderTheme(
+                  data: SliderThemeData(
+                    trackHeight: 3,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                    activeTrackColor: AppTheme.primaryOrange,
+                    inactiveTrackColor: const Color(0xFF444444),
+                    thumbColor: AppTheme.primaryOrange,
+                    overlayColor: Colors.transparent,
+                  ),
+                  child: Slider(
+                    value: _thumbnailFramePosition.clamp(0.0, _controller!.value.duration.inMilliseconds.toDouble()),
+                    min: 0.0,
+                    max: _controller!.value.duration.inMilliseconds.toDouble(),
+                    onChanged: (newValue) async {
+                      setState(() {
+                        _thumbnailFramePosition = newValue;
+                      });
+                      await _thumbnailController?.seekTo(Duration(milliseconds: newValue.round()));
+                    },
+                    onChangeEnd: (newValue) async {
+                      await _thumbnailController?.pause();
+                    },
+                  ),
+                ),
+              ],
             ],
 
             const SizedBox(height: 24),
