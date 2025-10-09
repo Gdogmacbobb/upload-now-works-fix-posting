@@ -1118,6 +1118,55 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                       ),
                     ],
                   ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Video scrubber timeline
+                  ValueListenableBuilder(
+                    valueListenable: controller,
+                    builder: (context, VideoPlayerValue value, child) {
+                      final position = value.position.inMilliseconds.toDouble();
+                      final duration = value.duration.inMilliseconds.toDouble();
+                      final progress = duration > 0 ? position / duration : 0.0;
+                      
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 24),
+                        child: SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 3,
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                            activeTrackColor: const Color(0xFFFF8C00),
+                            inactiveTrackColor: const Color(0xFF333333),
+                            thumbColor: const Color(0xFFFF8C00),
+                            overlayColor: Colors.transparent,
+                          ),
+                          child: Slider(
+                            value: progress.clamp(0.0, 1.0),
+                            min: 0.0,
+                            max: 1.0,
+                            onChanged: (newValue) {
+                              if (duration > 0) {
+                                final seekPosition = Duration(milliseconds: (newValue * duration).toInt());
+                                controller.seekTo(seekPosition);
+                                
+                                // For HtmlElementView fallback, also update HTML video element
+                                if (_useFallbackView && _htmlVideoElement != null) {
+                                  _htmlVideoElement!.currentTime = seekPosition.inSeconds.toDouble();
+                                }
+                              }
+                            },
+                            onChangeEnd: (newValue) {
+                              // Resume playback after seeking
+                              controller.play();
+                              if (_useFallbackView && _htmlVideoElement != null) {
+                                _htmlVideoElement!.play();
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
