@@ -135,7 +135,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
 
-  void _confirmThumbnailSelection() {
+  Future<void> _confirmThumbnailSelection() async {
+    final selectedPosition = Duration(milliseconds: _thumbnailFramePosition.round());
+    
+    // Prime thumbnail at selected position
+    await _primeThumbnail(selectedPosition);
+    
     setState(() {
       _selectedThumbnailFramePosition = _thumbnailFramePosition;
       _isSelectingThumbnail = false;
