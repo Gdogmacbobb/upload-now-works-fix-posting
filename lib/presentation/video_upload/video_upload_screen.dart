@@ -796,9 +796,14 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     });
     
     if (_useFallbackView && _htmlVideoElement != null) {
-      // HtmlElementView replay: reset currentTime and play
+      // HtmlElementView replay: restart both HTML element AND controller
       _htmlVideoElement!.currentTime = 0;
       _htmlVideoElement!.play();
+      
+      // Also restart controller to sync _updatePlaybackState listener
+      await widget.controller.seekTo(Duration.zero);
+      await widget.controller.play();
+      
       setState(() {
         _isPlaying = true;
       });
