@@ -1,0 +1,75 @@
+{
+  "task": "Restore correct logo on active splash screen and remove subtitle safely.",
+  "goal": "Ensure that the splash screen displays the correct main logo (not an alternate or outdated one) centered on screen, and that the text 'Discover NYC Street Performers' is removed completely — without touching navigation, Supabase, or other UI screens.",
+  "constraints": {
+    "do_not_modify": [
+      "Supabase configuration, anon key, API calls, or backend structure",
+      "Navigation routes or initial route logic",
+      "Any non-splash screen widgets (login, upload, profile, feed, etc.)",
+      "App initialization timing, async loading, or animation durations"
+    ],
+    "maintain": [
+      "Existing fade or scale animation transitions",
+      "Background color, theme, and route navigation"
+    ]
+  },
+  "requirements": {
+    "R1_identify_active_splash": "Search repository for files containing 'Splash', 'splash_screen.dart', 'app_splash.dart', or similar names. Identify which file is referenced in main.dart or router.dart as the initialRoute or default home widget.",
+    "R2_detect_logo_asset": "In the active splash widget, locate the Image.asset(), Image.network(), or SvgPicture.asset() call that references the logo. Verify it corresponds to the official logo file (assets/logo.png, assets/images/logo.png, or similar).",
+    "R3_replace_logo_if_needed": "If the splash currently references an alternate logo (e.g., 'assets/logo_alt.png', 'logo_white.png', or 'icon.png'), update it to the correct main logo path used elsewhere in the app (e.g., the one appearing in the app bar or profile header).",
+    "R4_remove_subtitle": "Locate and remove the Text widget or RichText element containing the phrase 'Discover NYC Street Performers'. Delete it entirely — do not leave empty padding or placeholders.",
+    "R5_layout_and_alignment": "Ensure final splash layout has only one centered logo inside a Center or Column widget with MainAxisAlignment.center. Maintain visual symmetry and responsiveness.",
+    "R6_responsiveness": "Ensure logo width is no more than 60% of screen width on mobile and scales appropriately for web if responsive design is active."
+  },
+  "implementation_plan": [
+    {
+      "name": "Locate active splash screen",
+      "steps": [
+        "Search for splash_screen.dart, main_splash.dart, or app_splash.dart.",
+        "Confirm which splash is being used by checking main.dart or route definitions.",
+        "Do NOT edit any other splash variants or archived files."
+      ]
+    },
+    {
+      "name": "Fix logo reference",
+      "steps": [
+        "Identify Image.asset or SvgPicture.asset path used in splash.",
+        "If path points to wrong logo file, replace it with the main logo asset path confirmed in assets/images or assets/icons folder.",
+        "Keep image widget style unchanged (fit: BoxFit.contain or similar)."
+      ]
+    },
+    {
+      "name": "Remove subtitle text",
+      "steps": [
+        "Locate Text widget with string 'Discover NYC Street Performers'.",
+        "Delete that widget and remove any related SizedBox or Padding below it."
+      ]
+    },
+    {
+      "name": "Verify layout",
+      "steps": [
+        "Ensure splash screen now contains only logo, centered vertically and horizontally.",
+        "Confirm it still transitions to the next route normally after the splash duration completes."
+      ]
+    }
+  ],
+  "validation_tests": [
+    "1. Launch app → splash shows correct logo centered ✅",
+    "2. No subtitle text 'Discover NYC Street Performers' visible ✅",
+    "3. Transition from splash → next screen works normally ✅",
+    "4. Backend load or Supabase init unaffected ✅",
+    "5. No secondary or test splash screens altered ✅"
+  ],
+  "expected_logs": [
+    "[UI] Correct splash logo verified and updated.",
+    "[UI] Subtitle removed successfully.",
+    "[FLOW] Splash transition logic unchanged.",
+    "[SAFETY] No backend or navigation modifications detected."
+  ],
+  "safety_measures": {
+    "no_backend_modification": true,
+    "no_navigation_change": true,
+    "no_api_key_access": true,
+    "only_active_splash_screen_modified": true
+  }
+}
