@@ -395,117 +395,64 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                   onPressed: _startThumbnailSelection,
                 )
               else ...[
-                // Thumbnail selector container - Compact TikTok-style
-                if (_thumbnailController != null && _thumbnailController!.value.isInitialized) ...[
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                // Scrub to select thumbnail frame
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Scrub to select thumbnail frame',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: AspectRatio(
-                        aspectRatio: 0.8, // Fixed 4:5 TikTok-style thumbnail ratio
-                        child: Stack(
-                          children: [
-                            // Video preview (with rotation if needed)
-                            Positioned.fill(
-                              child: _thumbnailNeedsRotation
-                                ? Transform.rotate(
-                                    angle: 1.5708, // 90 degrees clockwise (pi/2)
-                                    child: FittedBox(
-                                      fit: BoxFit.cover,
-                                      child: SizedBox(
-                                        width: _thumbnailController!.value.size.width,
-                                        height: _thumbnailController!.value.size.height,
-                                        child: VideoPlayer(_thumbnailController!),
-                                      ),
-                                    ),
-                                  )
-                                : FittedBox(
-                                    fit: BoxFit.cover,
-                                    child: SizedBox(
-                                      width: _thumbnailController!.value.size.width,
-                                      height: _thumbnailController!.value.size.height,
-                                      child: VideoPlayer(_thumbnailController!),
-                                    ),
-                                  ),
-                            ),
-                            
-                            // Frame border overlay to show thumbnail boundary
-                            Positioned.fill(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                            
-                            // Confirm button (bottom-right, slightly smaller)
-                            Positioned(
-                              bottom: 10,
-                              right: 10,
-                              child: GestureDetector(
-                                onTap: _confirmThumbnailSelection,
-                                child: Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryOrange.withOpacity(0.85),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                    const SizedBox(height: 8),
+                    SliderTheme(
+                      data: SliderThemeData(
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                        activeTrackColor: AppTheme.primaryOrange,
+                        inactiveTrackColor: const Color(0xFF444444),
+                        thumbColor: AppTheme.primaryOrange,
+                        overlayColor: Colors.transparent,
+                      ),
+                      child: Slider(
+                        value: _thumbnailFramePosition.clamp(0.0, _controller!.value.duration.inMilliseconds.toDouble()),
+                        min: 0.0,
+                        max: _controller!.value.duration.inMilliseconds.toDouble(),
+                        onChanged: (newValue) async {
+                          setState(() {
+                            _thumbnailFramePosition = newValue;
+                          });
+                          // Seek main controller to update preview in real-time
+                          await _controller?.seekTo(Duration(milliseconds: newValue.round()));
+                          
+                          // Silent play-pause to render frame
+                          _controller?.setVolume(0.0);
+                          await _controller?.play();
+                          await Future.delayed(const Duration(milliseconds: 100));
+                          await _controller?.pause();
+                          _controller?.setVolume(1.0);
+                          
+                          if (mounted) setState(() {});
+                        },
                       ),
                     ),
-                  ),
-                ],
-                
-                const SizedBox(height: 12),
-                
-                // Thumbnail scrub bar
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    activeTrackColor: AppTheme.primaryOrange,
-                    inactiveTrackColor: const Color(0xFF444444),
-                    thumbColor: AppTheme.primaryOrange,
-                    overlayColor: Colors.transparent,
-                  ),
-                  child: Slider(
-                    value: _thumbnailFramePosition.clamp(0.0, _controller!.value.duration.inMilliseconds.toDouble()),
-                    min: 0.0,
-                    max: _controller!.value.duration.inMilliseconds.toDouble(),
-                    onChanged: (newValue) async {
-                      setState(() {
-                        _thumbnailFramePosition = newValue;
-                      });
-                      await _thumbnailController?.seekTo(Duration(milliseconds: newValue.round()));
-                    },
-                    onChangeEnd: (newValue) async {
-                      await _thumbnailController?.pause();
-                    },
-                  ),
+                    const SizedBox(height: 12),
+                    // Confirm button
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryOrange,
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.check, color: Colors.white),
+                      label: const Text(
+                        'Confirm Thumbnail',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: _confirmThumbnailSelection,
+                    ),
+                  ],
                 ),
               ],
             ],
