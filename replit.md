@@ -9,15 +9,19 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 ### Video Preview Orientation & UI Controls (Latest - Oct 9, 2025)
 - **Portrait Orientation Fix**: Automatically detects landscape videos and applies 90° rotation to display upright in portrait mode
 - **Dual-Path Rotation**: 
-  - **Normal VideoPlayer**: Uses Flutter Transform.rotate with dimension swap for GPU-accelerated rotation
-  - **HtmlElementView Fallback**: Applies CSS `transform: translate(-50%, -50%) rotate(90deg)` with `width: 100vh, height: 100vw` for Replit sandbox
-- **Centered Playback**: Both landscape (rotated) and portrait (unrotated) videos use `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)` for TikTok-style centering
-- **Pointer-Events Passthrough**: HtmlElementView video uses `pointer-events: none` to allow taps to reach Flutter controls (close button remains interactive)
+  - **Normal VideoPlayer**: Uses Flutter Transform.rotate with dimension swap for GPU-accelerated rotation PLUS DOM-level rotation fallback via `_applyDomRotation()` for web compatibility
+  - **HtmlElementView Fallback**: Applies CSS `transform: translate(-50%, -50%) rotate(90deg)` with `width: 100vh, height: 100vw` for Replit sandbox using `onLoadedMetadata` event listener
+- **Metadata-Based Rotation**: HtmlElementView uses `videoElement.onLoadedMetadata.listen()` to wait for actual video dimensions before applying rotation (prevents race conditions)
+- **DOM Rotation Fallback**: `_applyDomRotation()` method queries `querySelectorAll('video')` to find video elements, checks `videoWidth > videoHeight` for landscape detection, and applies forced portrait CSS at 100ms/500ms/1000ms intervals
+- **Centered Playback**: Both landscape (rotated) and portrait (unrotated) videos use `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%)` for TikTok-style centering
+- **Pointer-Events Passthrough**: Video uses `pointer-events: none` to allow taps to reach Flutter controls (close button remains interactive)
 - **Close Button**: Fixed positioning (top: 12px, right: 12px), 32×32px size, rgba(0,0,0,0.6) background, centered 20px white X icon
 - **Video Pause on Close**: Calls `controller.pause()` before `Navigator.pop()` to cleanly stop playback
-- **Rotation Logging**: Console logs "🌀 Applied forced portrait rotation" for landscape videos in HtmlElementView mode, "🎥 Video rotated to portrait" for normal VideoPlayer
-- **Close Logging**: Console logs "❌ Preview closed" when user taps close button
-- **Complete Flow**: Detect orientation → Apply centered rotation (CSS or Transform) → Log rotation → User taps close → Pause video → Log closure → Dismiss
+- **Rotation Logging**: Console logs "🌀 Applied forced portrait rotation (HtmlElementView)" for landscape videos in sandbox mode, "[PREVIEW] HtmlElementView metadata loaded: WxH (landscape/portrait)" for dimension detection, "🎥 Video rotated to portrait" for normal VideoPlayer
+- **Close Logging**: Console logs "❌ Preview closed" when user taps close button, "❌ Close button confirmed visible" after rotation applied
+- **Complete Flow**: 
+  - **HtmlElementView**: Create video → Listen onLoadedMetadata → Detect orientation → Apply centered rotation CSS → Log rotation → User taps close → Pause video → Log closure → Dismiss
+  - **VideoPlayer**: DOM query → Detect dimensions → Apply rotation CSS → Log rotation → User taps close → Pause video → Log closure → Dismiss
 
 ### Replit Sandbox Fallback with HtmlElementView (Oct 9, 2025)
 - **Sandbox Detection**: Checks `window.location.hostname` for 'replit' in initState to identify development environment
