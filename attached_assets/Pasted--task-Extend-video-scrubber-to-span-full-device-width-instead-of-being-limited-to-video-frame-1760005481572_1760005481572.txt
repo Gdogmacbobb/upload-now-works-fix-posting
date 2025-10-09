@@ -1,0 +1,45 @@
+{
+  "task": "Extend video scrubber to span full device width instead of being limited to video frame width",
+  "context": "The preview screen currently displays a functional video scrubber below the location text, but its width is constrained by the video frame or overlay container. The user wants it to behave like the iPhone Photos or Reels editor timeline — full-screen width across the phone display, independent of the video bounds.",
+  "fix": {
+    "implementation": [
+      "Wrap the scrubber Slider in a LayoutBuilder or SizedBox that uses MediaQuery.of(context).size.width for full width.",
+      "Ensure horizontal padding of 0 on the parent Container, so the scrubber visually spans from screen edge to edge.",
+      "Retain vertical spacing (≈8px) below location text.",
+      "Keep the track height, thumb shape, and colors unchanged (FF8C00 thumb, dark gray track).",
+      "Confirm that the scrubber remains positioned at the bottom portion of the overlay, aligned visually with the rest of the TikTok-style UI.",
+      "Do not clip or mask the scrubber under any stack layers — it must remain on top of the video player but below the close (X) button.",
+      "Ensure it scales dynamically on different devices using MediaQuery width, not hardcoded pixel values."
+    ],
+    "style": {
+      "trackHeight": 3,
+      "thumbShape": "RoundSliderThumbShape(enabledThumbRadius: 6)",
+      "activeColor": "#FF8C00",
+      "inactiveColor": "#333333",
+      "overlayColor": "Colors.transparent",
+      "alignment": "center",
+      "margin": {
+        "top": 8,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    "testing": [
+      "Preview video → scrubber line stretches full screen width.",
+      "Dragging the dot seeks video and audio together, keeping sync.",
+      "Close button, caption, avatar, and performance type remain unaffected.",
+      "No change in portrait orientation or playback logic."
+    ]
+  },
+  "constraints": [
+    "Do NOT modify or rename the current video controller, audio re-sync logic, or replay overlay.",
+    "Do NOT alter the portrait rotation transform or CSS orientation code.",
+    "Do NOT reposition or restyle any existing overlay elements (handle, caption, location, avatar, or X button).",
+    "Do NOT adjust z-index or SafeArea padding outside of the scrubber's Container.",
+    "Do NOT modify any Supabase data bindings or profile image logic.",
+    "Do NOT re-enable debug overlays or sandbox warnings.",
+    "Do NOT introduce fixed pixel widths; only use MediaQuery width.",
+    "Ensure full backward compatibility on mobile, web, and sandbox environments."
+  ]
+}
