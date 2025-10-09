@@ -626,7 +626,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         _isReplitSandbox = hostname.contains('replit');
         if (_isReplitSandbox) {
           debugPrint('[PREVIEW] 🟠 Replit sandbox detected - enabling HtmlElementView fallback');
-          _registerPlatformView();
+          _registerPlatformView(widget.controller);
         }
       } catch (e) {
         debugPrint('[PREVIEW] Could not detect hostname: $e');
@@ -640,19 +640,21 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
   }
   
-  void _registerPlatformView() {
+  void _registerPlatformView(VideoPlayerController controller) {
     if (!kIsWeb) return;
     
     try {
+      // Extract video dimensions for rotation detection
+      final videoSize = controller.value.size;
+      final isLandscape = videoSize.width > videoSize.height;
+      
       // Register platform view factory for HtmlElementView fallback
       ui_web.platformViewRegistry.registerViewFactory(
         _platformViewId,
         (int viewId) {
           // Create raw HTML video element
           final videoElement = html.VideoElement()
-            ..src = widget.controller.dataSource
-            ..style.width = '100%'
-            ..style.height = '100%'
+            ..src = controller.dataSource
             ..style.objectFit = 'cover'
             ..setAttribute('playsinline', 'true')
             ..setAttribute('autoplay', 'true')
@@ -660,11 +662,23 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
             ..setAttribute('muted', 'false')
             ..controls = false;
           
+          // Apply rotation for landscape videos to display as portrait
+          if (isLandscape) {
+            videoElement.style.transform = 'rotate(90deg)';
+            videoElement.style.width = '100vh';
+            videoElement.style.height = '100vw';
+            debugPrint('🎥 Video rotated to portrait (HtmlElementView)');
+          } else {
+            videoElement.style.width = '100%';
+            videoElement.style.height = '100%';
+          }
+          
           // Start playback
           videoElement.play();
           
           debugPrint('[PREVIEW] 🟢 HtmlElementView fallback active (sandbox mode)');
           debugPrint('[PREVIEW] Platform view registered: $_platformViewId');
+          debugPrint('[PREVIEW] Video dimensions: ${videoSize.width}x${videoSize.height} (${isLandscape ? "landscape" : "portrait"})');
           
           return videoElement;
         },
@@ -1141,6 +1155,11 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     debugPrint('[PREVIEW] Portrait by: dimensions=$isPortraitByDimensions, rotation=$isPortraitByRotation, device=$needsRotation');
     debugPrint('[PREVIEW] Screen size: ${screenSize.width}x${screenSize.height}');
     
+    // Log rotation when applied
+    if (needsRotation || isPortraitByRotation) {
+      debugPrint('🎥 Video rotated to portrait');
+    }
+    
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.zero,
@@ -1390,22 +1409,29 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               ),
             ),
 
-            // Close button (top-right, moved from left)
+            // Close button (top-right)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              right: 16,
+              top: 12,
+              right: 12,
               child: GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  widget.controller.pause();
+                  debugPrint('❌ Preview closed');
+                  Navigator.pop(context);
+                },
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: Colors.black54,
+                    color: const Color(0x99000000),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24,
+                  child: const Center(
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
