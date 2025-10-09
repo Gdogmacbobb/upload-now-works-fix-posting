@@ -964,6 +964,26 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       _currentController!.pause();
       _currentController!.setLooping(false);
     }
+    
+    // Clean up web-specific transforms to prevent rotation persistence
+    if (kIsWeb) {
+      try {
+        final videoElements = html.document.querySelectorAll('video');
+        for (var i = 0; i < videoElements.length; i++) {
+          final dynamic videoElement = videoElements[i];
+          videoElement.style.removeProperty('transform');
+          videoElement.style.removeProperty('will-change');
+          videoElement.style.removeProperty('position');
+          videoElement.style.removeProperty('top');
+          videoElement.style.removeProperty('left');
+          videoElement.style.removeProperty('width');
+          videoElement.style.removeProperty('height');
+        }
+      } catch (e) {
+        // Silently handle cleanup errors
+      }
+    }
+    
     super.dispose();
   }
 
