@@ -534,12 +534,6 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
           ),
         ),
       );
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
 }
 
 // Full-screen video preview modal
