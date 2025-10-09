@@ -261,9 +261,24 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         }
       }
       
-      final thumbnailPosition = _selectedThumbnailFramePosition != null 
-          ? Duration(milliseconds: _selectedThumbnailFramePosition!.round())
-          : Duration.zero;
+      // Determine thumbnail position: if video was at end, use last frame; otherwise use selected or first frame
+      final currentPosition = _controller!.value.position;
+      final duration = _controller!.value.duration;
+      final videoWasAtEnd = currentPosition >= duration - const Duration(milliseconds: 100);
+      
+      Duration thumbnailPosition;
+      if (videoWasAtEnd) {
+        // Video completed - use last visible frame
+        thumbnailPosition = duration - const Duration(milliseconds: 33);
+        if (kDebugMode) print('[END_FRAME] Re-priming with last frame position: ${thumbnailPosition.inMilliseconds}ms');
+      } else if (_selectedThumbnailFramePosition != null) {
+        // User has selected a custom thumbnail
+        thumbnailPosition = Duration(milliseconds: _selectedThumbnailFramePosition!.round());
+      } else {
+        // Default to first frame
+        thumbnailPosition = Duration.zero;
+      }
+      
       await _primeThumbnail(thumbnailPosition);
       if (kDebugMode) print('[ROTATION] re-applied orientation ${(_orientationRadians * 180 / 3.14159).round()}°');
       setState(() {}); // Force rebuild with correct orientation
@@ -1058,11 +1073,22 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       final duration = _currentController!.value.duration;
       final isPlaying = _currentController!.value.isPlaying;
       
-      // Detect video end - show play overlay for manual replay
+      // Detect video end - capture final frame and show play overlay for manual replay
       if (position >= duration && duration > Duration.zero && !isPlaying) {
-        setState(() {
-          _isPlaying = false;
-          _showPlayOverlay = true;
+        if (kDebugMode) print('[END_FRAME] Video reached end — capturing final frame');
+        
+        // Seek to last visible frame (duration - 1 frame at 30fps = 33ms)
+        final lastFramePosition = duration - const Duration(milliseconds: 33);
+        _currentController!.seekTo(lastFramePosition).then((_) {
+          _currentController!.pause();
+          Future.delayed(const Duration(milliseconds: 150), () {
+            if (mounted) {
+              setState(() {
+                _isPlaying = false;
+                _showPlayOverlay = true;
+              });
+            }
+          });
         });
       } else {
         setState(() {
