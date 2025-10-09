@@ -1,0 +1,91 @@
+{
+  "task": "Finalize portrait preview UI and remove debug flashes WITHOUT breaking current working playback",
+  "context": {
+    "file": "lib/presentation/video_upload/video_upload_screen.dart",
+    "current_state": "Preview now plays with picture+sound in portrait on first tap. In Replit sandbox we use HtmlElementView fallback; in production we use normal VideoPlayer. A set of debug overlays (Frame/Sound/Paint and orange debug card) still flashes for ~0.5s before disappearing. The original TikTok-style chrome (X close, @handle, performance type, location, caption) is sometimes hidden in the sandbox path.",
+    "goal": "Keep the *current working playback* paths exactly as-is, but (1) permanently remove all debug overlays and any flash, and (2) always show the full TikTok-style overlay chrome (X close on top-right + @handle + performance type + location + caption) over the video in BOTH paths (HtmlElementView sandbox and VideoPlayer production). Maintain portrait orientation and BoxFit.cover behavior."
+  },
+  "strict_constraints": [
+    "DO NOT change routes, services, or any other files.",
+    "DO NOT change upload logic, Supabase calls, or form layout below the preview.",
+    "DO NOT reintroduce autoplay on entering the upload screen (only play after user taps Preview).",
+    "Preserve both render paths: HtmlElementView (web sandbox) AND standard VideoPlayer (mobile/production web)."
+  ],
+  "required_changes": [
+    {
+      "name": "Remove all debug UI and logs",
+      "steps": [
+        "Delete/disable any widgets that render debug badges (Frame/Sound/Paint) or orange debug cards.",
+        "Remove console prints/debug logs that begin with [VIDEO_INIT], [PREVIEW], [THUMBNAIL], or renderer messages.",
+        "Ensure no setState-driven debug visibility toggles remain.",
+        "No visual flash: nothing should briefly mount then unmount on open."
+      ]
+    },
+    {
+      "name": "Always-on overlay chrome (TikTok-style)",
+      "spec": {
+        "close_button": {
+          "position": "top-right (12 px from top/right), circular 32x32, rgba(0,0,0,0.6) bg, white 'X'",
+          "behavior": "onTap: pause controller (or HTML video), then close modal"
+        },
+        "text_block": {
+          "position": "bottom-left with safe-area padding",
+          "contents_order": ["@handle (with circular avatar)", "performance type icon+label", "caption text", "location line"],
+          "style": "white text with subtle shadow exactly matching discovery/following feed"
+        }
+      },
+      "notes": [
+        "Use the same small avatar + handle layout as discovery screen.",
+        "Fetch handle from existing profile provider; fallback '@user'.",
+        "Use existing PerformanceType selection and caption from form state; no restyling.",
+        "Overlay must render above BOTH the VideoPlayer and HtmlElementView."
+      ]
+    },
+    {
+      "name": "Portrait rotation without flash",
+      "production_videoplayer_path": [
+        "Keep current working initialization (no autoplay until preview).",
+        "Ensure Transform.rotate (or RotatedBox) is applied ONLY after controller.value.size is available.",
+        "Wrap video in AspectRatio(controller.value.aspectRatio) and BoxFit.cover equivalent so vertical fills screen.",
+        "No intermediate widget that causes a black frame; if needed, fade in video using AnimatedOpacity once first frame is available."
+      ],
+      "sandbox_htmlelementview_path": [
+        "Create HTML <video> element exactly as now (do not regress playback).",
+        "Apply CSS BEFORE attaching to DOM to avoid flashes: visibility:hidden; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(90deg if landscape else 0); width:100vh; height:100vw; object-fit:cover; pointer-events:none; z-index:0;",
+        "On loadedmetadata, confirm intrinsic dimensions and set the rotation (90deg when width>height).",
+        "After play() resolves and getBoundingClientRect().width>0, set visibility:visible and fade in via opacity transition (200ms).",
+        "Ensure the overlay chrome (Flutter side) sits above the video (Stack with clipBehavior: Clip.none; overlay z-index via Positioned; HtmlElementView should not intercept taps thanks to pointer-events:none)."
+      ]
+    },
+    {
+      "name": "Lifecycle and cleanup",
+      "steps": [
+        "When closing preview: pause video, remove listeners, and in sandbox restore any CSS you modified on the video element.",
+        "Guard all setState calls with mounted checks.",
+        "Ensure reopening preview immediately works (no stale controllers or DOM nodes)."
+      ]
+    }
+  ],
+  "acceptance_tests": [
+    "Open upload screen: no audio until tapping Preview.",
+    "Tap Preview (first time): immediate portrait video with audio; NO debug boxes flash.",
+    "Overlay chrome visible over video: close X (top-right), avatar+@handle, performance type, caption, location.",
+    "Tap X: preview closes, audio stops, state below (caption/type/etc.) unchanged.",
+    "Repeat open/close 3x: no regressions, no black frame or audio-only states.",
+    "Mobile (iOS/Android) and deployed web: same behavior using VideoPlayer path.",
+    "Replit/sandbox web: same behavior via HtmlElementView path; no debug flashes."
+  ],
+  "non_functional": [
+    "Null-safety everywhere; no crashes if video missing (show 'Video preview unavailable').",
+    "No new dependencies.",
+    "Keep theme colors (#1C1C1E background, #FF8C00 accents).",
+    "Code comments: clearly label 'PRODUCTION_VIDEO_PLAYER' vs 'SANDBOX_HTML_ELEMENT_VIEW' blocks."
+  ],
+  "deliverables": [
+    "Updated lib/presentation/video_upload/video_upload_screen.dart implementing the above.",
+    "Short note describing where the overlay chrome is built and how the two render paths are layered."
+  ],
+  "do_not_change": [
+    "Routing, main.dart, services (Supabase/Auth/Profile), other presentation screens, upload flow, thumbnail generation logic and UI."
+  ]
+}
