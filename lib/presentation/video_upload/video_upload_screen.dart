@@ -135,6 +135,10 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       await Future.delayed(const Duration(milliseconds: 200));
       await _controller!.pause();
       
+      // Re-seek to target position to ensure we're at the exact frame (playback may have overshot)
+      await _controller!.seekTo(position);
+      await Future.delayed(const Duration(milliseconds: 50)); // Brief delay for seek to settle
+      
       // Verify that we're at the correct position and controller is ready
       final actualPosition = _controller!.value.position;
       final positionDiff = (actualPosition - position).abs();
