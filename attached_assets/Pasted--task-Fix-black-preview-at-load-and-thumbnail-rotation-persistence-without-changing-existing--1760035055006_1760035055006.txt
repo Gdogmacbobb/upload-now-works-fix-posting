@@ -1,0 +1,81 @@
+{
+  "task": "Fix black preview-at-load and thumbnail rotation persistence without changing existing app flow.",
+  "constraints": {
+    "must_not_change": [
+      "UI layout hierarchy and sizes",
+      "Supabase or any backend schema/calls",
+      "Caption input, scrubber UX, and publish flow",
+      "Full-screen preview behavior and audio sync",
+      "Button labels/colors/styles"
+    ],
+    "platforms": ["Flutter Web", "iOS/Android"],
+    "safety": "All changes must be additive and guarded; if a step fails, fall back to current behavior."
+  },
+  "bugs_observed": [
+    "On entering the upload screen the preview container is black (no first frame).",
+    "After watching full-screen preview and closing it, the thumbnail reappears rotated/incorrect."
+  ],
+  "requirements": {
+    "R1_preview_first_frame": "When the upload screen appears, the preview container must show the first frame (or last selected thumbnail frame) immediately — never black.",
+    "R2_orientation_stable": "Thumbnail orientation must remain correct before and after opening/closing full preview. No rotation drift.",
+    "R3_single_source_of_truth": "Use a single stored orientation value and a single stored thumbnail position; both views must read from these."
+  },
+  "implementation_plan": [
+    {
+      "name": "Post-frame priming with verified paint",
+      "details": [
+        "After `controller.initialize()` completes and the preview `VideoPlayer` is built, schedule `_primeThumbnail(targetPosition)` inside `SchedulerBinding.instance.addPostFrameCallback`.",
+        "_primeThumbnail(position): mute -> seek(position) -> (web only) play 200ms -> pause -> restore volume.",
+        "Verification: after pause, confirm `controller.value.isInitialized == true` AND (web) video element `readyState >= 2` AND `position` within ±80ms of target. If verification fails, retry once (max 2 attempts) with 150ms delay.",
+        "On success, call `setState()`; never leave the preview black."
+      ]
+    },
+    {
+      "name": "Shared state",
+      "details": [
+        "Hold two fields in upload state: `thumbnailPosition` (Duration) and `orientationDeg` (int from metadata/device).",
+        "Preview button and full-screen preview both read these values; do NOT compute orientation independently per view."
+      ]
+    },
+    {
+      "name": "Rotation handling without leaking transforms",
+      "details": [
+        "Upload screen: apply rotation via Flutter `Transform.rotate` wrapper ONLY (do not set inline CSS on the `<video>`).",
+        "Full-screen preview: if CSS transforms are needed (web/sandbox), save original inline styles before applying.",
+        "On preview close: always run `clearWebVideoStyles()` that restores saved styles (or removes transform properties if none were present), then immediately call `_primeThumbnail(thumbnailPosition)` to repaint the correct upright frame."
+      ]
+    },
+    {
+      "name": "Do-not-break guards",
+      "details": [
+        "Wrap all DOM interop in try/catch; on any exception, skip DOM edits and still seek+pause the controller.",
+        "Never recreate or dispose the existing upload-screen controller during these steps.",
+        "No changes to routes, providers, or backend writes."
+      ]
+    }
+  ],
+  "code_hooks": {
+    "when_to_prime": [
+      "After controller.initialize() AND after the preview VideoPlayer is first built.",
+      "After user confirms a new thumbnail position.",
+      "Immediately after closing the full-screen preview."
+    ],
+    "logging": [
+      "[THUMBNAIL] prime:start {posMs}",
+      "[THUMBNAIL] prime:verify ok {posMs}",
+      "[THUMBNAIL] prime:retry",
+      "[THUMBNAIL] rotate:apply {deg}",
+      "[THUMBNAIL] rotate:clear done"
+    ]
+  },
+  "acceptance_tests": [
+    "Open upload screen → first frame visible in preview (no black) within ~300ms.",
+    "Tap Select Thumbnail → scrub and confirm → preview shows that frame instantly and upright.",
+    "Tap Preview → watch → close → preview still shows the same frame, upright.",
+    "Repeat the above 3x; no regressions on web and mobile."
+  ],
+  "fallback_plan": {
+    "when": "If verification still fails after 2 attempts on web only.",
+    "do": "Capture a snapshot to an Image widget (canvas drawImage on the HTMLVideoElement) for the preview-button background while keeping the controller for playback; this is non-invasive and prevents black preview. Do not change any existing playback code."
+  }
+}
