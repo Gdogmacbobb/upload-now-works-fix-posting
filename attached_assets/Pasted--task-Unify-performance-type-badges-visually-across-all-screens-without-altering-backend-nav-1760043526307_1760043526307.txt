@@ -1,0 +1,100 @@
+{
+  "task": "Unify performance type badges visually across all screens without altering backend, navigation, or Supabase integrations.",
+  "goal": "Ensure all performance type elements (labels, icons, shapes, and colors) are visually consistent across Create Account, Upload Post, and Performer Profile screens while keeping all navigation routes, Supabase backend structure, anon keys, and existing logic untouched.",
+  "constraints": {
+    "do_not_change": [
+      "Supabase database schema",
+      "Supabase API endpoints, anon keys, and authentication flow",
+      "Navigation routes or transitions",
+      "Form submission logic or backend integration",
+      "Supabase column names (e.g., 'performance_types', 'user_profiles')",
+      "Any backend or data serialization logic"
+    ],
+    "maintain": [
+      "Existing state management system (e.g., setState, provider, or riverpod)",
+      "Current user flow (Create → Upload → Profile)",
+      "All existing Supabase calls and user registration logic"
+    ]
+  },
+  "requirements": {
+    "R1_visual_consistency": "All performance type badges must share the same color, shape, font, and icon style across every screen.",
+    "R2_shape": "Convert all performance badges to oval (capsule-style) containers using BorderRadius.circular(20).",
+    "R3_colors": {
+      "active_color": "#FF8C00",
+      "inactive_color": "#1C1C1E",
+      "text_color": "#FFFFFF"
+    },
+    "R4_icons": {
+      "Music": "Icons.music_note",
+      "Dance": "Icons.directions_run",
+      "Visual Arts": "Icons.brush",
+      "Comedy": "Icons.theater_comedy",
+      "Magic": "Icons.auto_awesome",
+      "Other": "Icons.star"
+    },
+    "R5_typography": {
+      "font_size": 14,
+      "font_weight": "bold",
+      "alignment": "center"
+    },
+    "R6_layout": "Apply consistent padding (horizontal: 12px, vertical: 6px) and spacing (6px between badges). Use Row or Wrap for display.",
+    "R7_component_reuse": "Introduce a shared UI widget 'PerformanceTypeBadge' for consistent rendering across all relevant screens without affecting logic or API binding."
+  },
+  "implementation_plan": [
+    {
+      "name": "Create shared component",
+      "details": [
+        "Define a new widget PerformanceTypeBadge(label, icon, isActive, isSelectable, onTap).",
+        "Wrap content inside Container with BoxDecoration, borderRadius: BorderRadius.circular(20), background color depending on isActive state.",
+        "Inside the container, display Row(children: [Icon(icon, size: 18, color: Colors.white), SizedBox(width: 6), Text(label, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))])."
+      ]
+    },
+    {
+      "name": "Apply shared component to existing screens",
+      "details": [
+        "Replace inline badge containers in CreateAccountScreen, UploadPostScreen, and PerformerProfileScreen with PerformanceTypeBadge().",
+        "Preserve all callback logic (onTap, onSelect, etc.) to ensure Supabase writes remain unchanged.",
+        "Do not modify how selected performance types are stored, sent, or read from Supabase."
+      ]
+    },
+    {
+      "name": "Backend data validation",
+      "details": [
+        "Ensure UI continues to pass the same performance type string values (e.g., 'Music', 'Dance', etc.) to Supabase.",
+        "Confirm that the badge widget references existing Supabase data without modifying schema or auth parameters.",
+        "No change to backend structure, triggers, or data serialization."
+      ]
+    }
+  ],
+  "safety_measures": {
+    "no_backend_modification": true,
+    "no_navigation_modification": true,
+    "no_schema_updates": true,
+    "no_api_key_exposure": true
+  },
+  "visual_guidelines": {
+    "shape": "Oval (capsule)",
+    "active_color": "#FF8C00",
+    "inactive_color": "#1C1C1E",
+    "text_color": "#FFFFFF",
+    "font_size": 14,
+    "font_weight": "bold",
+    "border_radius": 20,
+    "horizontal_padding": 12,
+    "vertical_padding": 6,
+    "icon_alignment": "left of text",
+    "spacing_between_badges": 6
+  },
+  "validation_tests": [
+    "1. Create Account: selecting a badge saves correctly and UI matches oval orange style ✅",
+    "2. Performer Profile: shows same orange capsule badges for selected types ✅",
+    "3. Upload Post: performance type badges look identical and selection logic works ✅",
+    "4. Supabase backend keys and data unchanged ✅",
+    "5. Navigation routes and flow remain identical ✅"
+  ],
+  "expected_logs": [
+    "[UI] Unified PerformanceTypeBadge applied across all screens",
+    "[DB] Verified no schema or API key changes",
+    "[FLOW] Navigation intact, Supabase data flow consistent"
+  ]
+}
