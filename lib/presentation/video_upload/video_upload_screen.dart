@@ -38,7 +38,6 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   double _thumbnailFramePosition = 0.0; // Position in milliseconds (live scrubbing value)
   double? _selectedThumbnailFramePosition; // Confirmed timestamp to be saved
   bool _thumbnailNeedsRotation = false; // Track if 90° rotation is needed for landscape videos
-  Uint8List? _thumbnailImageBytes; // The actual thumbnail image to display
   
   final ProfileService _profileService = ProfileService();
 
@@ -91,10 +90,11 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       if (mounted) {
         _controller!.setVolume(1.0);
         _controller!.pause();
-        setState(() {});
         
-        // Generate initial thumbnail from first frame
-        await _generateThumbnailAtPosition(0);
+        // Seek to first frame for thumbnail display
+        await _controller!.seekTo(Duration.zero);
+        
+        setState(() {});
       }
     } catch (e) {
       if (mounted) {
@@ -106,28 +106,6 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
   
-  /// Generate thumbnail at given timestamp (in milliseconds)
-  Future<void> _generateThumbnailAtPosition(int timeMs) async {
-    if (_videoPath == null) return;
-    
-    try {
-      final uint8list = await VideoThumbnail.thumbnailData(
-        video: _videoPath!,
-        imageFormat: ImageFormat.PNG,
-        timeMs: timeMs,
-        quality: 75,
-      );
-      
-      if (mounted && uint8list != null) {
-        setState(() {
-          _thumbnailImageBytes = uint8list;
-        });
-      }
-    } catch (e) {
-      // Silently fail thumbnail generation - preview will still work
-      debugPrint('Failed to generate thumbnail: $e');
-    }
-  }
 
   Future<void> _initializeThumbnailController() async {
     if (_videoPath == null) return;
@@ -184,8 +162,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       _isSelectingThumbnail = false;
     });
     
-    // Regenerate thumbnail at selected position
-    await _generateThumbnailAtPosition(selectedTime);
+    // Seek main controller to selected thumbnail position for display
+    if (_controller != null && _controller!.value.isInitialized) {
+      await _controller!.seekTo(Duration(milliseconds: selectedTime));
+      if (mounted) {
+        setState(() {});
+      }
+    }
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -293,21 +276,15 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                               child: Stack(
                                 fit: StackFit.expand,
                                 children: [
-                                  // Thumbnail image background
-                                  if (_thumbnailImageBytes != null)
-                                    Image.memory(
-                                      _thumbnailImageBytes!,
-                                      fit: BoxFit.cover,
-                                    )
-                                  else
-                                    Container(
-                                      color: Colors.black87,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white54,
-                                        ),
-                                      ),
+                                  // Video frame as thumbnail background
+                                  FittedBox(
+                                    fit: BoxFit.cover,
+                                    child: SizedBox(
+                                      width: _controller!.value.size.width,
+                                      height: _controller!.value.size.height,
+                                      child: VideoPlayer(_controller!),
                                     ),
+                                  ),
                                   
                                   // Centered play icon overlay
                                   Center(
