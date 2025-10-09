@@ -35,6 +35,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   bool _isSelectingThumbnail = false;
   double _thumbnailFramePosition = 0.0; // Position in milliseconds (live scrubbing value)
   double? _selectedThumbnailFramePosition; // Confirmed timestamp to be saved
+  bool _hasDisplayedInitialFrame = false; // Track if we've shown first frame
   
   final ProfileService _profileService = ProfileService();
 
@@ -84,10 +85,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       
       await _controller!.initialize();
       
-      if (mounted) {
-        // Prime thumbnail to display first frame
-        await _primeThumbnail(Duration.zero);
-      }
+      // Don't prime here - let the FutureBuilder build the VideoPlayer widget first
+      // Priming will happen in a postFrameCallback after the widget is built
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,7 +97,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
 
-  Future<void> _primeThumbnail(Duration position) async {
+  Future<void> _primeThumbnail(Duration position, {int retryCount = 0}) async {
     if (_controller == null || !_controller!.value.isInitialized) return;
     
     try {
@@ -113,8 +112,21 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       await Future.delayed(const Duration(milliseconds: 180));
       await _controller!.pause();
       
+      // Verify that we're at the correct position and controller is ready
+      final isAtPosition = (_controller!.value.position - position).abs() < const Duration(milliseconds: 500);
+      final isReady = _controller!.value.isInitialized && !_controller!.value.isPlaying;
+      
       // Restore volume
       _controller!.setVolume(1.0);
+      
+      // If verification fails and we haven't retried yet, try once more
+      if (!isAtPosition || !isReady) {
+        if (retryCount < 1) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          await _primeThumbnail(position, retryCount: retryCount + 1);
+          return;
+        }
+      }
       
       // Update UI after texture is ready
       if (mounted) {
@@ -226,6 +238,16 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                 } else if (snapshot.connectionState == ConnectionState.done &&
                            _controller != null &&
                            _controller!.value.isInitialized) {
+                  // Prime thumbnail to show first frame AFTER VideoPlayer widget is built
+                  if (!_hasDisplayedInitialFrame) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                      if (mounted && !_hasDisplayedInitialFrame) {
+                        _hasDisplayedInitialFrame = true;
+                        await _primeThumbnail(Duration.zero);
+                      }
+                    });
+                  }
+                  
                   // Unified thumbnail-preview element
                   return Center(
                     child: Container(
@@ -655,8 +677,6 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
   String? _videoDataSource; // Store video path for controller recreation
   VideoPlayerController? _currentController; // Track current controller for proper disposal
-  Map<html.VideoElement, String> _originalTransforms = {}; // Store original transforms to restore on dispose
-  
 
   @override
   void initState() {
@@ -672,9 +692,6 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         _isReplitSandbox = hostname.contains('replit');
         if (_isReplitSandbox) {
           _registerPlatformView(widget.controller);
-        } else {
-          // Standard Flutter web: store current transforms to restore on dispose
-          _storeVideoTransforms();
         }
       } catch (e) {
         // Silently fail hostname detection
@@ -686,21 +703,6 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     widget.controller.addListener(_updatePlaybackState);
     
     WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
-  }
-  
-  void _storeVideoTransforms() {
-    if (!kIsWeb) return;
-    try {
-      final videoElements = html.document.querySelectorAll('video');
-      for (var i = 0; i < videoElements.length; i++) {
-        final videoElement = videoElements[i] as html.VideoElement;
-        final transform = videoElement.style.getPropertyValue('transform');
-        // Store transform even if empty - we need to restore to original state
-        _originalTransforms[videoElement] = transform;
-      }
-    } catch (e) {
-      // Silently handle storage errors
-    }
   }
   
   void _registerPlatformView(VideoPlayerController controller) {
@@ -993,15 +995,19 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           _htmlVideoElement!.style.removeProperty('will-change');
           _htmlVideoElement!.style.removeProperty('object-fit');
         } else {
-          // Standard Flutter web: restore original transforms
-          for (final entry in _originalTransforms.entries) {
-            if (entry.value.isEmpty) {
-              // Original was empty - remove the property to clear rotation
-              entry.key.style.removeProperty('transform');
-            } else {
-              // Restore original transform value
-              entry.key.style.setProperty('transform', entry.value);
-            }
+          // Standard Flutter web: remove all transforms from video elements
+          // The upload screen uses Transform.rotate wrapper, so elements should have no inline transform
+          final videoElements = html.document.querySelectorAll('video');
+          for (var i = 0; i < videoElements.length; i++) {
+            final videoElement = videoElements[i] as html.VideoElement;
+            videoElement.style.removeProperty('transform');
+            videoElement.style.removeProperty('will-change');
+            videoElement.style.removeProperty('object-fit');
+            videoElement.style.removeProperty('position');
+            videoElement.style.removeProperty('top');
+            videoElement.style.removeProperty('left');
+            videoElement.style.removeProperty('width');
+            videoElement.style.removeProperty('height');
           }
         }
       } catch (e) {
