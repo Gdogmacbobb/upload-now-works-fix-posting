@@ -237,6 +237,31 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     // After preview closes, refresh thumbnail to ensure correct orientation
     if (mounted && _controller != null && _controller!.value.isInitialized) {
       if (kDebugMode) print('[ROTATION] preview closed — refreshing thumbnail');
+      
+      // DOM-level transform cleanup (web only) - remove CSS transforms that preview applied
+      if (kIsWeb) {
+        try {
+          final videoElements = html.document.querySelectorAll('video');
+          for (var i = 0; i < videoElements.length; i++) {
+            final videoEl = videoElements[i] as html.VideoElement;
+            videoEl.style.removeProperty('transform');
+            videoEl.style.removeProperty('rotate');
+            videoEl.style.removeProperty('will-change');
+            videoEl.style.removeProperty('position');
+            videoEl.style.removeProperty('top');
+            videoEl.style.removeProperty('left');
+            videoEl.style.removeProperty('width');
+            videoEl.style.removeProperty('height');
+            videoEl.style.removeProperty('object-fit');
+            videoEl.style.transform = 'none';
+            videoEl.style.rotate = '0deg';
+          }
+          if (kDebugMode) print('[ROTATION] DOM transform cleared, current wrapper rotation = ${(_orientationRadians * 180 / 3.14159).round()}°');
+        } catch (e) {
+          if (kDebugMode) print('[ROTATION] DOM cleanup error: $e');
+        }
+      }
+      
       final thumbnailPosition = _selectedThumbnailFramePosition != null 
           ? Duration(milliseconds: _selectedThumbnailFramePosition!.round())
           : Duration.zero;
