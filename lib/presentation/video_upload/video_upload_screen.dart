@@ -93,7 +93,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         // Seek to first frame for thumbnail display
         await _controller!.seekTo(Duration.zero);
         
-        setState(() {});
+        // Wait for video texture to render the frame
+        await Future.delayed(const Duration(milliseconds: 150));
+        
+        if (mounted) {
+          setState(() {});
+        }
       }
     } catch (e) {
       if (mounted) {
