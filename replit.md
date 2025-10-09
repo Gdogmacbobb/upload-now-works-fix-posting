@@ -49,9 +49,10 @@ A serverless approach using external services:
 
 ## Development Tools
 - **Flutter Framework**: Version 3.32.0 with Dart SDK 3.8.0.
-- **Build Tools**: Automated build system via `build_web.sh`.
+- **Build Tools**: Automated build system via `build_web.sh` with `--no-tree-shake-icons` flag to preserve Material icons.
 - **Package Management**: Flutter Pub for Dart packages and NPM for Node.js.
 - **Web Server**: Node.js Express server (`server.js`) for serving static Flutter web builds.
+- **Material Icons**: Configured with `uses-material-design: true` in pubspec.yaml to bundle MaterialIcons font for web deployment.
 
 ## Infrastructure
 - **Web Hosting**: Static web deployment with CanvasKit rendering.

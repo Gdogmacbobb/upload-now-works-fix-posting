@@ -30,7 +30,6 @@ dependencies:
   universal_html: ^2.2.4
   vector_math: ^2.1.4
   video_player: ^2.8.1
-  video_thumbnail: ^0.5.3
   web: ^1.1.0
 dev_dependencies:
   flutter_lints: 4.0.0
