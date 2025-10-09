@@ -2,7 +2,7 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment.
 
-**Current Status** (Oct 9, 2025): ✅ **REPLIT SANDBOX FALLBACK IMPLEMENTED** - Added HtmlElementView fallback for video preview in Replit development sandbox while preserving GPU-accelerated rendering in production.
+**Current Status** (Oct 9, 2025): ✅ **PORTRAIT VIDEO PREVIEW COMPLETE** - Forced portrait mode with centered playback in Replit sandbox using HtmlElementView with CSS rotation and pointer-events passthrough for interactive controls.
 
 ## Recent Video Preview Fixes (Oct 9, 2025)
 
@@ -10,12 +10,14 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 - **Portrait Orientation Fix**: Automatically detects landscape videos and applies 90° rotation to display upright in portrait mode
 - **Dual-Path Rotation**: 
   - **Normal VideoPlayer**: Uses Flutter Transform.rotate with dimension swap for GPU-accelerated rotation
-  - **HtmlElementView Fallback**: Applies CSS `transform: rotate(90deg)` with `width: 100vh, height: 100vw` for Replit sandbox
+  - **HtmlElementView Fallback**: Applies CSS `transform: translate(-50%, -50%) rotate(90deg)` with `width: 100vh, height: 100vw` for Replit sandbox
+- **Centered Playback**: Both landscape (rotated) and portrait (unrotated) videos use `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)` for TikTok-style centering
+- **Pointer-Events Passthrough**: HtmlElementView video uses `pointer-events: none` to allow taps to reach Flutter controls (close button remains interactive)
 - **Close Button**: Fixed positioning (top: 12px, right: 12px), 32×32px size, rgba(0,0,0,0.6) background, centered 20px white X icon
 - **Video Pause on Close**: Calls `controller.pause()` before `Navigator.pop()` to cleanly stop playback
-- **Rotation Logging**: Console logs "🎥 Video rotated to portrait" when rotation is applied (both normal and HtmlElementView modes)
+- **Rotation Logging**: Console logs "🌀 Applied forced portrait rotation" for landscape videos in HtmlElementView mode, "🎥 Video rotated to portrait" for normal VideoPlayer
 - **Close Logging**: Console logs "❌ Preview closed" when user taps close button
-- **Complete Flow**: Detect orientation → Apply rotation (CSS or Transform) → Log rotation → User taps close → Pause video → Log closure → Dismiss
+- **Complete Flow**: Detect orientation → Apply centered rotation (CSS or Transform) → Log rotation → User taps close → Pause video → Log closure → Dismiss
 
 ### Replit Sandbox Fallback with HtmlElementView (Oct 9, 2025)
 - **Sandbox Detection**: Checks `window.location.hostname` for 'replit' in initState to identify development environment
