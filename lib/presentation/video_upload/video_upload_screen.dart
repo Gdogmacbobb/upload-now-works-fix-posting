@@ -93,7 +93,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         
         // Play briefly to force texture rendering (especially important on web)
         await _controller!.play();
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(const Duration(milliseconds: 300));
         await _controller!.pause();
         
         // Restore volume after pausing
@@ -126,42 +126,18 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     }
   }
 
-  void _confirmThumbnailSelection() async {
-    final selectedTime = _thumbnailFramePosition.round();
-    
+  void _confirmThumbnailSelection() {
     setState(() {
       _selectedThumbnailFramePosition = _thumbnailFramePosition;
       _isSelectingThumbnail = false;
     });
-    
-    // Seek main controller to selected thumbnail position for display
-    if (_controller != null && _controller!.value.isInitialized) {
-      await _controller!.seekTo(Duration(milliseconds: selectedTime));
-      
-      // Mute before playing to avoid audio blip
-      _controller!.setVolume(0.0);
-      
-      // Play briefly to force texture rendering of selected frame
-      await _controller!.play();
-      await Future.delayed(const Duration(milliseconds: 200));
-      await _controller!.pause();
-      
-      // Restore volume after pausing
-      _controller!.setVolume(1.0);
-      
-      // Use post-frame callback for reliable UI update
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {});
-        }
-      });
-    }
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Thumbnail set at ${(_thumbnailFramePosition / 1000).toStringAsFixed(1)}s'),
           backgroundColor: AppTheme.primaryOrange,
+          duration: const Duration(seconds: 2),
         ),
       );
     }
