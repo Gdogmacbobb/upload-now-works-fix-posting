@@ -241,18 +241,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 LoadingIndicatorWidget(
                   loadingText: _loadingText.replaceAll('...', ''),
                 ),
-                SizedBox(height: 8.h),
-                // NYC Street Culture tagline
-                Text(
-                  'Discover NYC Street Performers',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w400,
-                    color: AppTheme.textSecondary.withOpacity(0.8),
-                    letterSpacing: 0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
               ],
             ),
           ),
