@@ -1,0 +1,60 @@
+{
+  "task": "Final fix for persistent thumbnail rotation after preview close.",
+  "goal": "Ensure the thumbnail always returns upright and unrotated after preview, without affecting any working logic or layout.",
+  "scope": {
+    "do_not_modify": [
+      "Supabase upload, captions, scrubber, or duration badge",
+      "Preview dialog presentation or showDialog() await logic",
+      "Controller lifecycle (must continue to be reused between preview and upload screens)",
+      "UI layout, colors, or buttons"
+    ]
+  },
+  "problem_observed": "After exiting the full-screen preview, the thumbnail still appears rotated. The Dart-level orientation state is correct, but HTML video elements retain CSS transforms applied by the preview player.",
+  "implementation_plan": [
+    {
+      "name": "Enforce DOM-level transform cleanup",
+      "details": [
+        "After the preview dialog closes and before calling _primeThumbnail(), directly access the HTML video element in the web build using:",
+        "final html.VideoElement? videoEl = _controller!.textureId != null ? html.document.querySelector('video[texture-id=\"${_controller!.textureId}\"]') as html.VideoElement? : html.document.querySelector('video');",
+        "If videoEl != null, then execute:",
+        "videoEl.style.removeProperty('transform');",
+        "videoEl.style.removeProperty('rotate');",
+        "videoEl.style.removeProperty('will-change');",
+        "videoEl.style.transform = 'none';",
+        "videoEl.style.rotate = '0deg';",
+        "This step must occur BEFORE calling await _primeThumbnail(thumbnailPosition)."
+      ]
+    },
+    {
+      "name": "Orientation state reassertion",
+      "details": [
+        "Ensure the Flutter Transform.rotate wrapper still uses the fixed orientation value (stored as _orientationRadians).",
+        "After DOM cleanup and _primeThumbnail(), reapply setState(() {}) to trigger full re-render of the thumbnail preview container."
+      ]
+    },
+    {
+      "name": "Fail-safe verification",
+      "details": [
+        "After cleanup and re-render, log orientation and transform state:",
+        "if (kDebugMode) print('[ROTATION] DOM transform cleared, current wrapper rotation = ${_orientationRadians * 180 / 3.14159}°');",
+        "In debug builds, verify that html.document.querySelector('video').style.transform returns empty string or 'none'."
+      ]
+    }
+  ],
+  "safety_measures": [
+    "Wrap all DOM access in `if (kIsWeb)` and `try/catch` blocks to avoid crashes on mobile builds.",
+    "If videoEl is null, skip DOM cleanup silently but still call _primeThumbnail(thumbnailPosition).",
+    "Never dispose or recreate the controller during this process."
+  ],
+  "success_criteria": [
+    "1. When user enters upload screen → first frame visible, upright ✅",
+    "2. When user previews video → plays correctly ✅",
+    "3. When user exits preview → thumbnail returns instantly upright ✅",
+    "4. DOM inspector shows no residual CSS transforms on <video> element ✅",
+    "5. Works consistently on both web and mobile ✅"
+  ],
+  "expected_logs": [
+    "[ROTATION] preview closed — refreshing thumbnail",
+    "[ROTATION] DOM transform cleared, current wrapper rotation = 0°"
+  ]
+}
