@@ -1,0 +1,64 @@
+{
+  "task": "Fix thumbnail frame rendering orientation and full visibility within upload page thumbnail selector",
+  "context": "The current thumbnail selector on the upload page displays the recorded video rotated sideways and cropped to half the display height. The goal is to render the full video frame correctly in portrait mode within the container, preserving the correct aspect ratio (9:16), while ensuring the scrub bar and confirm button remain functional. This must not break any other parts of the app, such as preview playback, portrait rendering, or Supabase image loading.",
+  "fix": {
+    "implementation": [
+      "Determine the video's intrinsic dimensions by reading videoController.value.size or videoElement.videoWidth/videoHeight (for HtmlElementView fallback).",
+      "Calculate the aspect ratio as width/height, and set the AspectRatio widget dynamically to match.",
+      "Replace hardcoded container height with AspectRatio to preserve full video visibility.",
+      "Apply a rotation correction only if the video metadata indicates landscape orientation — rotate 90 degrees clockwise using Transform.rotate(angle: pi / 2).",
+      "Ensure BoxFit.cover is used to maintain full visual fill without letterboxing (use contain only for testing if cropping occurs).",
+      "Prevent double rotation by adding a state flag (e.g., hasAppliedRotation) so the fix doesn’t reapply during hot reload.",
+      "Add safe area padding to prevent black bars when rotated in mobile preview.",
+      "Maintain scrub bar and ✓ confirm button positions below the frame preview container.",
+      "Verify this fix under both HTML fallback and native VideoPlayerController paths."
+    ],
+    "ui_design": {
+      "thumbnail_container": {
+        "type": "AspectRatio",
+        "ratio": "videoController.value.aspectRatio or dynamic from metadata",
+        "alignment": "center",
+        "decoration": {
+          "color": "#000000",
+          "borderRadius": 8
+        },
+        "child": "FittedBox(fit: BoxFit.cover, child: RotatedBox(quarterTurns: rotationFix ? 1 : 0, child: VideoFramePreview()))"
+      },
+      "scrub_bar": {
+        "position": "below_container",
+        "activeColor": "#FF8C00",
+        "inactiveColor": "#444444",
+        "trackHeight": 3,
+        "margin": { "top": 12, "bottom": 8, "left": 8, "right": 8 }
+      },
+      "confirm_button": {
+        "alignment": "bottomRight",
+        "icon": "check",
+        "size": 36,
+        "backgroundColor": "rgba(255,140,0,0.85)",
+        "foregroundColor": "#FFFFFF"
+      }
+    },
+    "rotation_logic": {
+      "detectOrientation": "use videoController.value.size.width > videoController.value.size.height to detect landscape",
+      "applyCorrection": "if landscape, rotate 90° clockwise",
+      "storeState": "rotationApplied = true to prevent reprocessing",
+      "persistForThumbnail": "ensure exported frame respects corrected rotation"
+    },
+    "testing": [
+      "Upload a landscape video → renders correctly upright in portrait container.",
+      "Upload a portrait video → no rotation applied, full frame visible.",
+      "Scrub through → frame preview updates instantly with proper orientation.",
+      "Tap confirm ✓ → frame stored exactly as displayed (correct rotation).",
+      "Reopen upload page → persisted frame displays upright and full-width."
+    ]
+  },
+  "constraints": [
+    "Do NOT modify existing preview screen code or recording logic.",
+    "Do NOT change Supabase schema or file upload flow.",
+    "Do NOT hardcode container sizes — all dimensions must respond to video metadata.",
+    "Ensure performance remains smooth on mobile (60fps scrub).",
+    "Maintain all current styling, spacing, and orange accent scheme.",
+    "No debug overlays or sandbox warnings should reappear."
+  ]
+}
