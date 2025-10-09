@@ -1,0 +1,86 @@
+{
+  "task": "Fix black thumbnail after video ends and ensure correct rotation persistence on preview exit.",
+  "goal": "When a user finishes watching the video and exits, the thumbnail must display the final frame (never black) and remain correctly oriented. The user must still be able to change the thumbnail normally afterward.",
+  "scope": {
+    "must_not_change": [
+      "UI layout, padding, and visual styling",
+      "Supabase upload logic or backend schema",
+      "Preview playback, audio, or scrubber behavior",
+      "Controller reuse and initialization flow",
+      "Select Thumbnail and Confirm Thumbnail flow"
+    ]
+  },
+  "problems_observed": [
+    "1. After the video finishes and user exits the preview, the thumbnail container goes black.",
+    "2. The thumbnail should display the final frame instead of black.",
+    "3. The thumbnail must remain upright and properly oriented even after exiting preview playback."
+  ],
+  "requirements": {
+    "R1_end_frame_display": "When playback completes, the controller must automatically seek to the video's last frame (video duration - 1 frame) and pause there before exiting preview.",
+    "R2_upright_persistence": "Thumbnail must always appear upright; DOM-level transforms must be fully cleared on preview close.",
+    "R3_thumbnail_editing_intact": "After video completion, user must still be able to tap Select Thumbnail and scrub/change to any frame without glitches."
+  },
+  "implementation_plan": [
+    {
+      "name": "Detect video completion and capture final frame",
+      "details": [
+        "Inside the video controller listener, detect when controller.value.position >= controller.value.duration.",
+        "When detected, automatically call:",
+        "await _controller!.seekTo(controller.value.duration - const Duration(milliseconds: 33));",
+        "_controller!.pause();",
+        "await Future.delayed(const Duration(milliseconds: 150));",
+        "if (mounted) setState(() {});",
+        "This ensures the last rendered frame becomes the new visible thumbnail."
+      ]
+    },
+    {
+      "name": "Preview close handling",
+      "details": [
+        "After the user exits full-screen preview (detected after await showDialog()), run the following sequence:",
+        "if (kIsWeb) {",
+        "  try {",
+        "    final html.VideoElement? videoEl = html.document.querySelector('video');",
+        "    if (videoEl != null) {",
+        "      videoEl.style.removeProperty('transform');",
+        "      videoEl.style.removeProperty('rotate');",
+        "      videoEl.style.removeProperty('will-change');",
+        "      videoEl.style.transform = 'none';",
+        "      videoEl.style.rotate = '0deg';",
+        "    }",
+        "  } catch (e) { if (kDebugMode) print('[ROTATION] DOM cleanup failed: $e'); }",
+        "}",
+        "Then immediately re-prime the thumbnail:",
+        "final position = _controller!.value.position >= _controller!.value.duration",
+        "  ? _controller!.value.duration - const Duration(milliseconds: 33)",
+        "  : _selectedThumbnailFramePosition ?? Duration.zero;",
+        "await _primeThumbnail(position);",
+        "setState(() {});"
+      ]
+    },
+    {
+      "name": "Ensure consistent thumbnail orientation and editability",
+      "details": [
+        "Retain Transform.rotate(angle: _orientationRadians) wrapper for consistent visual rotation.",
+        "Do not dispose or reinitialize the controller when switching between preview and upload screen.",
+        "Ensure the 'Select Thumbnail' button remains active; when pressed, it should use the same controller to scrub through frames normally."
+      ]
+    }
+  ],
+  "safety_measures": [
+    "Wrap all DOM access in try/catch with kIsWeb guard to prevent crashes on mobile.",
+    "If for any reason the final frame capture fails, fall back to Duration.zero (first frame) rather than black.",
+    "Do not alter or dispose the shared VideoPlayerController instance."
+  ],
+  "validation_tests": [
+    "1. Upload screen loads → shows first frame, upright ✅",
+    "2. Watch full preview video until the end → closes → thumbnail shows last frame, upright ✅",
+    "3. User taps 'Select Thumbnail' → scrub bar works and updates thumbnail normally ✅",
+    "4. Preview video again → exit → thumbnail remains correct, upright ✅",
+    "5. Works smoothly on web and mobile with no UI breaks ✅"
+  ],
+  "expected_logs": [
+    "[END_FRAME] Video reached end — capturing final frame",
+    "[ROTATION] preview closed — DOM transform cleared",
+    "[THUMBNAIL] Re-primed with last frame position"
+  ]
+}
