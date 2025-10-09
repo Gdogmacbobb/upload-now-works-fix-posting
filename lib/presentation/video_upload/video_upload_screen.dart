@@ -1,7 +1,7 @@
 import 'dart:io' show File;
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import '../../theme/app_theme.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
@@ -36,6 +36,9 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   double _thumbnailFramePosition = 0.0; // Position in milliseconds (live scrubbing value)
   double? _selectedThumbnailFramePosition; // Confirmed timestamp to be saved
   bool _hasDisplayedInitialFrame = false; // Track if we've shown first frame
+  
+  // Shared orientation state - single source of truth
+  double _orientationRadians = 0.0; // Rotation angle in radians (0 for portrait, 1.5708 for landscape)
   
   final ProfileService _profileService = ProfileService();
 
@@ -85,6 +88,21 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       
       await _controller!.initialize();
       
+      // Calculate orientation once from video metadata - single source of truth
+      // Use rotationCorrection from metadata, not just dimensions
+      final videoSize = _controller!.value.size;
+      final rotationCorrection = _controller!.value.rotationCorrection.toDouble();
+      final isPortraitByDimensions = videoSize.height > videoSize.width;
+      final deviceIsPortrait = true; // Assume portrait device for upload screen
+      final videoIsLandscape = videoSize.width > videoSize.height;
+      
+      // Determine if rotation is needed based on metadata and dimensions
+      final needsRotation = deviceIsPortrait && videoIsLandscape && rotationCorrection == 0;
+      _orientationRadians = needsRotation ? 1.5708 : rotationCorrection; // Use metadata or apply 90° if needed
+      
+      final orientationType = needsRotation ? "landscape (needs rotation)" : (rotationCorrection > 0 ? "portrait with correction" : "portrait");
+      if (kDebugMode) print('[THUMBNAIL] orientation calculated from metadata: $orientationType (${(_orientationRadians * 180 / 3.14159).round()}°)');
+      
       // Don't prime here - let the FutureBuilder build the VideoPlayer widget first
       // Priming will happen in a postFrameCallback after the widget is built
     } catch (e) {
@@ -98,7 +116,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   }
 
   Future<void> _primeThumbnail(Duration position, {int retryCount = 0}) async {
-    if (_controller == null || !_controller!.value.isInitialized) return;
+    if (_controller == null || !_controller!.value.isInitialized) {
+      if (kDebugMode) print('[THUMBNAIL] prime:skip - controller not ready');
+      return;
+    }
+    
+    if (kDebugMode) print('[THUMBNAIL] prime:start ${position.inMilliseconds}ms (attempt ${retryCount + 1})');
     
     try {
       // Seek to target frame
@@ -107,25 +130,47 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       // Mute to avoid audio blip during paint
       _controller!.setVolume(0.0);
       
-      // Play briefly to force texture rendering (critical for web)
+      // Play briefly to force texture rendering (critical for web) - increased to 200ms per spec
       await _controller!.play();
-      await Future.delayed(const Duration(milliseconds: 180));
+      await Future.delayed(const Duration(milliseconds: 200));
       await _controller!.pause();
       
       // Verify that we're at the correct position and controller is ready
-      final isAtPosition = (_controller!.value.position - position).abs() < const Duration(milliseconds: 500);
+      final actualPosition = _controller!.value.position;
+      final positionDiff = (actualPosition - position).abs();
+      final isAtPosition = positionDiff < const Duration(milliseconds: 80); // ±80ms tolerance per spec
       final isReady = _controller!.value.isInitialized && !_controller!.value.isPlaying;
+      
+      // Web-specific: check video element readyState if available
+      bool webReady = true;
+      if (kIsWeb) {
+        try {
+          final videoElements = html.document.querySelectorAll('video');
+          if (videoElements.isNotEmpty) {
+            final videoElement = videoElements.first as html.VideoElement;
+            webReady = videoElement.readyState >= 2; // HAVE_CURRENT_DATA or better
+            if (kDebugMode) print('[THUMBNAIL] web readyState: ${videoElement.readyState}');
+          }
+        } catch (e) {
+          // Silently fail web check
+        }
+      }
       
       // Restore volume
       _controller!.setVolume(1.0);
       
       // If verification fails and we haven't retried yet, try once more
-      if (!isAtPosition || !isReady) {
+      if (!isAtPosition || !isReady || !webReady) {
         if (retryCount < 1) {
-          await Future.delayed(const Duration(milliseconds: 100));
+          if (kDebugMode) print('[THUMBNAIL] prime:retry - pos:$isAtPosition ready:$isReady web:$webReady (diff:${positionDiff.inMilliseconds}ms)');
+          await Future.delayed(const Duration(milliseconds: 150)); // 150ms delay per spec
           await _primeThumbnail(position, retryCount: retryCount + 1);
           return;
+        } else {
+          if (kDebugMode) print('[THUMBNAIL] prime:failed after retry - pos:$isAtPosition ready:$isReady web:$webReady');
         }
+      } else {
+        if (kDebugMode) print('[THUMBNAIL] prime:verify ok ${position.inMilliseconds}ms');
       }
       
       // Update UI after texture is ready
@@ -133,7 +178,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         setState(() {});
       }
     } catch (e) {
-      // Silently handle priming errors
+      if (kDebugMode) print('[THUMBNAIL] prime:error $e');
     }
   }
   
@@ -185,6 +230,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         location: _location,
         userHandle: _userHandle,
         profileImageUrl: _userProfileImageUrl,
+        orientationRadians: _orientationRadians, // Pass shared orientation state
       ),
     );
   }
@@ -239,10 +285,13 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                            _controller != null &&
                            _controller!.value.isInitialized) {
                   // Prime thumbnail to show first frame AFTER VideoPlayer widget is built
+                  // Set flag first to prevent multiple callbacks, then schedule
                   if (!_hasDisplayedInitialFrame) {
+                    _hasDisplayedInitialFrame = true; // Set flag immediately to prevent re-scheduling
+                    if (kDebugMode) print('[THUMBNAIL] scheduling postframe callback');
                     WidgetsBinding.instance.addPostFrameCallback((_) async {
-                      if (mounted && !_hasDisplayedInitialFrame) {
-                        _hasDisplayedInitialFrame = true;
+                      if (mounted) {
+                        if (kDebugMode) print('[THUMBNAIL] postframe callback fired');
                         await _primeThumbnail(Duration.zero);
                       }
                     });
@@ -272,15 +321,16 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
-                                // Video frame as thumbnail background (with rotation for landscape)
+                                // Video frame as thumbnail background (with rotation from shared state)
                                 Builder(
                                   builder: (context) {
                                     final videoSize = _controller!.value.size;
-                                    final isLandscape = videoSize.width > videoSize.height;
                                     
-                                    if (isLandscape) {
+                                    // Use shared orientation state - single source of truth
+                                    // Check absolute value to handle both positive and negative rotations
+                                    if (_orientationRadians.abs() > 1e-3) {
                                       return Transform.rotate(
-                                        angle: 1.5708, // 90 degrees clockwise (pi/2)
+                                        angle: _orientationRadians,
                                         child: FittedBox(
                                           fit: BoxFit.cover,
                                           child: SizedBox(
@@ -651,6 +701,7 @@ class _FullScreenVideoPreview extends StatefulWidget {
   final String location;
   final String userHandle;
   final String? profileImageUrl;
+  final double orientationRadians; // Shared orientation state
 
   const _FullScreenVideoPreview({
     required this.controller,
@@ -659,6 +710,7 @@ class _FullScreenVideoPreview extends StatefulWidget {
     required this.location,
     required this.userHandle,
     this.profileImageUrl,
+    required this.orientationRadians,
   });
 
   @override
@@ -733,20 +785,23 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           });
           
           videoElement.onLoadedMetadata.listen((_) {
-            final vWidth = videoElement.videoWidth;
-            final vHeight = videoElement.videoHeight;
-            final isLandscapeVideo = vWidth > vHeight;
+            // Use shared orientation state - single source of truth
+            // Check absolute value to handle both positive and negative rotations
+            final needsRotation = widget.orientationRadians.abs() > 1e-3;
+            final rotateDeg = (widget.orientationRadians * 180 / 3.14159).round();
             
-            if (isLandscapeVideo) {
+            if (needsRotation) {
+              if (kDebugMode) print('[THUMBNAIL] rotate:apply ${rotateDeg}deg using shared state (Replit sandbox)');
               videoElement.style.position = 'fixed';
               videoElement.style.top = '50%';
               videoElement.style.left = '50%';
-              videoElement.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+              videoElement.style.transform = 'translate(-50%, -50%) rotate(${rotateDeg}deg)';
               videoElement.style.width = '100vh';
               videoElement.style.height = '100vw';
               videoElement.style.objectFit = 'cover';
               videoElement.style.pointerEvents = 'none';
             } else {
+              if (kDebugMode) print('[THUMBNAIL] rotate:apply ${rotateDeg}deg using shared state (Replit sandbox)');
               videoElement.style.position = 'fixed';
               videoElement.style.top = '50%';
               videoElement.style.left = '50%';
@@ -794,6 +849,14 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     
     try {
       final videoElements = html.document.querySelectorAll('video');
+      if (kDebugMode) print('[THUMBNAIL] rotate:apply checking ${videoElements.length} video elements (standard web)');
+      
+      // Use shared orientation state - single source of truth
+      // Check absolute value to handle both positive and negative rotations
+      final needsRotation = widget.orientationRadians.abs() > 1e-3;
+      final rotateDeg = (widget.orientationRadians * 180 / 3.14159).round();
+      
+      if (kDebugMode) print('[THUMBNAIL] rotate:apply ${rotateDeg}deg using shared state (standard web)');
       
       for (var i = 0; i < videoElements.length; i++) {
         final dynamic videoElement = videoElements[i];
@@ -802,10 +865,6 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           continue;
         }
         
-        final videoWidth = videoElement.videoWidth as num;
-        final videoHeight = videoElement.videoHeight as num;
-        final isLandscape = videoWidth > videoHeight;
-        
         videoElement.style.removeProperty('position');
         videoElement.style.removeProperty('top');
         videoElement.style.removeProperty('left');
@@ -813,11 +872,11 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         videoElement.style.removeProperty('height');
         videoElement.style.removeProperty('transform');
         
-        if (isLandscape) {
+        if (needsRotation) {
           videoElement.style.position = 'fixed';
           videoElement.style.top = '50%';
           videoElement.style.left = '50%';
-          videoElement.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+          videoElement.style.transform = 'translate(-50%, -50%) rotate(${rotateDeg}deg)';
           videoElement.style.width = '100vh';
           videoElement.style.height = '100vw';
           videoElement.style.objectFit = 'cover';
@@ -834,7 +893,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         }
       }
     } catch (e) {
-      // Silently fail DOM rotation
+      if (kDebugMode) print('[THUMBNAIL] rotate:apply error: $e');
     }
   }
   
@@ -991,13 +1050,17 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       try {
         if (_htmlVideoElement != null) {
           // Replit sandbox: clean up HTML element view
+          if (kDebugMode) print('[THUMBNAIL] rotate:clear (Replit sandbox)');
           _htmlVideoElement!.style.removeProperty('transform');
           _htmlVideoElement!.style.removeProperty('will-change');
           _htmlVideoElement!.style.removeProperty('object-fit');
+          if (kDebugMode) print('[THUMBNAIL] rotate:clear done');
         } else {
           // Standard Flutter web: remove all transforms from video elements
           // The upload screen uses Transform.rotate wrapper, so elements should have no inline transform
+          if (kDebugMode) print('[THUMBNAIL] rotate:clear (standard web)');
           final videoElements = html.document.querySelectorAll('video');
+          if (kDebugMode) print('[THUMBNAIL] rotate:clear cleaning ${videoElements.length} video elements');
           for (var i = 0; i < videoElements.length; i++) {
             final videoElement = videoElements[i] as html.VideoElement;
             videoElement.style.removeProperty('transform');
@@ -1009,9 +1072,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
             videoElement.style.removeProperty('width');
             videoElement.style.removeProperty('height');
           }
+          if (kDebugMode) print('[THUMBNAIL] rotate:clear done');
         }
       } catch (e) {
-        // Silently handle cleanup errors
+        if (kDebugMode) print('[THUMBNAIL] rotate:clear error: $e');
       }
     }
     
