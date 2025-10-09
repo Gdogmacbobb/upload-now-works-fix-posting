@@ -1,0 +1,51 @@
+{
+  "task": "Add interactive video scrubber (timeline) to preview screen without breaking existing features",
+  "context": "The current preview screen already displays a portrait-oriented video with working audio, close button, Supabase user avatar, caption, performance type, and location text. The user wants to add a visual progress indicator and scrubber (timeline bar with draggable handle) directly below the location text to allow seeking through the video like the iPhone Photos editor, while preserving perfect audio sync.",
+  "fix": {
+    "implementation": [
+      "Add a new widget below the location Row (after the Text or Icon/Text combination showing the performance location).",
+      "Use a ValueListenableBuilder linked to controller (VideoPlayerController) to listen for position updates.",
+      "Implement a Slider or custom Container+GestureDetector that shows current position (controller.value.position.inMilliseconds) vs total duration (controller.value.duration.inMilliseconds).",
+      "Style the track as a horizontal bar (height: 3px, rounded corners) with an orange thumb (FF8C00) and a dark gray background.",
+      "When user drags or taps the slider, call controller.seekTo(Duration(milliseconds: newValue.toInt())); followed by controller.play(); to resume playback with sound in sync.",
+      "In the web fallback (HtmlElementView), bind the same logic to video.currentTime and video.duration for consistency.",
+      "Ensure the scrubber updates in real time while the video plays, reflecting actual playback progress.",
+      "Position this element directly beneath the location label with approximately 8px vertical spacing.",
+      "Ensure this component respects SafeArea and remains visible above the preview controls overlay."
+    ],
+    "style": {
+      "trackHeight": 3,
+      "thumbShape": "RoundSliderThumbShape(enabledThumbRadius: 6)",
+      "activeColor": "#FF8C00",
+      "inactiveColor": "#333333",
+      "overlayColor": "Colors.transparent",
+      "margin": {
+        "top": 8,
+        "left": 24,
+        "right": 24
+      }
+    },
+    "testing": [
+      "Preview opens → video plays portrait with synced audio and overlays intact.",
+      "Scrubber line appears below location text, moves smoothly as video plays.",
+      "Dragging or tapping on the line seeks video and audio simultaneously (no desync).",
+      "Releasing resumes playback seamlessly.",
+      "Close button (X), avatar, handle, caption, performance type, and location text remain unchanged."
+    ]
+  },
+  "constraints": [
+    "Do NOT modify or reinitialize Supabase profile image logic.",
+    "Do NOT touch or rename any existing methods related to audio re-sync, replay overlay, or HtmlElementView fallback.",
+    "Do NOT alter the portrait rotation code or any transform/rotate CSS currently applied to the video.",
+    "Do NOT modify or remove the existing close (X) button or its positioning.",
+    "Do NOT alter caption text rendering, font, or positioning.",
+    "Do NOT change performance type (🎵, 🎭, etc.) or handle text display logic.",
+    "Do NOT modify the video controller initialization or disposal logic except for reading current position and duration.",
+    "Do NOT adjust or modify any z-index (Stack order) of overlays except to ensure the scrubber sits above the background but below the Close (X) button.",
+    "Do NOT modify color themes, paddings, or SafeArea behavior outside the new scrubber.",
+    "Do NOT introduce any new async delays, loops, or timers that might affect playback smoothness.",
+    "Do NOT re-enable any debug overlays or sandbox warnings.",
+    "Ensure all audio sync fixes remain untouched and functional.",
+    "Ensure app behavior on mobile, web, and Replit sandbox remain identical after this addition."
+  ]
+}
