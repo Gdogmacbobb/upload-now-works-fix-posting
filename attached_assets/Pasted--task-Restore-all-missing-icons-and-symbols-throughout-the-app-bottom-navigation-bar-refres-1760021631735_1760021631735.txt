@@ -1,0 +1,38 @@
+{
+  "task": "Restore all missing icons and symbols throughout the app (bottom navigation bar, refresh icon, placeholder image, and other Material icons) without altering any working thumbnail-preview or upload functionality.",
+  "context": "After merging the unified thumbnail-preview feature, all Material icons and placeholder assets disappeared in the Discovery and Following screens, as well as in navigation and buttons. The likely cause is Flutter's icon tree-shaking or missing MaterialIcons.ttf reference in pubspec.yaml. The app was previously configured with preserved icons and working asset paths.",
+  "fix": {
+    "implementation": [
+      "Verify pubspec.yaml includes the Material Icons font asset. If missing, add:",
+      "  uses-material-design: true",
+      "Rebuild the asset bundle to ensure MaterialIcons.ttf and other icon fonts are packaged.",
+      "Add a fonts section if manually managed:",
+      "  fonts:",
+      "    - family: MaterialIcons",
+      "      fonts:",
+      "        - asset: packages/flutter_gallery_assets/fonts/MaterialIcons-Regular.otf",
+      "Ensure that all Image.asset and Icon() references point to valid assets.",
+      "In main.dart, confirm MaterialApp(theme: ThemeData(useMaterial3: false, iconTheme: IconThemeData(color: Colors.white))) is still present.",
+      "Add `--no-tree-shake-icons` flag to the build process in build_web.sh to preserve icons.",
+      "If custom SVG icons were used, verify they are declared under `flutter/assets` in pubspec.yaml and that their relative paths have not changed.",
+      "Run `flutter clean && flutter pub get` then rebuild with `flutter build web --no-tree-shake-icons` to regenerate the correct bundle."
+    ],
+    "ui_verification": [
+      "Check that the Refresh button now displays its icon and label properly.",
+      "Ensure BottomNavigationBar items each display their respective Material icons (home, discovery, upload, profile).",
+      "Confirm placeholder icons (no videos, upload empty state, etc.) appear again.",
+      "Verify color and sizing match pre-existing style (white icons, 28–32px)."
+    ],
+    "state_management": {
+      "icon_state": "no new state variables needed; icons should be static assets only",
+      "asset_binding": "reuse existing static asset calls and theme references"
+    }
+  },
+  "constraints": [
+    "Do NOT modify or reload any Supabase, video controller, or thumbnail-preview logic.",
+    "Do NOT remove or rename existing asset paths.",
+    "Ensure rebuild process preserves icons across all environments (mobile + web).",
+    "Maintain full compatibility with pointer_interceptor package.",
+    "Maintain app theme consistency (dark background, orange highlights)."
+  ]
+}
