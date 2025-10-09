@@ -1149,9 +1149,9 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                                 final seekPosition = Duration(milliseconds: (newValue * duration).toInt());
                                 controller.seekTo(seekPosition);
                                 
-                                // For HtmlElementView fallback, also update HTML video element
+                                // For HtmlElementView fallback, also update HTML video element with sub-second precision
                                 if (_useFallbackView && _htmlVideoElement != null) {
-                                  _htmlVideoElement!.currentTime = seekPosition.inSeconds.toDouble();
+                                  _htmlVideoElement!.currentTime = seekPosition.inMilliseconds / 1000.0;
                                 }
                               }
                             },
