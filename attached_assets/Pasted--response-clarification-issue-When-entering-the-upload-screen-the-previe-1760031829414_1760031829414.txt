@@ -1,0 +1,46 @@
+{
+  "response": {
+    "clarification": {
+      "issue": "When entering the upload screen, the preview container is black instead of showing the first frame. After selecting a thumbnail, the frame displays correctly and is oriented properly. However, once the user watches the preview and exits, the thumbnail in the upload screen becomes rotated. The app otherwise functions correctly.",
+      "confirmed_behavior": [
+        "Black preview container when entering upload screen.",
+        "Thumbnail selection displays the correct frame and orientation.",
+        "After preview playback, thumbnail rotates incorrectly.",
+        "All other features (upload flow, audio, Supabase, layout) work correctly."
+      ]
+    },
+    "request": {
+      "objective": "Fix the black preview display and prevent the thumbnail from rotating after preview, without breaking any existing functionality. Maintain the single unified preview container, correct orientation, and full compatibility with current app behavior.",
+      "required_fixes": [
+        "1. Implement a 'silent paint' initialization sequence after the video controller is initialized. This ensures the first frame renders immediately without black screen:",
+        "   - Mute controller volume.",
+        "   - Seek to Duration.zero (or selected thumbnail timestamp).",
+        "   - Play for ~180ms to force texture render.",
+        "   - Pause the controller.",
+        "   - Restore volume and call setState() to display the frame.",
+        "2. Call this '_primeThumbnail' function immediately after controller.initialize() for the first frame, and again after user selects a new thumbnail timestamp.",
+        "3. Remove or ignore any secondary thumbnail containers — the thumbnail must always display within the preview container itself.",
+        "4. Fix rotation persistence by separating rotation transforms between the preview overlay and thumbnail tile:",
+        "   - The base VideoPlayer widget must never have inline or persistent rotation transforms applied directly.",
+        "   - Rotation for the upload-screen tile should be handled via a wrapper Transform widget that applies a fixed '_tileRotationRadians' derived from video metadata.",
+        "   - Rotation for full-screen preview should be applied only to its overlay wrapper, not the shared VideoPlayer element.",
+        "   - Upon closing the preview, ensure all temporary web transforms are cleared using 'removeProperty('transform')' and 'removeProperty('will-change')' on the HTML video element if applicable.",
+        "5. Maintain current orientation metadata behavior so portrait and landscape videos render correctly both in preview and upload tile.",
+        "6. Preserve all existing working features: video playback, audio synchronization, upload flow, Supabase integration, captions, layout, and button behavior."
+      ],
+      "constraints": [
+        "Do not alter or remove any working UI elements or event listeners.",
+        "Do not modify Supabase database logic, caption input, or video upload handling.",
+        "Do not touch the 'Select Thumbnail' scrubber functionality or layout structure.",
+        "Do not change button placement, sizing, or animations.",
+        "Ensure compatibility across Flutter web and mobile."
+      ],
+      "goal": "When the user enters the upload screen, the preview container immediately shows the first frame of the video (no black screen). When the user selects a thumbnail, the same preview container updates to that frame. After watching and exiting preview, the thumbnail maintains its correct orientation and frame without rotation or duplication."
+    },
+    "debug_info": {
+      "platforms_tested": ["Web", "Mobile"],
+      "current_result": "Black preview on entry, correct frame selection, thumbnail rotates after preview.",
+      "expected_result": "Single preview container that always shows the correct video frame, maintains proper orientation before and after preview, and renders without black screen on initialization."
+    }
+  }
+}
