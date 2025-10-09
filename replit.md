@@ -6,7 +6,18 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 
 ## Recent Video Preview Fixes (Oct 9, 2025)
 
-### Replit Sandbox Fallback with HtmlElementView (Latest - Oct 9, 2025)
+### Video Preview Orientation & UI Controls (Latest - Oct 9, 2025)
+- **Portrait Orientation Fix**: Automatically detects landscape videos and applies 90° rotation to display upright in portrait mode
+- **Dual-Path Rotation**: 
+  - **Normal VideoPlayer**: Uses Flutter Transform.rotate with dimension swap for GPU-accelerated rotation
+  - **HtmlElementView Fallback**: Applies CSS `transform: rotate(90deg)` with `width: 100vh, height: 100vw` for Replit sandbox
+- **Close Button**: Fixed positioning (top: 12px, right: 12px), 32×32px size, rgba(0,0,0,0.6) background, centered 20px white X icon
+- **Video Pause on Close**: Calls `controller.pause()` before `Navigator.pop()` to cleanly stop playback
+- **Rotation Logging**: Console logs "🎥 Video rotated to portrait" when rotation is applied (both normal and HtmlElementView modes)
+- **Close Logging**: Console logs "❌ Preview closed" when user taps close button
+- **Complete Flow**: Detect orientation → Apply rotation (CSS or Transform) → Log rotation → User taps close → Pause video → Log closure → Dismiss
+
+### Replit Sandbox Fallback with HtmlElementView (Oct 9, 2025)
 - **Sandbox Detection**: Checks `window.location.hostname` for 'replit' in initState to identify development environment
 - **Platform View Fallback**: Uses `ui_web.platformViewRegistry.registerViewFactory()` to create raw `<video>` element that bypasses Flutter compositor entirely
 - **Conditional Rendering**: In Replit sandbox: renders `HtmlElementView` instead of `VideoPlayer`; in production: uses normal GPU-accelerated `VideoPlayer`
