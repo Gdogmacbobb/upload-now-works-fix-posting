@@ -1,0 +1,65 @@
+{
+  "task": "Add a thumbnail selection feature to the upload page with scrub bar control, matching TikTok grid sizing",
+  "context": "On the upload page, the user should be able to preview a video thumbnail in a container sized exactly to match the aspect ratio of the thumbnail grid shown in the reference image (TikTok-style 3-column grid). The top container should display the currently selected thumbnail frame from the uploaded video, and a scrub bar below should allow the user to scroll through the video timeline to choose the desired frame. This update should not interfere with existing upload logic, Supabase integration, portrait orientation behavior, or preview features.",
+  "fix": {
+    "implementation": [
+      "Create a Container at the top of the upload screen dedicated to thumbnail selection.",
+      "Set the aspect ratio of the Container to 1:1.25 (approx 4:5) — the same ratio used by TikTok grid thumbnails.",
+      "Inside this Container, render a static frame preview from the uploaded video using VideoPlayerController or ffmpeg frame extraction (depending on environment).",
+      "Below the Container, add a Slider (scrub bar) that maps to the full video duration (0 to videoController.value.duration.inMilliseconds).",
+      "When the user drags the scrub bar, seekTo() the selected timestamp, pause the video, and update the preview frame in real time.",
+      "Add a small floating '✓ Use Frame' button overlay in the bottom-right corner of the thumbnail container that, when tapped, captures the current frame and stores its timestamp as the chosen thumbnail position.",
+      "Store the selected frame in Supabase or local state as thumbnail_frame_time for later upload or retrieval.",
+      "Ensure the scrub bar is visually consistent with the preview screen’s orange accent color (#FF8C00).",
+      "Include haptic feedback (if on mobile) when confirming the thumbnail frame selection.",
+      "Do NOT modify or reposition existing preview, profile image, or upload logic."
+    ],
+    "ui_design": {
+      "thumbnail_container": {
+        "height": "MediaQuery.of(context).size.width / 1.25",
+        "width": "double.infinity",
+        "decoration": {
+          "borderRadius": 8,
+          "color": "#000000",
+          "boxShadow": "0px 2px 8px rgba(0,0,0,0.2)"
+        },
+        "child": "Stack: [FramePreviewImage, Positioned(bottom-right): ConfirmButton]"
+      },
+      "scrub_bar": {
+        "type": "Slider",
+        "activeColor": "#FF8C00",
+        "inactiveColor": "#444444",
+        "thumbRadius": 6,
+        "trackHeight": 3,
+        "margin": {
+          "top": 12,
+          "bottom": 4,
+          "left": 8,
+          "right": 8
+        }
+      },
+      "confirm_button": {
+        "icon": "check",
+        "backgroundColor": "rgba(255,140,0,0.85)",
+        "foregroundColor": "white",
+        "shape": "circle",
+        "size": 36,
+        "alignment": "bottomRight"
+      }
+    },
+    "state_management": {
+      "thumbnailFramePosition": "state variable to store selected frame position",
+      "onScrubChange": "videoController.seekTo(Duration(milliseconds: newValue.round()))",
+      "onScrubEnd": "pause video and update thumbnail preview frame",
+      "onConfirm": "save thumbnailFramePosition to database or temporary state"
+    }
+  },
+  "constraints": [
+    "Do NOT change the upload flow, database schema, or Supabase logic except to add thumbnail_frame_time if not existing.",
+    "Do NOT alter preview screen functionality, X button, or portrait orientation handling.",
+    "Ensure thumbnail selection works on both mobile and web environments.",
+    "Ensure slider and video playback remain perfectly in sync.",
+    "Preserve all current app colors, fonts, and alignment conventions.",
+    "Avoid introducing new dependencies unless necessary for frame extraction (use existing VideoPlayerController first)."
+  ]
+}
