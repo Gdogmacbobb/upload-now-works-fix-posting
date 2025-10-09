@@ -2,11 +2,21 @@
 
 YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services (OpenAI, Gemini, Anthropic, Perplexity), Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment.
 
-**Current Status** (Oct 9, 2025): ✅ **PORTRAIT VIDEO PREVIEW COMPLETE** - Forced portrait mode with centered playback in Replit sandbox using HtmlElementView with CSS rotation and pointer-events passthrough for interactive controls.
+**Current Status** (Oct 9, 2025): ✅ **PRODUCTION-READY VIDEO PREVIEW** - Portrait playback with TikTok-style chrome, zero debug flashes, clean codebase ready for deployment. All debug overlays, logging, and state variables removed while preserving dual-path rendering (HtmlElementView sandbox + VideoPlayer production).
 
 ## Recent Video Preview Fixes (Oct 9, 2025)
 
-### Video Preview Orientation & UI Controls (Latest - Oct 9, 2025)
+### Production-Ready Cleanup (Latest - Oct 9, 2025)
+- **Debug Removal**: Eliminated all debug overlays (Frame/Sound/Paint status, orange sandbox warning, stats box) - zero visual debug elements remain
+- **Code Cleanup**: Removed 467 lines of debug code - file reduced from 1,472 to 1,006 lines
+- **State Variables Cleaned**: Deleted `_frameDecoded`, `_soundActive`, `_paintConfirmed`, `_showRendererWarning`, `_rendererMode`, `_domAttached`, `_retryCount`, `_retryTimer`, `_paintCheckTimer`
+- **Logging Stripped**: Removed all debugPrint statements - verified with `grep -r "PREVIEW\]" lib/` returning no matches
+- **TikTok Chrome Preserved**: Close button (top-right), avatar + @handle, performance type, caption, location all intact with proper shadows
+- **CSS Transform Fixed**: Corrected `translate(-50%, -50())` → `translate(-50%, -50%)` in portrait video centering
+- **Dual Paths Functional**: HtmlElementView (sandbox) and VideoPlayer (production) both work without debug flashes
+- **Production Ready**: Clean error handling with silent catch blocks, properly labeled rendering paths, valid CSS transforms
+
+### Video Preview Orientation & UI Controls (Oct 9, 2025)
 - **Portrait Orientation Fix**: Automatically detects landscape videos and applies 90° rotation to display upright in portrait mode
 - **Dual-Path Rotation**: 
   - **Normal VideoPlayer**: Uses Flutter Transform.rotate with dimension swap for GPU-accelerated rotation PLUS DOM-level rotation fallback via `_applyDomRotation()` for web compatibility
