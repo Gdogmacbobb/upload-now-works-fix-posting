@@ -1383,59 +1383,60 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                       ),
                     ],
                   ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Full-width video scrubber timeline (positioned below location text)
-                  Transform.translate(
-                    offset: const Offset(-16, 0), // Compensate for parent's left: 16 offset
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      child: ValueListenableBuilder(
-                        valueListenable: controller,
-                        builder: (context, VideoPlayerValue value, child) {
-                          final position = value.position.inMilliseconds.toDouble();
-                          final duration = value.duration.inMilliseconds.toDouble();
-                          final progress = duration > 0 ? position / duration : 0.0;
-                          
-                          return SliderTheme(
-                            data: SliderThemeData(
-                              trackHeight: 3,
-                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                              activeTrackColor: const Color(0xFFFF8C00),
-                              inactiveTrackColor: const Color(0xFF444444),
-                              thumbColor: const Color(0xFFFF8C00),
-                              overlayColor: Colors.transparent,
-                            ),
-                            child: Slider(
-                              value: progress.clamp(0.0, 1.0),
-                              min: 0.0,
-                              max: 1.0,
-                              onChanged: (newValue) {
-                                if (duration > 0) {
-                                  final seekPosition = Duration(milliseconds: (newValue * duration).toInt());
-                                  controller.seekTo(seekPosition);
-                                  
-                                  // For HtmlElementView fallback, also update HTML video element with sub-second precision
-                                  if (_useFallbackView && _htmlVideoElement != null) {
-                                    _htmlVideoElement!.currentTime = seekPosition.inMilliseconds / 1000.0;
-                                  }
-                                }
-                              },
-                              onChangeEnd: (newValue) {
-                                // Resume playback after seeking
-                                controller.play();
-                                if (_useFallbackView && _htmlVideoElement != null) {
-                                  _htmlVideoElement!.play();
-                                }
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
                 ],
+              ),
+            ),
+
+            // Full-width video scrubber timeline (edge-to-edge, positioned below location text)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 16,
+              child: ValueListenableBuilder(
+                valueListenable: controller,
+                builder: (context, VideoPlayerValue value, child) {
+                  final position = value.position.inMilliseconds.toDouble();
+                  final duration = value.duration.inMilliseconds.toDouble();
+                  final progress = duration > 0 ? position / duration : 0.0;
+                  
+                  if (kDebugMode) {
+                    print('[SCRUBBAR_PREVIEW] Full-width layout applied - Width: ${MediaQuery.of(context).size.width}px');
+                  }
+                  
+                  return SliderTheme(
+                    data: SliderThemeData(
+                      trackHeight: 3,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      activeTrackColor: const Color(0xFFFF8C00),
+                      inactiveTrackColor: const Color(0xFF444444),
+                      thumbColor: const Color(0xFFFF8C00),
+                      overlayColor: Colors.transparent,
+                    ),
+                    child: Slider(
+                      value: progress.clamp(0.0, 1.0),
+                      min: 0.0,
+                      max: 1.0,
+                      onChanged: (newValue) {
+                        if (duration > 0) {
+                          final seekPosition = Duration(milliseconds: (newValue * duration).toInt());
+                          controller.seekTo(seekPosition);
+                          
+                          // For HtmlElementView fallback, also update HTML video element with sub-second precision
+                          if (_useFallbackView && _htmlVideoElement != null) {
+                            _htmlVideoElement!.currentTime = seekPosition.inMilliseconds / 1000.0;
+                          }
+                        }
+                      },
+                      onChangeEnd: (newValue) {
+                        // Resume playback after seeking
+                        controller.play();
+                        if (_useFallbackView && _htmlVideoElement != null) {
+                          _htmlVideoElement!.play();
+                        }
+                      },
+                    ),
+                  );
+                },
               ),
             ),
           ],
