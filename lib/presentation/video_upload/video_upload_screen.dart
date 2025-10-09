@@ -29,6 +29,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   String _privacy = 'Public';
   String? _videoPath;
   String _userHandle = '@user';
+  String? _userProfileImageUrl;
   
   // Thumbnail selection
   List<String> _thumbnails = [];
@@ -60,6 +61,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         if (mounted) {
           setState(() {
             _userHandle = '@${profile['username']}';
+            _userProfileImageUrl = profile['profile_image_url'] as String?;
           });
         }
       }
@@ -192,6 +194,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
         performanceType: _performanceType,
         location: _location,
         userHandle: _userHandle,
+        profileImageUrl: _userProfileImageUrl,
       ),
     );
   }
@@ -541,6 +544,7 @@ class _FullScreenVideoPreview extends StatefulWidget {
   final String performanceType;
   final String location;
   final String userHandle;
+  final String? profileImageUrl;
 
   const _FullScreenVideoPreview({
     required this.controller,
@@ -548,6 +552,7 @@ class _FullScreenVideoPreview extends StatefulWidget {
     required this.performanceType,
     required this.location,
     required this.userHandle,
+    this.profileImageUrl,
   });
 
   @override
@@ -556,10 +561,12 @@ class _FullScreenVideoPreview extends StatefulWidget {
 
 class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   bool _isPlaying = false;
+  bool _showPlayOverlay = false;
   
   bool _isReplitSandbox = false;
   String _platformViewId = 'video-preview-${DateTime.now().millisecondsSinceEpoch}';
   bool _useFallbackView = false;
+  html.VideoElement? _htmlVideoElement;
   
   String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -579,6 +586,8 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       }
     }
     
+    // Disable auto-looping to fix audio sync - we'll handle replay manually
+    widget.controller.setLooping(false);
     widget.controller.addListener(_updatePlaybackState);
     
     WidgetsBinding.instance.addPostFrameCallback((_) => _waitForTextureAndStartPlayback());
@@ -595,9 +604,21 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
             ..src = controller.dataSource
             ..setAttribute('playsinline', 'true')
             ..setAttribute('autoplay', 'true')
-            ..setAttribute('loop', 'true')
             ..setAttribute('muted', 'false')
             ..controls = false;
+          
+          // Store reference for manual replay
+          _htmlVideoElement = videoElement;
+          
+          // Handle video end - pause and show play overlay
+          videoElement.onEnded.listen((_) {
+            if (mounted) {
+              setState(() {
+                _showPlayOverlay = true;
+                _isPlaying = false;
+              });
+            }
+          });
           
           videoElement.onLoadedMetadata.listen((_) {
             final vWidth = videoElement.videoWidth;
@@ -745,7 +766,6 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     
     widget.controller.setVolume(1.0);
     await widget.controller.play();
-    widget.controller.setLooping(true);
     
     setState(() {
       _isPlaying = true;
@@ -767,12 +787,48 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
       if (mounted) _applyDomRotation();
     });
   }
+  
+  Future<void> _replayVideo() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _showPlayOverlay = false;
+    });
+    
+    if (_useFallbackView && _htmlVideoElement != null) {
+      // HtmlElementView replay: reset currentTime and play
+      _htmlVideoElement!.currentTime = 0;
+      _htmlVideoElement!.play();
+      setState(() {
+        _isPlaying = true;
+      });
+    } else {
+      // VideoPlayer replay: seekTo(0) then play to restart both audio and video
+      await widget.controller.seekTo(Duration.zero);
+      await widget.controller.play();
+      setState(() {
+        _isPlaying = true;
+      });
+    }
+  }
 
   void _updatePlaybackState() {
     if (mounted) {
-      setState(() {
-        _isPlaying = widget.controller.value.isPlaying;
-      });
+      final position = widget.controller.value.position;
+      final duration = widget.controller.value.duration;
+      final isPlaying = widget.controller.value.isPlaying;
+      
+      // Detect video end - show play overlay for manual replay
+      if (position >= duration && duration > Duration.zero && !isPlaying) {
+        setState(() {
+          _isPlaying = false;
+          _showPlayOverlay = true;
+        });
+      } else {
+        setState(() {
+          _isPlaying = isPlaying;
+        });
+      }
     }
   }
 
@@ -885,6 +941,29 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               ),
             ),
 
+            // Play overlay button (centered) - shows when video ends
+            if (_showPlayOverlay)
+              Positioned.fill(
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _replayVideo,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xCC000000),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
             // PRODUCTION_VIDEO_PLAYER & SANDBOX_HTML_ELEMENT_VIEW: TikTok-style overlay chrome (bottom)
             Positioned(
               bottom: 40,
@@ -897,18 +976,19 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                   // Profile image and handle
                   Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.primaryOrange,
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppTheme.primaryOrange,
+                        backgroundImage: widget.profileImageUrl != null 
+                            ? NetworkImage(widget.profileImageUrl!)
+                            : null,
+                        child: widget.profileImageUrl == null
+                            ? const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 24,
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 12),
                       Text(
