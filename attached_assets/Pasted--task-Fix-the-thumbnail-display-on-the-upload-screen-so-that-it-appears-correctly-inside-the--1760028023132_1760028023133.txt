@@ -1,0 +1,38 @@
+{
+  "task": "Fix the thumbnail display on the upload screen so that it appears correctly inside the preview button container, with a default frame shown when entering the page and full support for manual thumbnail selection.",
+  "clarification": {
+    "current_implementation": {
+      "preview_button": {
+        "description": "A unified preview button (85% width, 4:5 aspect ratio) that shows a paused VideoPlayer frame as the thumbnail background with a play icon and duration badge.",
+        "behavior": "When tapped, the button opens the full-screen video preview."
+      },
+      "select_thumbnail_button": {
+        "description": "A button below the preview that allows the user to choose a new frame using a scrubber.",
+        "behavior": "When tapped, the scrubber appears and lets the user select a frame to use as the thumbnail."
+      }
+    },
+    "issue_observed": "The thumbnail currently appears in a separate container below the preview button, leaving the preview button itself black or empty instead of displaying the default frame. This creates the appearance of two different thumbnail displays.",
+    "desired_behavior": {
+      "default_thumbnail": "When the user finishes recording and enters the upload screen, the first frame of the recorded video (Duration.zero) should automatically be displayed inside the preview button container as the default thumbnail background.",
+      "thumbnail_selection": "The existing Select Thumbnail button and scrubber should remain unchanged. When the user selects a frame, the preview button updates immediately to display that frame as the new thumbnail.",
+      "preview_button": {
+        "appearance": "The thumbnail frame (default or selected) should fill the preview button boundaries with rounded corners, maintaining the 4:5 aspect ratio and the same style as the current UI.",
+        "content": [
+          "Play icon overlay (centered)",
+          "Duration badge (bottom-right)"
+        ],
+        "interaction": [
+          "Tapping opens the full-screen video preview with synchronized audio and correct orientation."
+        ]
+      }
+    },
+    "constraints": [
+      "Do not remove or modify any existing video preview, playback, scrubbing, or Supabase upload logic.",
+      "Do not change audio behavior, orientation, or timing functions.",
+      "Keep the Select Thumbnail button and scrubber working exactly as they are now.",
+      "Ensure both web (HtmlElementView) and mobile (VideoPlayer) implementations remain functional.",
+      "Preserve all existing icon placements, button sizes, and styling within the upload page layout."
+    ],
+    "goal": "Display the default thumbnail (first video frame) directly within the preview button container on upload, replacing the black background. Keep the Select Thumbnail button for manual updates. Remove any separate thumbnail box below the preview button while maintaining all existing upload and preview functionality."
+  }
+}
