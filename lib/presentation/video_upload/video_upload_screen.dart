@@ -260,14 +260,35 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
-                                // Video frame as thumbnail background
-                                FittedBox(
-                                  fit: BoxFit.cover,
-                                  child: SizedBox(
-                                    width: _controller!.value.size.width,
-                                    height: _controller!.value.size.height,
-                                    child: VideoPlayer(_controller!),
-                                  ),
+                                // Video frame as thumbnail background (with rotation for landscape)
+                                Builder(
+                                  builder: (context) {
+                                    final videoSize = _controller!.value.size;
+                                    final isLandscape = videoSize.width > videoSize.height;
+                                    
+                                    if (isLandscape) {
+                                      return Transform.rotate(
+                                        angle: 1.5708, // 90 degrees clockwise (pi/2)
+                                        child: FittedBox(
+                                          fit: BoxFit.cover,
+                                          child: SizedBox(
+                                            width: videoSize.width,
+                                            height: videoSize.height,
+                                            child: VideoPlayer(_controller!),
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      return FittedBox(
+                                        fit: BoxFit.cover,
+                                        child: SizedBox(
+                                          width: videoSize.width,
+                                          height: videoSize.height,
+                                          child: VideoPlayer(_controller!),
+                                        ),
+                                      );
+                                    }
+                                  },
                                 ),
                                 
                                 // Transparent tap overlay (above video on web, intercepts pointer events)
