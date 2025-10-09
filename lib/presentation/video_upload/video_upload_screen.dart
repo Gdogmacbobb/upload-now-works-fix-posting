@@ -661,28 +661,44 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
             ..setAttribute('muted', 'false')
             ..controls = false;
           
-          // Apply centered portrait rotation for landscape videos (TikTok-style)
-          if (isLandscape) {
-            videoElement.style.position = 'absolute';
-            videoElement.style.top = '50%';
-            videoElement.style.left = '50%';
-            videoElement.style.transform = 'translate(-50%, -50%) rotate(90deg)';
-            videoElement.style.width = '100vh';
-            videoElement.style.height = '100vw';
-            videoElement.style.objectFit = 'cover';
-            videoElement.style.pointerEvents = 'none';
-            debugPrint('🌀 Applied forced portrait rotation');
-          } else {
-            // Portrait videos: centered without rotation
-            videoElement.style.position = 'absolute';
-            videoElement.style.top = '50%';
-            videoElement.style.left = '50%';
-            videoElement.style.transform = 'translate(-50%, -50%)';
-            videoElement.style.width = '100vw';
-            videoElement.style.height = '100vh';
-            videoElement.style.objectFit = 'cover';
-            videoElement.style.pointerEvents = 'none';
-          }
+          // Listen for metadata loaded event to apply rotation
+          videoElement.onLoadedMetadata.listen((_) {
+            final vWidth = videoElement.videoWidth;
+            final vHeight = videoElement.videoHeight;
+            final isLandscapeVideo = vWidth > vHeight;
+            
+            debugPrint('[PREVIEW] HtmlElementView metadata loaded: ${vWidth}x${vHeight} (${isLandscapeVideo ? "landscape" : "portrait"})');
+            
+            // Apply centered portrait rotation for landscape videos (TikTok-style)
+            if (isLandscapeVideo) {
+              videoElement.style.position = 'fixed';
+              videoElement.style.top = '50%';
+              videoElement.style.left = '50%';
+              videoElement.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+              videoElement.style.width = '100vh';
+              videoElement.style.height = '100vw';
+              videoElement.style.objectFit = 'cover';
+              videoElement.style.pointerEvents = 'none';
+              debugPrint('🌀 Applied forced portrait rotation (HtmlElementView)');
+              
+              // Log bounding box
+              final rect = videoElement.getBoundingClientRect();
+              debugPrint('[PREVIEW] Video bounding box after rotation: ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})');
+            } else {
+              // Portrait videos: centered without rotation
+              videoElement.style.position = 'fixed';
+              videoElement.style.top = '50%';
+              videoElement.style.left = '50%';
+              videoElement.style.transform = 'translate(-50%, -50%)';
+              videoElement.style.width = '100vw';
+              videoElement.style.height = '100vh';
+              videoElement.style.objectFit = 'cover';
+              videoElement.style.pointerEvents = 'none';
+              debugPrint('[PREVIEW] Portrait video centered (HtmlElementView)');
+            }
+            
+            debugPrint('❌ Close button confirmed visible');
+          });
           
           // Start playback
           videoElement.play();
@@ -699,6 +715,9 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
         _useFallbackView = true;
         _paintConfirmed = true; // Fallback view bypasses compositor, mark as painted
       });
+      
+      // Schedule DOM rotation check for HtmlElementView fallback
+      _scheduleRotationCheck();
       
       debugPrint('[PREVIEW] ⚠️ Sandbox limitation warning displayed');
     } catch (e) {
@@ -859,6 +878,74 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     }
   }
   
+  void _applyDomRotation() {
+    if (!kIsWeb) return;
+    
+    try {
+      final videoElements = html.document.querySelectorAll('video');
+      debugPrint('[PREVIEW] 🌀 Checking ${videoElements.length} video element(s) for rotation');
+      
+      for (var i = 0; i < videoElements.length; i++) {
+        final dynamic videoElement = videoElements[i];
+        
+        // Wait for video metadata to load
+        if (videoElement.videoWidth == 0 || videoElement.videoHeight == 0) {
+          debugPrint('[PREVIEW] Video #$i: Waiting for dimensions (current: ${videoElement.videoWidth}x${videoElement.videoHeight})');
+          continue;
+        }
+        
+        final videoWidth = videoElement.videoWidth as num;
+        final videoHeight = videoElement.videoHeight as num;
+        final isLandscape = videoWidth > videoHeight;
+        
+        debugPrint('[PREVIEW] Video #$i: ${videoWidth}x${videoHeight} (${isLandscape ? "landscape" : "portrait"})');
+        
+        // Clear any existing positioning/transform
+        videoElement.style.removeProperty('position');
+        videoElement.style.removeProperty('top');
+        videoElement.style.removeProperty('left');
+        videoElement.style.removeProperty('width');
+        videoElement.style.removeProperty('height');
+        videoElement.style.removeProperty('transform');
+        
+        if (isLandscape) {
+          // Apply forced portrait rotation for landscape videos
+          videoElement.style.position = 'fixed';
+          videoElement.style.top = '50%';
+          videoElement.style.left = '50%';
+          videoElement.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+          videoElement.style.width = '100vh';
+          videoElement.style.height = '100vw';
+          videoElement.style.objectFit = 'cover';
+          videoElement.style.pointerEvents = 'none';
+          
+          debugPrint('🌀 Forced DOM-level portrait rotation applied');
+        } else {
+          // Portrait videos: centered without rotation
+          videoElement.style.position = 'fixed';
+          videoElement.style.top = '50%';
+          videoElement.style.left = '50%';
+          videoElement.style.transform = 'translate(-50%, -50%)';
+          videoElement.style.width = '100vw';
+          videoElement.style.height = '100vh';
+          videoElement.style.objectFit = 'cover';
+          videoElement.style.pointerEvents = 'none';
+          
+          debugPrint('[PREVIEW] Video #$i: Centered portrait (no rotation needed)');
+        }
+        
+        // Log bounding box for verification
+        final dynamic rect = videoElement.getBoundingClientRect();
+        debugPrint('[PREVIEW] Video #$i bounding box: ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})');
+      }
+      
+      // Confirm close button visibility
+      debugPrint('❌ Close button confirmed visible');
+    } catch (e) {
+      debugPrint('[PREVIEW] DOM rotation failed: $e');
+    }
+  }
+  
   void _startDomVisibilityCheck() {
     _retryTimer?.cancel();
     
@@ -881,6 +968,10 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           
           // Force CSS visibility on all video elements
           _forceVideoVisibility();
+          
+          // Apply DOM-level rotation after visibility
+          await Future.delayed(const Duration(milliseconds: 100));
+          _applyDomRotation();
           
           _startPlayback();
         } else {
@@ -941,7 +1032,22 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
     // Web: Force paint refresh after CSS visibility enforcement
     if (kIsWeb && _domAttached) {
       _forcePaintRefresh();
+      // Schedule rotation check after metadata loads
+      _scheduleRotationCheck();
     }
+  }
+  
+  void _scheduleRotationCheck() {
+    // Schedule rotation check after video metadata loads (100ms, 500ms, 1000ms intervals)
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _applyDomRotation();
+    });
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _applyDomRotation();
+    });
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) _applyDomRotation();
+    });
   }
   
   Future<void> _forcePaintRefresh() async {
