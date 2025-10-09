@@ -693,7 +693,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
           videoElement.style.position = 'fixed';
           videoElement.style.top = '50%';
           videoElement.style.left = '50%';
-          videoElement.style.transform = 'translate(-50%, -50())';
+          videoElement.style.transform = 'translate(-50%, -50%)';
           videoElement.style.width = '100vw';
           videoElement.style.height = '100vh';
           videoElement.style.objectFit = 'cover';
