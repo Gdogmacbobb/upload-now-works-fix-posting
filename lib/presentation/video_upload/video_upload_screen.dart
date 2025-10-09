@@ -36,6 +36,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   bool _isSelectingThumbnail = false;
   double _thumbnailFramePosition = 0.0; // Position in milliseconds (live scrubbing value)
   double? _selectedThumbnailFramePosition; // Confirmed timestamp to be saved
+  bool _thumbnailNeedsRotation = false; // Track if 90° rotation is needed for landscape videos
   
   final ProfileService _profileService = ProfileService();
 
@@ -121,6 +122,11 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
       if (mounted) {
         _thumbnailController!.setVolume(0.0); // Mute thumbnail preview
         _thumbnailController!.pause();
+        
+        // Detect if video is landscape and needs 90° rotation
+        final videoSize = _thumbnailController!.value.size;
+        _thumbnailNeedsRotation = videoSize.width > videoSize.height;
+        
         setState(() {});
       }
     } catch (e) {
@@ -310,57 +316,79 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
                 )
               else ...[
                 // Thumbnail selector container
-                Container(
-                  height: MediaQuery.of(context).size.width / 1.25,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
+                if (_thumbnailController != null && _thumbnailController!.value.isInitialized) ...[
+                  ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      // Thumbnail preview
-                      if (_thumbnailController != null && _thumbnailController!.value.isInitialized)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Center(
-                            child: AspectRatio(
-                              aspectRatio: _thumbnailController!.value.aspectRatio,
-                              child: VideoPlayer(_thumbnailController!),
+                      child: Stack(
+                        children: [
+                          // Thumbnail preview with proper aspect ratio and rotation
+                          AspectRatio(
+                            aspectRatio: _thumbnailNeedsRotation 
+                              ? 1.0 / _thumbnailController!.value.aspectRatio  // Invert for rotated landscape
+                              : _thumbnailController!.value.aspectRatio,        // Use as-is for portrait
+                            child: _thumbnailNeedsRotation
+                              ? Transform.rotate(
+                                  angle: 1.5708, // 90 degrees clockwise (pi/2)
+                                  child: AspectRatio(
+                                    aspectRatio: _thumbnailController!.value.aspectRatio,
+                                    child: FittedBox(
+                                      fit: BoxFit.cover,
+                                      child: SizedBox(
+                                        width: _thumbnailController!.value.size.width,
+                                        height: _thumbnailController!.value.size.height,
+                                        child: VideoPlayer(_thumbnailController!),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : FittedBox(
+                                  fit: BoxFit.cover,
+                                  child: SizedBox(
+                                    width: _thumbnailController!.value.size.width,
+                                    height: _thumbnailController!.value.size.height,
+                                    child: VideoPlayer(_thumbnailController!),
+                                  ),
+                                ),
+                          ),
+                          
+                          // Confirm button (bottom-right)
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: GestureDetector(
+                              onTap: _confirmThumbnailSelection,
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryOrange.withOpacity(0.85),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      
-                      // Confirm button (bottom-right)
-                      Positioned(
-                        bottom: 12,
-                        right: 12,
-                        child: GestureDetector(
-                          onTap: _confirmThumbnailSelection,
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryOrange.withOpacity(0.85),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
                 
                 const SizedBox(height: 12),
                 
