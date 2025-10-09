@@ -34,7 +34,8 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   
   // Thumbnail selection
   bool _isSelectingThumbnail = false;
-  double _thumbnailFramePosition = 0.0; // Position in milliseconds
+  double _thumbnailFramePosition = 0.0; // Position in milliseconds (live scrubbing value)
+  double? _selectedThumbnailFramePosition; // Confirmed timestamp to be saved
   
   final ProfileService _profileService = ProfileService();
 
@@ -103,6 +104,10 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
     if (_videoPath == null) return;
     
     try {
+      // Dispose existing controller to prevent leaks
+      await _thumbnailController?.dispose();
+      _thumbnailController = null;
+      
       final VideoPlayerController thumbnailController;
       if (kIsWeb) {
         thumbnailController = VideoPlayerController.networkUrl(Uri.parse(_videoPath!));
@@ -139,6 +144,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
   void _confirmThumbnailSelection() {
     setState(() {
+      _selectedThumbnailFramePosition = _thumbnailFramePosition;
       _isSelectingThumbnail = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -445,9 +451,33 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
               icon: const Icon(Icons.upload, color: Colors.white),
               label: const Text("Drop Content", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
               onPressed: () {
+                // TODO: Implement actual upload logic here
+                // When uploading to Supabase, include the thumbnail timestamp:
+                // - _selectedThumbnailFramePosition (in milliseconds) should be saved to 'thumbnail_frame_time' column
+                // - If null, default to 0 (first frame)
+                
+                final thumbnailTime = _selectedThumbnailFramePosition?.round() ?? 0;
+                
+                // Placeholder upload logic
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Uploading video...")),
+                  SnackBar(
+                    content: Text(
+                      "Uploading video...\nThumbnail frame: ${(thumbnailTime / 1000).toStringAsFixed(1)}s"
+                    ),
+                  ),
                 );
+                
+                // Example Supabase mutation (when implemented):
+                // await Supabase.instance.client.from('videos').insert({
+                //   'video_url': uploadedVideoUrl,
+                //   'thumbnail_frame_time': thumbnailTime,
+                //   'title': _caption,
+                //   'description': _caption,
+                //   'performance_type': _performanceType,
+                //   'location': _location,
+                //   'privacy': _privacy,
+                //   ...
+                // });
               },
             ),
             const SizedBox(height: 24),
