@@ -17,6 +17,7 @@ Preferred communication style: Simple, everyday language.
   - Material Icons (music_note, directions_run, brush, theater_comedy, auto_awesome, star)
   - Consistent typography (14px bold white text) and spacing (12px horizontal, 6px vertical padding)
   - Backend integration preserved: no changes to Supabase schema, API calls, or performance type values
+- **Splash screen simplification**: Removed subtitle text "Discover NYC Street Performers" from splash screen, maintaining only the centered animated logo and loading indicator. Navigation flow and all initialization logic remain unchanged.
 
 # System Architecture
 
