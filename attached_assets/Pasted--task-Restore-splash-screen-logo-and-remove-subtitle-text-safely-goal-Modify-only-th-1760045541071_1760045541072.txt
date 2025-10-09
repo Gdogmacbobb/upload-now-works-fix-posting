@@ -1,0 +1,65 @@
+{
+  "task": "Restore splash screen logo and remove subtitle text safely.",
+  "goal": "Modify only the Splash Screen to display the main logo centered on screen and remove the text 'Discover NYC Street Performers' without altering navigation flow, backend, or other UI components.",
+  "constraints": {
+    "do_not_touch": [
+      "All navigation routes and transitions",
+      "Supabase configuration, anon key, and backend integration",
+      "App state management logic",
+      "Any other screen (login, registration, upload, profile, feed, etc.)"
+    ],
+    "keep_intact": [
+      "Splash screen background color and fade animation (if present)",
+      "Logo asset path and dimensions",
+      "App initialization logic that loads after splash"
+    ]
+  },
+  "requirements": {
+    "R1_logo_restore": "Ensure the app logo image asset is visible at the center of the splash screen. Use existing asset path (e.g., 'assets/logo.png' or current path).",
+    "R2_remove_text": "Delete or comment out the subtitle Text widget that says 'Discover NYC Street Performers'. There should be no text displayed under the logo.",
+    "R3_alignment": "Keep logo centered vertically and horizontally within a SafeArea or Center widget.",
+    "R4_size": "Maintain existing logo size if defined; if not, constrain within 60% of screen width for mobile responsiveness.",
+    "R5_transition": "Preserve fade-in or scale animation timing; do not modify duration or transition to home page."
+  },
+  "implementation_plan": [
+    {
+      "name": "Locate Splash Screen widget",
+      "details": [
+        "Find file typically named splash_screen.dart or similar.",
+        "Identify the Column or Stack containing both the logo and subtitle text."
+      ]
+    },
+    {
+      "name": "Remove subtitle text",
+      "details": [
+        "Locate the Text widget with the string 'Discover NYC Street Performers'.",
+        "Delete or comment it out.",
+        "Ensure no extra padding or empty SizedBox remains below the logo."
+      ]
+    },
+    {
+      "name": "Center logo",
+      "details": [
+        "Wrap the logo in a Center widget or keep existing alignment if already centered.",
+        "Example: Center(child: Image.asset('assets/logo.png', width: MediaQuery.of(context).size.width * 0.6))"
+      ]
+    }
+  ],
+  "expected_result": [
+    "✅ Splash screen displays only the centered app logo.",
+    "✅ No text or subtitle visible below logo.",
+    "✅ Navigation to next screen works exactly as before.",
+    "✅ No changes to backend, Supabase, or other screens."
+  ],
+  "safety_measures": {
+    "no_backend_modification": true,
+    "no_navigation_modification": true,
+    "no_api_key_change": true,
+    "no_additional_screens_affected": true
+  },
+  "expected_logs": [
+    "[UI] Splash logo restored successfully.",
+    "[UI] Subtitle text removed ('Discover NYC Street Performers').",
+    "[FLOW] Splash transition logic verified unchanged."
+  ]
+}
