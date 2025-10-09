@@ -569,10 +569,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   html.VideoElement? _htmlVideoElement;
   
   String _textureKey = 'video_player_${DateTime.now().millisecondsSinceEpoch}';
+  String? _videoDataSource; // Store video path for controller recreation
+  VideoPlayerController? _currentController; // Track current controller for proper disposal
 
   @override
   void initState() {
     super.initState();
+    
+    // Store video data source for controller recreation on replay
+    _videoDataSource = widget.controller.dataSource;
+    _currentController = widget.controller;
     
     if (kIsWeb) {
       try {
@@ -663,7 +669,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   }
 
   Future<void> _waitForTextureAndStartPlayback() async {
-    if (!mounted || !widget.controller.value.isInitialized) {
+    if (!mounted || _currentController == null || !_currentController!.value.isInitialized) {
       return;
     }
 
@@ -751,21 +757,21 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   }
   
   Future<void> _startPlayback() async {
-    if (!mounted) return;
+    if (!mounted || _currentController == null) return;
     
     try {
-      await widget.controller.play();
+      await _currentController!.play();
       await Future.delayed(const Duration(milliseconds: 32));
-      await widget.controller.pause();
-      await widget.controller.seekTo(Duration.zero);
+      await _currentController!.pause();
+      await _currentController!.seekTo(Duration.zero);
     } catch (e) {
       // Silently fail frame decode
     }
     
     if (!mounted) return;
     
-    widget.controller.setVolume(1.0);
-    await widget.controller.play();
+    _currentController!.setVolume(1.0);
+    await _currentController!.play();
     
     setState(() {
       _isPlaying = true;
@@ -789,39 +795,68 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
   }
   
   Future<void> _replayVideo() async {
-    if (!mounted) return;
+    if (!mounted || _videoDataSource == null) return;
     
     setState(() {
       _showPlayOverlay = false;
     });
     
     if (_useFallbackView && _htmlVideoElement != null) {
-      // HtmlElementView replay: restart both HTML element AND controller
-      _htmlVideoElement!.currentTime = 0;
+      // HtmlElementView replay: use load() to force browser to reload entire media stream
+      _htmlVideoElement!.load();
       _htmlVideoElement!.play();
       
-      // Also restart controller to sync _updatePlaybackState listener
-      await widget.controller.seekTo(Duration.zero);
-      await widget.controller.play();
+      // Recreate controller to fully reinitialize audio context
+      if (_currentController != null) {
+        _currentController!.removeListener(_updatePlaybackState);
+        await _currentController!.dispose();
+      }
+      
+      // Create fresh controller with same video source
+      final newController = VideoPlayerController.networkUrl(Uri.parse(_videoDataSource!));
+      await newController.initialize();
+      newController.setLooping(false);
+      newController.setVolume(1.0);
+      newController.addListener(_updatePlaybackState);
+      await newController.play();
+      
+      _currentController = newController;
       
       setState(() {
         _isPlaying = true;
       });
     } else {
-      // VideoPlayer replay: seekTo(0) then play to restart both audio and video
-      await widget.controller.seekTo(Duration.zero);
-      await widget.controller.play();
+      // VideoPlayer replay: dispose and recreate controller for full audio/video reinitialization
+      if (_currentController != null) {
+        _currentController!.removeListener(_updatePlaybackState);
+        await _currentController!.dispose();
+      }
+      
+      // Create fresh controller from stored data source
+      final newController = VideoPlayerController.networkUrl(Uri.parse(_videoDataSource!));
+      await newController.initialize();
+      newController.setLooping(false);
+      newController.setVolume(1.0);
+      newController.addListener(_updatePlaybackState);
+      await newController.play();
+      
+      _currentController = newController;
+      
       setState(() {
         _isPlaying = true;
       });
+      
+      if (kIsWeb) {
+        _scheduleRotationCheck();
+      }
     }
   }
 
   void _updatePlaybackState() {
-    if (mounted) {
-      final position = widget.controller.value.position;
-      final duration = widget.controller.value.duration;
-      final isPlaying = widget.controller.value.isPlaying;
+    if (mounted && _currentController != null) {
+      final position = _currentController!.value.position;
+      final duration = _currentController!.value.duration;
+      final isPlaying = _currentController!.value.isPlaying;
       
       // Detect video end - show play overlay for manual replay
       if (position >= duration && duration > Duration.zero && !isPlaying) {
@@ -839,16 +874,20 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
 
   @override
   void dispose() {
-    widget.controller.removeListener(_updatePlaybackState);
-    widget.controller.pause();
-    widget.controller.setLooping(false);
+    if (_currentController != null) {
+      _currentController!.removeListener(_updatePlaybackState);
+      _currentController!.pause();
+      _currentController!.setLooping(false);
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final videoSize = widget.controller.value.size;
-    final rotationCorrection = widget.controller.value.rotationCorrection.toDouble();
+    // Use current controller for all video state
+    final controller = _currentController ?? widget.controller;
+    final videoSize = controller.value.size;
+    final rotationCorrection = controller.value.rotationCorrection.toDouble();
     final int rotationDegrees = (rotationCorrection * 180 / 3.14159).round();
     
     final isPortraitByDimensions = videoSize.height > videoSize.width;
@@ -878,7 +917,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
             
             // VIDEO LAYER with conditional rendering (HtmlElementView fallback in sandbox)
             Positioned.fill(
-              child: widget.controller.value.isInitialized
+              child: controller.value.isInitialized
                   ? (_useFallbackView
                       ? // 3️⃣ HtmlElementView Fallback (Replit sandbox)
                         Container(
@@ -897,16 +936,16 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
                               child: AspectRatio(
                                 aspectRatio: isPortrait 
                                     ? (videoSize.height / videoSize.width) 
-                                    : widget.controller.value.aspectRatio,
+                                    : controller.value.aspectRatio,
                                 child: isPortrait
                                     ? Transform.rotate(
                                         angle: finalRotation,
                                         child: AspectRatio(
-                                          aspectRatio: widget.controller.value.aspectRatio,
-                                          child: VideoPlayer(widget.controller),
+                                          aspectRatio: controller.value.aspectRatio,
+                                          child: VideoPlayer(controller),
                                         ),
                                       )
-                                    : VideoPlayer(widget.controller),
+                                    : VideoPlayer(controller),
                               ),
                             ),
                           ),
@@ -925,7 +964,7 @@ class _FullScreenVideoPreviewState extends State<_FullScreenVideoPreview> {
               right: 12,
               child: GestureDetector(
                 onTap: () {
-                  widget.controller.pause();
+                  controller.pause();
                   Navigator.pop(context);
                 },
                 child: Container(
