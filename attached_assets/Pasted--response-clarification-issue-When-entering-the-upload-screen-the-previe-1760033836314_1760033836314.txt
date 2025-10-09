@@ -1,0 +1,51 @@
+{
+  "response": {
+    "clarification": {
+      "issue": "When entering the upload screen, the preview area is black until the user manually selects a thumbnail. After selecting a thumbnail, the image appears with correct orientation. However, when the user opens and closes the video preview, the thumbnail becomes rotated or distorted. The rest of the app (upload, Supabase integration, scrubber, caption input) works correctly.",
+      "confirmed_behavior": [
+        "Black preview container on first load.",
+        "Thumbnail renders correctly only after manual selection.",
+        "After preview playback, the thumbnail rotates or flips orientation."
+      ]
+    },
+    "request": {
+      "objective": "Ensure that the preview container immediately displays the first frame of the uploaded video (not black) and that the thumbnail remains upright and correctly oriented at all times, regardless of whether the user previews the video or not. All existing app functionality must remain intact.",
+      "required_fixes": [
+        "1. Create or confirm a `_primeThumbnail()` function that ensures a video frame is rendered both at load and after thumbnail selection. The process should:",
+        "   • Mute the video controller (`volume = 0`)",
+        "   • Seek to `Duration.zero` (or the selected thumbnail position)",
+        "   • Play for approximately 180ms to force texture rendering (critical for Flutter web)",
+        "   • Pause at that frame",
+        "   • Restore controller volume to normal (`volume = 1.0`)",
+        "   • Call `setState()` to refresh the UI after rendering the frame",
+        "2. Automatically call `_primeThumbnail(Duration.zero)` once the video controller finishes initialization, ensuring the first frame is displayed by default whenever a user enters the upload screen.",
+        "3. When a thumbnail is selected, run `_primeThumbnail(selectedPosition)` using the same silent play-pause method to update the preview container in place.",
+        "4. Prevent thumbnail rotation by implementing orientation-locking logic:",
+        "   • Never apply rotation transforms directly to the shared `VideoPlayer` widget or underlying HTML element.",
+        "   • Handle rotation visually through a wrapper `Transform.rotate(angle: _tileRotationRadians)` that derives orientation once from the video’s metadata and does not update dynamically.",
+        "   • For the preview (full-screen) view, apply temporary rotation only to the overlay container (not the shared player), then remove or restore the transform when the preview closes.",
+        "   • For web builds, ensure that the `<video>` element resets its inline transform properties after preview close using:",
+        "     `el.style.removeProperty('transform');` and `el.style.removeProperty('will-change');`",
+        "5. Confirm that after preview closure, the thumbnail within the upload container always retains the same orientation it had before preview — upright and consistent.",
+        "6. Maintain all existing behavior:",
+        "   • 'Select Thumbnail' button and scrubber functionality unchanged",
+        "   • Full-screen preview opens and closes correctly with synced audio",
+        "   • Supabase upload and metadata flow remain untouched",
+        "   • Layout, buttons, colors, and animation logic stay intact"
+      ],
+      "constraints": [
+        "Do not alter the upload pipeline or any Supabase interaction.",
+        "Do not add new containers or modify the existing preview hierarchy.",
+        "Do not change button alignment, sizing, padding, or captions.",
+        "Do not modify any backend functions or JSON schema.",
+        "Ensure stable performance on Flutter web and mobile."
+      ],
+      "goal": "When the user enters the upload screen, the first frame of their video appears instantly inside the preview container (no black screen). The thumbnail remains upright and correctly oriented before and after watching the preview. Selecting a new thumbnail updates the same preview container without rotation or layout shifts. The rest of the upload flow and preview experience remain unchanged."
+    },
+    "debug_info": {
+      "platforms_tested": ["Web", "iOS Mobile"],
+      "current_result": "Black preview before manual selection, correct orientation after thumbnail selection, rotated thumbnail after preview playback.",
+      "expected_result": "First frame always visible on entry, consistent thumbnail orientation regardless of user actions, and fully preserved functionality."
+    }
+  }
+}
