@@ -1,0 +1,57 @@
+{
+  "task": "Embed the selected or default thumbnail image directly inside the existing preview button container, removing the separate thumbnail box below, while preserving all existing logic and functionality.",
+  "context": "Currently, the preview button is sized and placed correctly, but the thumbnail image displays in a separate box below it. The goal is to have the thumbnail fill the preview button area itself (same boundaries), with the play icon overlaid on top. When the user selects a new thumbnail, that image should update within this same container. The video preview, scrub selection, Supabase integration, and all state variables must remain untouched.",
+  "fix": {
+    "implementation": [
+      "Do NOT change the size, shape, or placement of the existing preview button container. It must remain the same dimensions and alignment as currently rendered.",
+      "Remove the separate thumbnail container that currently renders below the preview button.",
+      "Inside the existing preview container, replace the black background (or placeholder color) with a dynamic Image or VideoFrame widget bound to the current thumbnail variable.",
+      "Ensure the thumbnail fully covers the preview container using BoxFit.cover and the same corner radius (borderRadius: 10 or as currently defined).",
+      "Overlay the existing play icon on top of the thumbnail (centered, semi-transparent).",
+      "Keep the duration label in the bottom-right corner if it already exists, and ensure it appears above the thumbnail.",
+      "When the 'Select Thumbnail' button is pressed, update the same thumbnail image variable so that the preview container refreshes automatically (via setState or equivalent).",
+      "When the user taps the preview container, trigger the existing onPreview() function — do not create a new handler or alter videoController behavior.",
+      "Keep the first frame as the default thumbnail if the user has not selected one, and ensure it is loaded before the preview UI renders."
+    ],
+    "ui_design": {
+      "preview_container": {
+        "type": "Stack",
+        "width": "same as current preview button container",
+        "height": "same as current preview button container",
+        "alignment": "center",
+        "borderRadius": 10,
+        "children": [
+          "ClipRRect(borderRadius: BorderRadius.circular(10), child: Image(thumbnailImageUrl, fit: BoxFit.cover, width: double.infinity, height: double.infinity))",
+          "Center(Icon(Icons.play_circle_filled, size: 56, color: 'rgba(255,255,255,0.75)'))",
+          "Positioned(bottom: 8, right: 8, child: DurationBadge)"
+        ]
+      },
+      "select_thumbnail_button": {
+        "label": "Select Thumbnail",
+        "onPressed": "use existing openThumbnailSelector() logic",
+        "margin": { "top": 10 },
+        "backgroundColor": "#FF8C00"
+      }
+    },
+    "state_management": {
+      "thumbnail_state": {
+        "variable": "currentThumbnailImage",
+        "default": "auto-captured first frame",
+        "update": "reused by thumbnail selector and preview container",
+        "refresh": "triggers UI update only — no new controller instantiation"
+      },
+      "preview_state": {
+        "controller": "existing videoController",
+        "onTap": "existing preview logic (play/pause, fullscreen, etc.)"
+      }
+    }
+  },
+  "constraints": [
+    "Do NOT modify or recreate the videoController.",
+    "Do NOT change the Supabase upload flow or file storage structure.",
+    "Do NOT alter any audio, looping, or preview playback logic.",
+    "Do NOT adjust layout margins outside the preview area.",
+    "Ensure the image and video orientations remain consistent with current fixes.",
+    "Preserve responsive scaling for both mobile and web."
+  ]
+}
