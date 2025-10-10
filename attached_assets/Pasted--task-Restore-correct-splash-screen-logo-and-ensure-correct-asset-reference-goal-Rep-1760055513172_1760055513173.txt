@@ -1,0 +1,42 @@
+{
+  "task": "Restore correct splash screen logo and ensure correct asset reference.",
+  "goal": "Replace the old or compressed logo on the splash screen with the correct full-resolution YNFNY_Logo.png while keeping backend, navigation, and animation logic intact.",
+  "constraints": {
+    "do_not_modify": [
+      "Supabase config, anon key, API logic",
+      "Navigation routes, splash timing, or loading sequence",
+      "Other screens (login, register, upload, feed, etc.)"
+    ],
+    "keep": [
+      "Current fade or scale animations",
+      "Existing background color and text styling",
+      "Splash transition duration"
+    ]
+  },
+  "requirements": {
+    "R1_asset_verification": "Search project for all logo assets: 'ynfny_logo.png', 'YNFNY_Logo.png', 'logo.png', 'logo_alt.png'. Verify that 'YNFNY_Logo.png' (the Statue of Liberty artwork) exists in assets/images or equivalent folder.",
+    "R2_pubspec_sync": "Ensure pubspec.yaml includes the correct path under flutter → assets: for 'assets/images/YNFNY_Logo.png'. Remove or comment out any older logo references to prevent caching conflicts.",
+    "R3_splash_widget_update": "In splash_screen.dart (or equivalent), replace the Image.asset source with the correct one: Image.asset('assets/images/YNFNY_Logo.png', fit: BoxFit.cover, width: MediaQuery.of(context).size.width * 0.9).",
+    "R4_cache_flush": "Before rebuild, clear Flutter’s image cache to remove old compressed logo instances: 'paintingBinding.imageCache.clear();' inside initState().",
+    "R5_asset_compression_check": "Ensure YNFNY_Logo.png is uncompressed or high-resolution (no .webp or low-quality version generated during optimization).",
+    "R6_safe_rebuild": "Perform full clean build: 'flutter clean' → 'flutter pub get' → 'flutter build web' (or target platform)."
+  },
+  "expected_result": [
+    "✅ Splash screen displays the Statue of Liberty YNFNY_Logo.png artwork in full resolution.",
+    "✅ No older orange-square placeholder logo visible.",
+    "✅ Navigation timing, fade animation, and Supabase initialization remain untouched.",
+    "✅ 'Discover NYC Street Performers' text remains deleted."
+  ],
+  "validation_tests": [
+    "1. Launch app → Statue of Liberty logo appears centered, no compression ✅",
+    "2. App transitions smoothly to next screen ✅",
+    "3. No backend or navigation errors ✅",
+    "4. No duplicate logo assets loaded ✅"
+  ],
+  "safety_measures": {
+    "no_backend_modification": true,
+    "no_api_key_exposure": true,
+    "no_navigation_change": true,
+    "asset_update_only": true
+  }
+}
