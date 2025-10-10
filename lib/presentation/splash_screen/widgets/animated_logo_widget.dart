@@ -107,7 +107,7 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
-                      'assets/images/ynfny_logo_compressed.webp',
+                      'assets/images/ynfny_logo.png',
                       width: 280.0, // Fixed width
                       height: 224.0, // Fixed height
                       fit: BoxFit.cover,
@@ -146,9 +146,9 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                 ),
                 SizedBox(
                     height: 24.0), // Fixed height to push text down
-                // Added "You Are Not From New York" text in orange
+                // Added "You Not From New York" text in orange
                 Text(
-                  'You Are Not From New York',
+                  'You Not From New York',
                   style: GoogleFonts.inter(
                     color: AppTheme.primaryOrange,
                     fontSize: 14.0,
