@@ -4,6 +4,13 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 # User Preferences
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes (October 10, 2025)
+
+## Splash Screen Logo and Text Update
+- **Logo replacement**: Updated AnimatedLogoWidget to use correct logo `ynfny_logo.png` instead of `ynfny_logo_compressed.webp`
+- **Tagline text update**: Changed tagline from "You Are Not From New York" to "You Not From New York" while maintaining identical styling (orange #FF8C00, 21px, Inter font, weight 600)
+- **Preserved elements**: "WE OUTSIDE" subtitle, all animations (glow, scale), error fallbacks, and splash flow logic remain unchanged
+
 # Recent Changes (October 9, 2025)
 
 ## Video Player Enhancements
