@@ -1,23 +1,20 @@
-# Flutter / Dart
-.dart_tool/
-.packages
-.pub-cache/
+# Environment & secrets
+.env
+*.env
+supabase/.env
+lib/.env
+
+# Flutter / Dart build
 build/
-coverage/
-ios/Flutter/Flutter.podspec
-ios/Pods/
-android/.gradle/
-android/app/build/
-web/.dart_tool/
+dist/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
 
-# Replit & temp
-.replit
-*.lock
-*.log
+# IDE / system
+.idea/
+.vscode/
+.DS_Store
 
-# Local SDKs / archives (do NOT commit)
-.flutter-sdk/
-flutter.tar.xz
-
-# Misc generated
-**/*.lock
