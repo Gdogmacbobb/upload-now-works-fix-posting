@@ -107,7 +107,7 @@ class _AnimatedLogoWidgetState extends State<AnimatedLogoWidget>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
-                      'assets/images/ynfny_logo.png',
+                      'assets/images/YNFNY_Logo-1753669643145.png',
                       width: 280.0, // Fixed width
                       height: 224.0, // Fixed height
                       fit: BoxFit.cover,
