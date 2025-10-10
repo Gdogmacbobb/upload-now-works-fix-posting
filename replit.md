@@ -7,8 +7,9 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes (October 10, 2025)
 
 ## Splash Screen Logo and Text Update
-- **Logo replacement**: Updated AnimatedLogoWidget to use correct logo `ynfny_logo.png` instead of `ynfny_logo_compressed.webp`
+- **Logo replacement**: Updated AnimatedLogoWidget to use correct logo `YNFNY_Logo-1753669643145.png` (Statue of Liberty artwork) instead of compressed versions
 - **Tagline text update**: Changed tagline from "You Are Not From New York" to "You Not From New York" while maintaining identical styling (orange #FF8C00, 21px, Inter font, weight 600)
+- **Asset cleanup**: Removed unused logo files (YNFNY_Logo-1753709879889.png, ynfny_logo_compressed.png, ynfny_logo_compressed.webp)
 - **Preserved elements**: "WE OUTSIDE" subtitle, all animations (glow, scale), error fallbacks, and splash flow logic remain unchanged
 
 # Recent Changes (October 9, 2025)
