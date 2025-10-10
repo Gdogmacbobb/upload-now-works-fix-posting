@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 - **Logo replacement**: Updated AnimatedLogoWidget to use correct logo `YNFNY_Logo-1753669643145.png` (Statue of Liberty artwork) instead of compressed versions
 - **Tagline text update**: Changed tagline from "You Are Not From New York" to "You Not From New York" while maintaining identical styling (orange #FF8C00, 21px, Inter font, weight 600)
 - **Asset cleanup**: Removed unused logo files (YNFNY_Logo-1753709879889.png, ynfny_logo_compressed.png, ynfny_logo_compressed.webp)
+- **Asset loading fix**: Added `assets/images/` to pubspec.yaml flutter section to resolve AssetManifest.bin.json 502 errors and enable proper logo/asset bundling
 - **Preserved elements**: "WE OUTSIDE" subtitle, all animations (glow, scale), error fallbacks, and splash flow logic remain unchanged
 
 # Recent Changes (October 9, 2025)
