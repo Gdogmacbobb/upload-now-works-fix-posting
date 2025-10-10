@@ -1,10 +1,8 @@
-# Environment & secrets
+# Ignore secrets and build files
 .env
 *.env
 supabase/.env
 lib/.env
-
-# Flutter / Dart build
 build/
 dist/
 .dart_tool/
@@ -12,8 +10,6 @@ dist/
 .flutter-plugins-dependencies
 .packages
 pubspec.lock
-
-# IDE / system
 .idea/
 .vscode/
 .DS_Store
