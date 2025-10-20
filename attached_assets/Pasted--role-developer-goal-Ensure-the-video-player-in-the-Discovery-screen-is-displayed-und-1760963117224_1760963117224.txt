@@ -1,0 +1,24 @@
+{
+  "role": "developer",
+  "goal": "Ensure the video player in the Discovery screen is displayed underneath the top navigation bar ('Following | Discovery'), similar to TikTok or Instagram, while maintaining vertically centered right-side buttons.",
+  "context": {
+    "issue": "Currently, the video is pushing the top navigation bar downward, meaning the layout isn't layered correctly. The UI should allow the video to play beneath the nav bar and other overlay elements."
+  },
+  "instruction": {
+    "layout_fix": {
+      "type": "Stack",
+      "code": "Scaffold(\n  backgroundColor: Colors.black,\n  body: Stack(\n    children: [\n      // 👇 Video content should fill the background\n      Positioned.fill(\n        child: YourVideoFeedWidget(),\n      ),\n\n      // 👇 Top navigation overlay ('Following | Discovery')\n      SafeArea(\n        child: Align(\n          alignment: Alignment.topCenter,\n          child: Padding(\n            padding: const EdgeInsets.only(top: 10),\n            child: Row(\n              mainAxisAlignment: MainAxisAlignment.center,\n              children: [\n                Text(\n                  'Following',\n                  style: TextStyle(\n                    color: Colors.grey,\n                    fontSize: 16,\n                    fontWeight: FontWeight.w500,\n                  ),\n                ),\n                SizedBox(width: 20),\n                Text(\n                  'Discovery',\n                  style: TextStyle(\n                    color: Colors.orange,\n                    fontSize: 16,\n                    fontWeight: FontWeight.bold,\n                  ),\n                ),\n              ],\n            ),\n          ),\n        ),\n      ),\n\n      // 👇 Vertically centered right-side button column\n      Positioned(\n        right: 10,\n        top: 0,\n        bottom: 0,\n        child: Center(\n          child: Column(\n            mainAxisAlignment: MainAxisAlignment.center,\n            children: [\n              Icon(Icons.person_outline, color: Colors.orange, size: 28),\n              SizedBox(height: 20),\n              Icon(Icons.favorite_border, color: Colors.white, size: 28),\n              SizedBox(height: 20),\n              Icon(Icons.comment_outlined, color: Colors.white, size: 28),\n              SizedBox(height: 20),\n              Icon(Icons.share_outlined, color: Colors.white, size: 28),\n              SizedBox(height: 20),\n              Container(\n                decoration: BoxDecoration(\n                  color: Colors.orange,\n                  shape: BoxShape.circle,\n                ),\n                padding: const EdgeInsets.all(10),\n                child: Icon(Icons.attach_money, color: Colors.white),\n              ),\n            ],\n          ),\n        ),\n      ),\n    ],\n  ),\n);"
+    },
+    "optional_overlay_gradient": {
+      "description": "Adds a semi-transparent gradient behind the top nav bar for readability.",
+      "code": "Container(\n  decoration: BoxDecoration(\n    gradient: LinearGradient(\n      colors: [Colors.black.withOpacity(0.5), Colors.transparent],\n      begin: Alignment.topCenter,\n      end: Alignment.bottomCenter,\n    ),\n  ),\n  padding: const EdgeInsets.symmetric(vertical: 10),\n  child: /* nav bar content */,\n);"
+    }
+  },
+  "expected_result": [
+    "✅ The video appears underneath the top navigation bar.",
+    "✅ The 'Following | Discovery' text overlays cleanly above the video.",
+    "✅ The right-side action buttons are vertically centered.",
+    "✅ The overall look matches TikTok’s vertical feed layout."
+  ],
+  "commentary": "This structure restores proper layering. Using Stack ensures the video is the background layer, while SafeArea keeps UI elements positioned safely above it across all device sizes."
+}
