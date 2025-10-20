@@ -7,7 +7,6 @@ import '../../services/supabase_service.dart';
 import '../../services/video_service.dart';
 import '../../widgets/feed_navigation_bottom_widget.dart';
 import '../../widgets/feed_navigation_header_widget.dart';
-import '../../widgets/debug_layout_overlay.dart';
 import './widgets/following_context_menu_widget.dart';
 import './widgets/following_empty_state_widget.dart';
 import './widgets/following_video_player_widget.dart';
@@ -330,18 +329,6 @@ class _FollowingFeedState extends State<FollowingFeed>
 
   @override
   Widget build(BuildContext context) {
-    // Debug: Target offsets for TikTok-style layout
-    final padTop = MediaQuery.of(context).padding.top;
-    const headerTopOffset = 18.0;
-    const iconsBottomOffset = 140.0;
-    const captionBottomOffset = 115.0;
-    const fabBottomOffset = 60.0;
-
-    final headerTop = padTop + headerTopOffset;
-
-    // Debug logging
-    debugPrint('[FOLLOWING] Target positions => headerTop: $headerTop (padTop:$padTop + $headerTopOffset), iconsBottom: $iconsBottomOffset, captionBottom: $captionBottomOffset, fabBottom: $fabBottomOffset');
-
     return Scaffold(
         extendBody: true,
         extendBodyBehindAppBar: true,
@@ -443,15 +430,6 @@ class _FollowingFeedState extends State<FollowingFeed>
                 onShare: () => _onShare(),
                 onClose: _hideContextMenu,
               ),
-
-            // Debug overlay (set visible: false to remove)
-            DebugLayoutOverlay(
-              headerTop: headerTop,
-              iconsBottom: iconsBottomOffset,
-              captionBottom: captionBottomOffset,
-              fabBottom: fabBottomOffset,
-              visible: true,
-            ),
           ],
         ));
   }
