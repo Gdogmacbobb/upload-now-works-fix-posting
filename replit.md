@@ -89,3 +89,11 @@ A serverless approach utilizing external services:
 - **TikTok-accurate overlay structure**: Avatar, action buttons, caption, and $ button each positioned independently with pixel-precise offsets matching TikTok reference layout
 - **Preserved spacing hierarchy**: Caption at `bottom: 12.h` (~90px above bottom nav), $ button at `bottom: 11.h` (~45px above bottom nav), avatar at `top: 10.h` overlapping video edge
 - **Architect-verified pixel-perfect alignment**: Code review confirmed avatar overlap and vertical centering match TikTok reference with proper responsive behavior across device sizes
+
+## MediaQuery-Based Layout Rebuild (October 20, 2025)
+- **Complete positioning system overhaul**: Replaced all responsive_scale h/w units with MediaQuery-based absolute pixel positioning for TikTok-precision overlay placement
+- **Discovery feed VideoPlayerWidget**: Rebuilt with MediaQuery constants - header "Discover" badge at `topInset + 40px`, avatar at `topInset + 80px`, caption at `bottomInset + 130px`, $ button at `bottomInset + 95px`, action buttons vertically centered using `Positioned(top: 0, bottom: 0) + Align.center`
+- **Following feed FollowingVideoPlayerWidget**: Rebuilt with identical MediaQuery-based positioning - header "Following" badge at `topInset + 40px`, matching avatar/caption/button placement to Discovery feed for cross-feed consistency
+- **Absolute pixel precision**: All overlay elements now use explicit pixel offsets (40px, 80px, 95px, 130px) combined with MediaQuery safe area insets for predictable TikTok-style positioning across all device sizes
+- **Debug cleanup**: Removed DebugLayoutOverlay widget and all console logging from both feeds after verifying layout correctness
+- **Architect-verified parity**: Final code review confirmed both video player widgets implement identical MediaQuery-based positioning with matching overlay offsets, satisfying TikTok reference layout requirements
