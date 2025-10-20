@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 - **Overlay navigation**: Top navigation bar (Following | Discovery) and bottom navigation overlay on top of video using SafeArea + Align positioning
 - **Proper layering**: Videos play underneath UI chrome while maintaining full accessibility of navigation elements
 - **Consistent implementation**: Both Discovery and Following feeds use identical Stack structure for unified user experience
-- **Spacing refinements**: Tightened top navigation padding (1.5.h → 0.5.h vertical, 2.h → 1.h button padding) to match TikTok reference, with SafeArea bottom: false for closer fit to status bar while respecting notch insets
+- **Pixel-perfect TikTok spacing**: Completely removed all Container/Padding wrappers around navigation Row, leaving only SafeArea for notch protection. Navigation bar now sits flush with status bar exactly like TikTok. Tightened button spacing (8.w → 6.w gap, 4.w → 3.w horizontal padding) and removed all vertical padding to achieve identical visual hierarchy
 - **Vertically centered action buttons**: Changed side action buttons from fixed bottom positioning to full-height Positioned with Align.center wrapper, ensuring profile/heart/comment/share/dollar icons are perfectly centered vertically on all device sizes
 
 # Recent Changes (October 10, 2025)
