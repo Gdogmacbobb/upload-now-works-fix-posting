@@ -224,13 +224,13 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
           ),
 
           // 👇 Top navigation overlay (Following | Discovery)
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: FeedNavigationHeaderWidget(
-                currentFeed: 'discovery',
-                showSearch: true,
-              ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: FeedNavigationHeaderWidget(
+              currentFeed: 'discovery',
+              showSearch: true,
             ),
           ),
 

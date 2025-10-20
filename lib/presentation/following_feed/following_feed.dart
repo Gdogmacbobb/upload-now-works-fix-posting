@@ -375,15 +375,15 @@ class _FollowingFeedState extends State<FollowingFeed>
             ),
 
             // 👇 Top navigation overlay (Following | Discovery)
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: FeedNavigationHeaderWidget(
-                  currentFeed: 'following',
-                  showSearch: false,
-                  unreadCount: _unreadCount,
-                  onRefresh: _refreshFeed,
-                ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: FeedNavigationHeaderWidget(
+                currentFeed: 'following',
+                showSearch: false,
+                unreadCount: _unreadCount,
+                onRefresh: _refreshFeed,
               ),
             ),
 
