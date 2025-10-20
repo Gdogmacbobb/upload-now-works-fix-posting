@@ -20,7 +20,6 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.5.h),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -33,27 +32,30 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
       ),
       child: SafeArea(
         bottom: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Following Button
-            _buildNavigationButton(
-              context,
-              'Following',
-              currentFeed == 'following',
-              () => _navigateToFeed(context, 'following'),
-            ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 0.5.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Following Button
+              _buildNavigationButton(
+                context,
+                'Following',
+                currentFeed == 'following',
+                () => _navigateToFeed(context, 'following'),
+              ),
 
-            SizedBox(width: 8.w),
+              SizedBox(width: 6.w),
 
-            // Discovery Button
-            _buildNavigationButton(
-              context,
-              'Discovery',
-              currentFeed == 'discovery',
-              () => _navigateToFeed(context, 'discovery'),
-            ),
-          ],
+              // Discovery Button
+              _buildNavigationButton(
+                context,
+                'Discovery',
+                currentFeed == 'discovery',
+                () => _navigateToFeed(context, 'discovery'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -67,8 +69,8 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
   ) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
         child: Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
