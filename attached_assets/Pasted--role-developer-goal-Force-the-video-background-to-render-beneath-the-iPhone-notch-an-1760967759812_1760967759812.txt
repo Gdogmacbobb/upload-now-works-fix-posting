@@ -1,0 +1,25 @@
+{
+  "role": "developer",
+  "goal": "Force the video background to render beneath the iPhone notch and position the 'Following | Discovery' navigation directly on top, with no visible black padding.",
+  "context": {
+    "problem": "SafeArea and Scaffold layers are still drawing a background above the video, causing a visible black gap above the navigation bar. The video must extend underneath the notch just like TikTok.",
+    "desired_result": "The video fully covers the screen (edge-to-edge, including behind the notch), and only the 'Following | Discovery' text row is visible over it."
+  },
+  "instruction": {
+    "architecture_fix": {
+      "description": "Rebuild the layout using an extendBodyBehindAppBar Scaffold and a Stack to ensure the video renders behind the top UI.",
+      "code": "Scaffold(\n  extendBodyBehindAppBar: true,\n  backgroundColor: Colors.transparent,\n  body: Stack(\n    children: [\n      Positioned.fill(\n        child: FittedBox(\n          fit: BoxFit.cover,\n          child: VideoPlayerWidget(),\n        ),\n      ),\n      SafeArea(\n        top: true,\n        bottom: false,\n        child: Align(\n          alignment: Alignment.topCenter,\n          child: Container(\n            color: Colors.transparent,\n            padding: EdgeInsets.symmetric(vertical: 4),\n            child: Row(\n              mainAxisAlignment: MainAxisAlignment.center,\n              children: [\n                Text('Following', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),\n                SizedBox(width: 20),\n                Text('Discovery', style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),\n              ],\n            ),\n          ),\n        ),\n      ),\n    ],\n  ),\n)"
+    },
+    "extra_steps": {
+      "disable_safearea_color": "Ensure no Container or Material widget above the Stack has a background color other than transparent.",
+      "test_mode": "Run this with a bright test video to confirm the video is visible behind the top navigation bar and notch."
+    }
+  },
+  "expected_result": [
+    "✅ The video fills the entire screen including behind the notch.",
+    "✅ The black bar above the navigation is completely gone.",
+    "✅ The 'Following | Discovery' bar floats cleanly over the video.",
+    "✅ The layout finally matches TikTok’s immersive appearance."
+  ],
+  "commentary": "This change directly bypasses Flutter’s default SafeArea clipping by enabling extendBodyBehindAppBar, allowing true edge-to-edge rendering behind system UI elements."
+}
