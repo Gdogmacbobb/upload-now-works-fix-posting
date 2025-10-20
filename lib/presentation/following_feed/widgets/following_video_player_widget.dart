@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../../core/app_export.dart';
 
@@ -37,6 +36,15 @@ class _FollowingVideoPlayerWidgetState
     _isLiked = widget.videoData['isLiked'] ?? false;
   }
 
+  @override
+  void didUpdateWidget(FollowingVideoPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update liked state if video data changes
+    if (oldWidget.videoData['id'] != widget.videoData['id']) {
+      _isLiked = widget.videoData['isLiked'] ?? false;
+    }
+  }
+
   void _toggleLike() {
     setState(() {
       _isLiked = !_isLiked;
@@ -59,15 +67,49 @@ class _FollowingVideoPlayerWidgetState
     return count.toString();
   }
 
+  String _getImageUrl() {
+    final thumbnailUrl =
+        widget.videoData['thumbnailUrl'] ?? widget.videoData['thumbnail'] ?? '';
+
+    if (thumbnailUrl.isEmpty) {
+      return 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=800&fit=crop';
+    }
+
+    return thumbnailUrl;
+  }
+
+  String _getPerformerAvatar() {
+    final avatarUrl = widget.videoData['performerAvatar'] ?? '';
+
+    if (avatarUrl.isEmpty) {
+      return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face';
+    }
+
+    return avatarUrl;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // MediaQuery-based positioning for pixel-perfect TikTok layout
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final topInset = MediaQuery.of(context).padding.top;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    // TikTok-style positioning constants (in pixels)
+    const headerTopOffset = 40.0;  // Header 40px below notch
+    const avatarTopOffset = 80.0;  // Avatar positioned under header
+    const captionBottomOffset = 130.0;  // Caption 130px above bottom nav
+    const fabBottomOffset = 95.0;  // $ button 95px above bottom nav
+
     return Container(
-      width: 100.w,
-      height: 100.h,
+      width: screenWidth,
+      height: screenHeight,
       color: AppTheme.backgroundDark,
       child: Stack(
+        fit: StackFit.expand,
         children: [
-          // Video Background
+          // Video Background (full screen)
           Positioned.fill(
             child: GestureDetector(
               onTap: _togglePlayPause,
@@ -75,10 +117,11 @@ class _FollowingVideoPlayerWidgetState
               child: Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: NetworkImage(widget.videoData['thumbnailUrl'] ??
-                        widget.videoData['thumbnail'] ??
-                        ''),
+                    image: NetworkImage(_getImageUrl()),
                     fit: BoxFit.cover,
+                    onError: (error, stackTrace) {
+                      debugPrint('Image loading error: $error');
+                    },
                   ),
                 ),
                 child: Container(
@@ -88,8 +131,8 @@ class _FollowingVideoPlayerWidgetState
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        AppTheme.backgroundDark.withOpacity(0.3),
-                        AppTheme.backgroundDark.withOpacity(0.7),
+                        AppTheme.backgroundDark.withAlpha((0.3 * 255).round()),
+                        AppTheme.backgroundDark.withAlpha((0.7 * 255).round()),
                       ],
                     ),
                   ),
@@ -102,64 +145,29 @@ class _FollowingVideoPlayerWidgetState
           if (!_isPlaying)
             Center(
               child: Container(
-                width: 20.w,
-                height: 20.w,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  color: AppTheme.backgroundDark.withOpacity(0.7),
+                  color: AppTheme.backgroundDark.withAlpha((0.7 * 255).round()),
                   shape: BoxShape.circle,
                 ),
-                child: CustomIconWidget(
-                  iconName: 'play_arrow',
+                child: Icon(
+                  Icons.play_arrow,
                   color: AppTheme.textPrimary,
-                  size: 10.w,
+                  size: 50,
                 ),
               ),
             ),
 
-          // Top Overlay - Following Indicator
+          // Profile Avatar (positioned at top-right under header, TikTok-style)
           Positioned(
-            top: 8.h,
-            left: 4.w,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryOrange.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppTheme.primaryOrange.withOpacity(0.5),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CustomIconWidget(
-                    iconName: 'people',
-                    color: AppTheme.primaryOrange,
-                    size: 4.w,
-                  ),
-                  SizedBox(width: 2.w),
-                  Text(
-                    'Following',
-                    style: AppTheme.darkTheme.textTheme.labelMedium?.copyWith(
-                      color: AppTheme.primaryOrange,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Profile Avatar (positioned at top-right, TikTok-style)
-          Positioned(
-            right: 3.w,
-            top: 10.h,
+            right: 12,
+            top: topInset + avatarTopOffset,
             child: GestureDetector(
               onTap: widget.onProfileTap,
               child: Container(
-                width: 12.w,
-                height: 12.w,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -168,20 +176,46 @@ class _FollowingVideoPlayerWidgetState
                   ),
                 ),
                 child: ClipOval(
-                  child: CustomImageWidget(
-                    imageUrl: widget.videoData['performerAvatar'] ?? '',
-                    width: 12.w,
-                    height: 12.w,
+                  child: Image.network(
+                    _getPerformerAvatar(),
+                    width: 48,
+                    height: 48,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 48,
+                        height: 48,
+                        color: AppTheme.surfaceDark,
+                        child: Icon(
+                          Icons.person,
+                          color: AppTheme.textSecondary,
+                          size: 24,
+                        ),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        width: 48,
+                        height: 48,
+                        color: AppTheme.surfaceDark,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryOrange,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
           ),
 
-          // Right Side Action Buttons (vertically centered)
+          // Right Side Action Buttons (vertically centered, TikTok-style)
           Positioned(
-            right: 3.w,
+            right: 12,
             top: 0,
             bottom: 0,
             child: Align(
@@ -195,23 +229,23 @@ class _FollowingVideoPlayerWidgetState
                     child: Column(
                       children: [
                         Container(
-                          width: 12.w,
-                          height: 12.w,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: _isLiked
                                 ? AppTheme.accentRed
                                 : Colors.transparent,
                             shape: BoxShape.circle,
                           ),
-                          child: CustomIconWidget(
-                            iconName: _isLiked ? 'favorite' : 'favorite_border',
+                          child: Icon(
+                            _isLiked ? Icons.favorite : Icons.favorite_border,
                             color: _isLiked
                                 ? AppTheme.textPrimary
                                 : AppTheme.textPrimary,
-                            size: 6.w,
+                            size: 28,
                           ),
                         ),
-                        SizedBox(height: 1.h),
+                        const SizedBox(height: 4),
                         Text(
                           _formatCount(widget.videoData['likesCount'] ??
                               widget.videoData['likeCount'] ??
@@ -222,7 +256,7 @@ class _FollowingVideoPlayerWidgetState
                     ),
                   ),
 
-                  SizedBox(height: 3.h),
+                  const SizedBox(height: 20),
 
                   // Comment Button
                   GestureDetector(
@@ -230,19 +264,19 @@ class _FollowingVideoPlayerWidgetState
                     child: Column(
                       children: [
                         Container(
-                          width: 12.w,
-                          height: 12.w,
+                          width: 48,
+                          height: 48,
                           decoration: const BoxDecoration(
                             color: Colors.transparent,
                             shape: BoxShape.circle,
                           ),
-                          child: CustomIconWidget(
-                            iconName: 'chat_bubble_outline',
+                          child: Icon(
+                            Icons.chat_bubble_outline,
                             color: AppTheme.textPrimary,
-                            size: 6.w,
+                            size: 28,
                           ),
                         ),
-                        SizedBox(height: 1.h),
+                        const SizedBox(height: 4),
                         Text(
                           _formatCount(widget.videoData['commentsCount'] ??
                               widget.videoData['commentCount'] ??
@@ -253,7 +287,7 @@ class _FollowingVideoPlayerWidgetState
                     ),
                   ),
 
-                  SizedBox(height: 3.h),
+                  const SizedBox(height: 20),
 
                   // Share Button
                   GestureDetector(
@@ -261,19 +295,19 @@ class _FollowingVideoPlayerWidgetState
                     child: Column(
                       children: [
                         Container(
-                          width: 12.w,
-                          height: 12.w,
+                          width: 48,
+                          height: 48,
                           decoration: const BoxDecoration(
                             color: Colors.transparent,
                             shape: BoxShape.circle,
                           ),
-                          child: CustomIconWidget(
-                            iconName: 'share',
+                          child: Icon(
+                            Icons.share,
                             color: AppTheme.textPrimary,
-                            size: 6.w,
+                            size: 28,
                           ),
                         ),
-                        SizedBox(height: 1.h),
+                        const SizedBox(height: 4),
                         Text(
                           _formatCount(widget.videoData['sharesCount'] ??
                               widget.videoData['shareCount'] ??
@@ -288,79 +322,84 @@ class _FollowingVideoPlayerWidgetState
             ),
           ),
 
-          // Donate Button (separate, positioned above bottom nav)
+          // Donate Button (floating $ button, positioned above bottom nav)
           Positioned(
-            right: 3.w,
-            bottom: 11.h,
+            right: 12,
+            bottom: bottomInset + fabBottomOffset,
             child: GestureDetector(
               onTap: widget.onDonate,
               child: Container(
-                width: 12.w,
-                height: 12.w,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: AppTheme.primaryOrange,
                   shape: BoxShape.circle,
                 ),
-                child: CustomIconWidget(
-                  iconName: 'attach_money',
+                child: Icon(
+                  Icons.attach_money,
                   color: AppTheme.backgroundDark,
-                  size: 6.w,
+                  size: 28,
                 ),
               ),
             ),
           ),
 
-          // Bottom Overlay - Performer Info (raised for TikTok-style spacing)
+          // Bottom Overlay - Performer Info (positioned above bottom nav, TikTok-style)
           Positioned(
-            bottom: 12.h,
-            left: 4.w,
-            right: 20.w,
+            bottom: bottomInset + captionBottomOffset,
+            left: 16,
+            right: 80,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Performer Name and Verification
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: widget.onProfileTap,
-                      child: Text(
-                        '@${widget.videoData['performerUsername'] ?? ''}',
-                        style:
-                            AppTheme.darkTheme.textTheme.titleMedium?.copyWith(
-                          color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: GestureDetector(
+                        onTap: widget.onProfileTap,
+                        child: Text(
+                          '@${widget.videoData['performerUsername'] ?? 'performer'}',
+                          style: AppTheme.darkTheme.textTheme.titleMedium
+                              ?.copyWith(
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                    SizedBox(width: 2.w),
+                    const SizedBox(width: 6),
                     if (widget.videoData['isVerified'] == true)
-                      CustomIconWidget(
-                        iconName: 'verified',
+                      Icon(
+                        Icons.verified,
                         color: AppTheme.primaryOrange,
-                        size: 4.w,
+                        size: 16,
                       ),
                   ],
                 ),
 
-                SizedBox(height: 1.h),
+                const SizedBox(height: 6),
 
                 // Performance Type Tag
                 if (widget.videoData['performanceType'] != null &&
-                    widget.videoData['performanceType'].isNotEmpty)
+                    widget.videoData['performanceType'].toString().isNotEmpty)
                   Container(
                     padding:
-                        EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryOrange.withOpacity(0.2),
+                      color:
+                          AppTheme.primaryOrange.withAlpha((0.2 * 255).round()),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppTheme.primaryOrange.withOpacity(0.5),
+                        color: AppTheme.primaryOrange
+                            .withAlpha((0.5 * 255).round()),
                         width: 1,
                       ),
                     ),
                     child: Text(
                       _formatPerformanceType(
-                          widget.videoData['performanceType']),
+                          widget.videoData['performanceType'].toString()),
                       style: AppTheme.darkTheme.textTheme.labelSmall?.copyWith(
                         color: AppTheme.primaryOrange,
                         fontWeight: FontWeight.w500,
@@ -368,52 +407,48 @@ class _FollowingVideoPlayerWidgetState
                     ),
                   ),
 
-                SizedBox(height: 1.h),
+                const SizedBox(height: 6),
 
                 // Performance Description
-                Text(
-                  widget.videoData['description'] ??
-                      widget.videoData['caption'] ??
-                      '',
-                  style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textPrimary,
+                if ((widget.videoData['description'] ??
+                        widget.videoData['caption'] ??
+                        '')
+                    .isNotEmpty)
+                  Text(
+                    widget.videoData['description'] ??
+                        widget.videoData['caption'] ??
+                        '',
+                    style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
 
-                SizedBox(height: 1.h),
+                const SizedBox(height: 6),
 
-                // Location and Timestamp
-                Row(
-                  children: [
-                    CustomIconWidget(
-                      iconName: 'location_on',
-                      color: AppTheme.textSecondary,
-                      size: 4.w,
-                    ),
-                    SizedBox(width: 1.w),
-                    Text(
-                      widget.videoData['location'] ?? '',
-                      style: AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
+                // Location
+                if ((widget.videoData['location'] ?? '').isNotEmpty)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
                         color: AppTheme.textSecondary,
+                        size: 16,
                       ),
-                    ),
-                    SizedBox(width: 3.w),
-                    CustomIconWidget(
-                      iconName: 'access_time',
-                      color: AppTheme.textSecondary,
-                      size: 4.w,
-                    ),
-                    SizedBox(width: 1.w),
-                    Text(
-                      widget.videoData['timestamp'] ?? 'Just now',
-                      style: AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          widget.videoData['location'] ?? '',
+                          style:
+                              AppTheme.darkTheme.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),
