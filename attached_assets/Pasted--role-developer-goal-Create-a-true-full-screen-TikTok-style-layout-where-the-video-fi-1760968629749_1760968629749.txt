@@ -1,0 +1,29 @@
+{
+  "role": "developer",
+  "goal": "Create a true full-screen TikTok-style layout where the video fills the entire screen from the top notch to the bottom navigation bar, with no gaps or overlays cutting off the video background.",
+  "context": {
+    "current_issue": "The video currently stops above the bottom navigation bar and does not fill fully behind the top notch. The black padding still appears because the Scaffold and SafeArea are handling insets separately.",
+    "target_layout": "The video background must fill the entire viewport, edge-to-edge, behind both the top and bottom navigation overlays. Only the 'Following | Discovery' nav text at the top and the bottom nav bar should float above it, like TikTok."
+  },
+  "instruction": {
+    "final_layout_fix": {
+      "description": "Rebuild the feed screen so the Scaffold background is transparent, extendBody and extendBodyBehindAppBar are enabled, and the Stack uses Positioned.fill for a continuous full-screen video layer.",
+      "code": "return Scaffold(\n  extendBody: true,\n  extendBodyBehindAppBar: true,\n  backgroundColor: Colors.transparent,\n  body: Stack(\n    fit: StackFit.expand,\n    clipBehavior: Clip.none,\n    children: [\n      // Fullscreen video background\n      Positioned.fill(\n        child: FittedBox(\n          fit: BoxFit.cover,\n          alignment: Alignment.center,\n          child: VideoPlayerWidget(),\n        ),\n      ),\n\n      // Top navigation bar floating over video\n      Positioned(\n        top: 0,\n        left: 0,\n        right: 0,\n        child: SafeArea(\n          top: true,\n          bottom: false,\n          child: Container(\n            color: Colors.transparent,\n            padding: EdgeInsets.only(top: 0, bottom: 6),\n            child: Row(\n              mainAxisAlignment: MainAxisAlignment.center,\n              children: [\n                Text(\n                  'Following',\n                  style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500),\n                ),\n                SizedBox(width: 20),\n                Text(\n                  'Discovery',\n                  style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold),\n                ),\n              ],\n            ),\n          ),\n        ),\n      ),\n\n      // Side action buttons vertically centered\n      Align(\n        alignment: Alignment.centerRight,\n        child: Padding(\n          padding: EdgeInsets.only(right: 12),\n          child: Column(\n            mainAxisSize: MainAxisSize.min,\n            mainAxisAlignment: MainAxisAlignment.center,\n            children: [\n              Icon(Icons.person_outline, color: Colors.orange, size: 28),\n              SizedBox(height: 18),\n              Icon(Icons.favorite_border, color: Colors.white, size: 28),\n              SizedBox(height: 18),\n              Icon(Icons.chat_bubble_outline, color: Colors.white, size: 28),\n              SizedBox(height: 18),\n              Icon(Icons.share_outlined, color: Colors.white, size: 28),\n              SizedBox(height: 18),\n              Container(\n                width: 44,\n                height: 44,\n                decoration: BoxDecoration(\n                  color: Colors.orange,\n                  shape: BoxShape.circle,\n                ),\n                child: Icon(Icons.attach_money, color: Colors.black, size: 26),\n              ),\n            ],\n          ),\n        ),\n      ),\n\n      // Bottom navigation bar floating over video\n      Positioned(\n        bottom: 0,\n        left: 0,\n        right: 0,\n        child: SafeArea(\n          top: false,\n          bottom: true,\n          child: Container(\n            color: Colors.transparent,\n            padding: EdgeInsets.only(bottom: 0),\n            child: BottomNavigationBarWidget(),\n          ),\n        ),\n      ),\n    ],\n  ),\n);"
+    },
+    "key_requirements": [
+      "✅ extendBody and extendBodyBehindAppBar must both be true.",
+      "✅ Scaffold and parent containers must have backgroundColor: Colors.transparent.",
+      "✅ Do NOT wrap the entire body in SafeArea — only overlays (top and bottom).",
+      "✅ Use Positioned.fill with FittedBox for the video to ensure full coverage.",
+      "✅ clipBehavior: Clip.none to prevent SafeArea clipping."
+    ]
+  },
+  "expected_result": [
+    "✅ The video fills from the top notch all the way behind the bottom navigation bar.",
+    "✅ No black padding, no cutoff, no visible gaps anywhere on the screen.",
+    "✅ 'Following | Discovery' floats perfectly over the video near the notch.",
+    "✅ Bottom navigation bar sits over the video just like TikTok.",
+    "✅ Permanent fix — works across all devices, including iPhones with notches and Android edge-to-edge displays."
+  ],
+  "commentary": "This prompt fully replaces any partial fixes by combining extendBody, transparent Scaffold, and selective SafeArea overlays. The result is a permanent, TikTok-accurate full-screen layout that never leaves black gaps at the top or bottom."
+}
