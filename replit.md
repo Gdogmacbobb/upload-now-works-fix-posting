@@ -13,6 +13,7 @@ Preferred communication style: Simple, everyday language.
 - **Proper layering**: Videos play underneath UI chrome while maintaining full accessibility of navigation elements
 - **Consistent implementation**: Both Discovery and Following feeds use identical Stack structure for unified user experience
 - **Pixel-perfect TikTok spacing**: Completely removed all Container/Padding wrappers around navigation Row, leaving only SafeArea for notch protection. Navigation bar now sits flush with status bar exactly like TikTok. Tightened button spacing (8.w → 6.w gap, 4.w → 3.w horizontal padding) and removed all vertical padding to achieve identical visual hierarchy
+- **Video extends behind notch**: Added `extendBodyBehindAppBar: true` to both Discovery and Following feed Scaffolds with transparent backgroundColor. Video background now renders behind iPhone notch/status bar with navigation overlay on top, eliminating the black gap above navigation for true edge-to-edge immersive display matching TikTok reference
 - **Vertically centered action buttons**: Changed side action buttons from fixed bottom positioning to full-height Positioned with Align.center wrapper, ensuring profile/heart/comment/share/dollar icons are perfectly centered vertically on all device sizes
 
 # Recent Changes (October 10, 2025)
