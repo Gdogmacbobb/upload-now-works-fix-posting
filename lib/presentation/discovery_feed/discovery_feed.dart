@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
-import '../../services/api_service.dart';
+import '../../services/supabase_service.dart';
 import '../../services/video_service.dart';
 import '../../widgets/feed_navigation_bottom_widget.dart';
 import '../../widgets/feed_navigation_header_widget.dart';
@@ -19,7 +19,7 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   final PageController _pageController = PageController();
   final VideoService _videoService = VideoService();
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
 
   List<Map<String, dynamic>> _videos = [];
   bool _isLoading = true;
@@ -76,10 +76,10 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
     if (!mounted) return;
 
     try {
-      // Get user role from API service
+      // Get user role with timeout and error handling
       try {
-        final user = _apiService.currentUser;
-        _currentUserRole = user?['role'];
+        _currentUserRole =
+            await _supabaseService.getUserRole().timeout(Duration(seconds: 5));
       } catch (e) {
         debugPrint('User role fetch error: $e');
         _currentUserRole = null; // Continue without user role

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
-import '../../services/api_service.dart';
+import '../../services/supabase_service.dart';
 import './widgets/login_footer_widget.dart';
 import './widgets/login_form_widget.dart';
 import './widgets/login_header_widget.dart';
@@ -18,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String? _errorMessage;
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
 
   @override
   void initState() {
@@ -43,17 +43,18 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       debugPrint('[LOGIN] Attempting login with: $email');
       
-      // API authentication
-      final response = await _apiService.login(email: email, password: password);
+      // Real Supabase authentication
+      await _supabaseService.waitForInitialization();
+      final response = await _supabaseService.signInWithPassword(email, password);
       
-      if (response['user'] != null) {
+      if (response.session != null && response.user != null) {
         debugPrint('[LOGIN] Sign in successful for: $email');
         
         // Successful login - trigger haptic feedback
         HapticFeedback.lightImpact();
         
         // Get user role and navigate based on role
-        final role = response['user']['role'];
+        final role = await _supabaseService.getUserRole();
         debugPrint('[LOGIN] User role: $role');
         
         if (mounted) {

@@ -5,7 +5,7 @@ import '../../core/app_export.dart';
 import '../../core/constants/user_roles.dart';
 import '../../services/profile_service.dart';
 import '../../services/image_upload_service.dart';
-import '../../services/api_service.dart';
+import '../../services/supabase_service.dart';
 import './widgets/activity_item_widget.dart';
 import './widgets/performer_stats_widget.dart';
 import './widgets/profile_header_widget.dart';
@@ -37,7 +37,7 @@ class _UserProfileState extends State<UserProfile> {
   
   final ProfileService _profileService = ProfileService();
   final ImageUploadService _imageUploadService = ImageUploadService();
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
   
   // No form controllers needed for view-only profile
 
@@ -131,13 +131,13 @@ class _UserProfileState extends State<UserProfile> {
     try {
       setState(() => _isUploadingPhoto = true);
 
-      final currentUser = _apiService.currentUser;
+      final currentUser = _supabaseService.currentUser;
       if (currentUser == null) {
         throw Exception('User not authenticated');
       }
 
       // Pick and upload photo
-      final imageUrl = await _imageUploadService.pickAndUploadProfilePhoto(currentUser['id']);
+      final imageUrl = await _imageUploadService.pickAndUploadProfilePhoto(currentUser.id);
       
       if (imageUrl == null) {
         setState(() => _isUploadingPhoto = false);
@@ -145,7 +145,7 @@ class _UserProfileState extends State<UserProfile> {
       }
 
       // Update database with new photo URL
-      final success = await _profileService.updateProfilePhoto(currentUser['id'], imageUrl);
+      final success = await _profileService.updateProfilePhoto(currentUser.id, imageUrl);
       
       if (success) {
         // Reload profile to show new photo
@@ -182,7 +182,7 @@ class _UserProfileState extends State<UserProfile> {
   // Logout functionality
   Future<void> _handleLogout() async {
     try {
-      await _apiService.logout();
+      await _supabaseService.signOut();
       
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(
@@ -307,7 +307,7 @@ class _UserProfileState extends State<UserProfile> {
                 children: [
                   // Avatar with orange border - Tappable only for own profile
                   GestureDetector(
-                    onTap: _apiService.currentUser?['id'] == widget.userId ? _handleAvatarTap : null,
+                    onTap: _supabaseService.currentUser?.id == widget.userId ? _handleAvatarTap : null,
                     child: Stack(
                       children: [
                         Container(
@@ -457,7 +457,7 @@ class _UserProfileState extends State<UserProfile> {
             ),
 
             // Logout Button - Only show when viewing own profile
-            if (_apiService.currentUser?['id'] == widget.userId) ...[
+            if (_supabaseService.currentUser?.id == widget.userId) ...[
               SizedBox(height: 3.h),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w),

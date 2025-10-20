@@ -3,6 +3,7 @@ import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
 import '../../services/profile_service.dart';
+import '../../services/supabase_service.dart';
 
 class EditSocialMediaPage extends StatefulWidget {
   final String userId;
@@ -23,6 +24,7 @@ class _EditSocialMediaPageState extends State<EditSocialMediaPage> {
   final _youtubeController = TextEditingController();
   
   final ProfileService _profileService = ProfileService();
+  final SupabaseService _supabaseService = SupabaseService();
   
   bool _isLoading = true;
   bool _isSaving = false;

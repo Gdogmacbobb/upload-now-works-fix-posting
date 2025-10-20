@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
-import './api_service.dart';
+
+import './supabase_service.dart';
 
 class VideoService {
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
 
   // Upload video with location verification
   Future<Map<String, dynamic>?> uploadVideo({
@@ -15,31 +16,38 @@ class VideoService {
     required double longitude,
     required String locationName,
     required String borough,
-    int? thumbnailFrameTime,
-    List<String>? hashtags,
   }) async {
     try {
+      final client = await _supabaseService.client;
+      final userId = _supabaseService.currentUser?.id;
+
+      if (userId == null) throw Exception('User not authenticated');
+
       // Verify NYC location (approximate boundaries)
       if (!_isInNYC(latitude, longitude)) {
         throw Exception(
             'Videos can only be uploaded from within NYC boundaries');
       }
 
-      final response = await _apiService.post('/videos', {
-        'title': title,
-        'description': description,
-        'videoUrl': videoUrl,
-        'thumbnailUrl': thumbnailUrl,
-        'duration': duration,
-        'locationLatitude': latitude,
-        'locationLongitude': longitude,
-        'locationName': locationName,
-        'borough': borough,
-        'thumbnailFrameTime': thumbnailFrameTime ?? 0,
-        'hashtags': hashtags ?? [],
-      });
+      final response = await client
+          .from('videos')
+          .insert({
+            'performer_id': userId,
+            'title': title,
+            'description': description,
+            'video_url': videoUrl,
+            'thumbnail_url': thumbnailUrl,
+            'duration': duration,
+            'location_latitude': latitude,
+            'location_longitude': longitude,
+            'location_name': locationName,
+            'borough': borough,
+            'is_approved': false, // Requires admin approval
+          })
+          .select()
+          .single();
 
-      return response?['video'] as Map<String, dynamic>?;
+      return response;
     } catch (error) {
       debugPrint('Upload video error: $error');
       rethrow;
@@ -52,18 +60,23 @@ class VideoService {
     int offset = 0,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/videos/discovery',
-        queryParams: {
-          'limit': limit.toString(),
-          'offset': offset.toString(),
-        },
-      );
+      final client = await _supabaseService.client;
 
-      final videos = response?['videos'] as List<dynamic>?;
-      if (videos == null) return [];
+      final response = await client
+          .from('videos')
+          .select('''
+            *,
+            performer:user_profiles!performer_id(
+              id, username, full_name, profile_image_url, 
+              performance_types, is_verified
+            )
+          ''')
+          .eq('is_approved', true)
+          .eq('is_flagged', false)
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-      return videos.map((v) => _mapVideoResponse(v)).toList();
+      return List<Map<String, dynamic>>.from(response);
     } catch (error) {
       debugPrint('Get discovery feed error: $error');
       return [];
@@ -76,22 +89,145 @@ class VideoService {
     int offset = 0,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/videos/following',
-        queryParams: {
-          'limit': limit.toString(),
-          'offset': offset.toString(),
-        },
-      );
+      final client = await _supabaseService.client;
+      final response = await client
+          .from('videos')
+          .select('''
+            id,
+            title,
+            description,
+            video_url,
+            thumbnail_url,
+            duration,
+            like_count,
+            comment_count,
+            share_count,
+            view_count,
+            location_name,
+            borough,
+            created_at,
+            performer:performer_id (
+              id,
+              username,
+              profile_image_url,
+              performance_types,
+              is_verified
+            )
+          ''')
+          .eq('is_approved', true)
+          .inFilter('performer_id', await _getFollowedPerformerIds())
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-      final videos = response?['videos'] as List<dynamic>?;
-      if (videos == null) return [];
-
-      return videos.map((v) => _mapVideoResponse(v)).toList();
-    } catch (error) {
-      debugPrint('Get following feed error: $error');
-      return [];
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error fetching following feed: $e');
+      // Return mock data for development
+      return _getMockFollowingVideos();
     }
+  }
+
+  Future<List<String>> _getFollowedPerformerIds() async {
+    try {
+      final client = await _supabaseService.client;
+      final userId = _supabaseService.currentUser?.id;
+      if (userId == null) return [];
+
+      final response = await client
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId);
+
+      return response
+          .map<String>((follow) => follow['following_id'].toString())
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching followed performer IDs: $e');
+      return ['mock-performer-1', 'mock-performer-2', 'mock-performer-3'];
+    }
+  }
+
+  List<Map<String, dynamic>> _getMockFollowingVideos() {
+    return [
+      {
+        "id": "following-1",
+        "title": "Smooth Jazz Session",
+        "description":
+            "Smooth jazz vibes in Washington Square Park 🎷 #JazzLife #NYCStreets",
+        "video_url": "https://example.com/video1.mp4",
+        "thumbnail_url":
+            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=800&fit=crop",
+        "duration": 180,
+        "like_count": 1247,
+        "comment_count": 89,
+        "share_count": 156,
+        "view_count": 5623,
+        "location_name": "Washington Square Park",
+        "borough": "Manhattan",
+        "created_at":
+            DateTime.now().subtract(Duration(hours: 3)).toIso8601String(),
+        "performer": {
+          "id": "performer-1",
+          "username": "jazzy_marcus",
+          "profile_image_url":
+              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+          "performance_type": "musician",
+          "is_verified": true
+        }
+      },
+      {
+        "id": "following-2",
+        "title": "Hip-Hop Freestyle",
+        "description":
+            "Hip-hop freestyle session! Drop your bars in the comments 🎤 #HipHop #Freestyle",
+        "video_url": "https://example.com/video2.mp4",
+        "thumbnail_url":
+            "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=800&fit=crop",
+        "duration": 240,
+        "like_count": 2156,
+        "comment_count": 234,
+        "share_count": 89,
+        "view_count": 8934,
+        "location_name": "Brooklyn Bridge",
+        "borough": "Brooklyn",
+        "created_at":
+            DateTime.now().subtract(Duration(hours: 5)).toIso8601String(),
+        "performer": {
+          "id": "performer-2",
+          "username": "brooklyn_beats",
+          "profile_image_url":
+              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+          "performance_type": "singer",
+          "is_verified": false
+        }
+      },
+      {
+        "id": "following-3",
+        "title": "Classical Violin",
+        "description":
+            "Classical meets modern in Times Square ✨ Playing requests all day!",
+        "video_url": "https://example.com/video3.mp4",
+        "thumbnail_url":
+            "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=800&fit=crop",
+        "duration": 300,
+        "like_count": 3421,
+        "comment_count": 167,
+        "share_count": 298,
+        "view_count": 12456,
+        "location_name": "Times Square",
+        "borough": "Manhattan",
+        "created_at":
+            DateTime.now().subtract(Duration(hours: 8)).toIso8601String(),
+        "performer": {
+          "id": "performer-3",
+          "username": "violin_virtuoso",
+          "profile_image_url":
+              "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+          "performance_type": "musician",
+          "is_verified": true
+        }
+      },
+    ];
   }
 
   // Get performer's videos
@@ -101,18 +237,18 @@ class VideoService {
     int offset = 0,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/videos/performer/$performerId',
-        queryParams: {
-          'limit': limit.toString(),
-          'offset': offset.toString(),
-        },
-      );
+      final client = await _supabaseService.client;
 
-      final videos = response?['videos'] as List<dynamic>?;
-      if (videos == null) return [];
+      final response = await client
+          .from('videos')
+          .select('*')
+          .eq('performer_id', performerId)
+          .eq('is_approved', true)
+          .eq('is_flagged', false)
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-      return videos.map((v) => v as Map<String, dynamic>).toList();
+      return List<Map<String, dynamic>>.from(response);
     } catch (error) {
       debugPrint('Get performer videos error: $error');
       return [];
@@ -122,28 +258,66 @@ class VideoService {
   // Like/unlike video
   Future<void> toggleVideoLike(String videoId) async {
     try {
-      await _apiService.post('/videos/$videoId/like', {});
+      final client = await _supabaseService.client;
+      final userId = _supabaseService.currentUser?.id;
+
+      if (userId == null) throw Exception('User not authenticated');
+
+      // Check if already liked
+      final existingLike = await client
+          .from('video_interactions')
+          .select()
+          .eq('user_id', userId)
+          .eq('video_id', videoId)
+          .eq('interaction_type', 'like')
+          .limit(1);
+
+      if (existingLike.isNotEmpty) {
+        // Unlike
+        await client
+            .from('video_interactions')
+            .delete()
+            .eq('user_id', userId)
+            .eq('video_id', videoId)
+            .eq('interaction_type', 'like');
+      } else {
+        // Like
+        await client.from('video_interactions').insert({
+          'user_id': userId,
+          'video_id': videoId,
+          'interaction_type': 'like',
+        });
+      }
     } catch (error) {
       debugPrint('Toggle video like error: $error');
       rethrow;
     }
   }
 
-  // Check if video is liked
-  Future<bool> isVideoLiked(String videoId) async {
-    try {
-      final response = await _apiService.get('/videos/$videoId/liked');
-      return response?['liked'] as bool? ?? false;
-    } catch (error) {
-      debugPrint('Check video liked error: $error');
-      return false;
-    }
-  }
-
   // Record video view
   Future<void> recordVideoView(String videoId) async {
     try {
-      await _apiService.post('/videos/$videoId/view', {});
+      final client = await _supabaseService.client;
+      final userId = _supabaseService.currentUser?.id;
+
+      if (userId == null) return;
+
+      // Check if already viewed by this user (to prevent duplicate views)
+      final existingView = await client
+          .from('video_interactions')
+          .select()
+          .eq('user_id', userId)
+          .eq('video_id', videoId)
+          .eq('interaction_type', 'view')
+          .limit(1);
+
+      if (existingView.isEmpty) {
+        await client.from('video_interactions').insert({
+          'user_id': userId,
+          'video_id': videoId,
+          'interaction_type': 'view',
+        });
+      }
     } catch (error) {
       debugPrint('Record video view error: $error');
     }
@@ -153,12 +327,23 @@ class VideoService {
   Future<Map<String, dynamic>?> addComment(
       String videoId, String content) async {
     try {
-      final response = await _apiService.post(
-        '/videos/$videoId/comments',
-        {'content': content},
-      );
+      final client = await _supabaseService.client;
+      final userId = _supabaseService.currentUser?.id;
 
-      return response?['comment'] as Map<String, dynamic>?;
+      if (userId == null) throw Exception('User not authenticated');
+
+      final response = await client.from('comments').insert({
+        'video_id': videoId,
+        'user_id': userId,
+        'content': content,
+      }).select('''
+            *,
+            user:user_profiles!user_id(
+              username, full_name, profile_image_url
+            )
+          ''').single();
+
+      return response;
     } catch (error) {
       debugPrint('Add comment error: $error');
       rethrow;
@@ -172,18 +357,22 @@ class VideoService {
     int offset = 0,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/videos/$videoId/comments',
-        queryParams: {
-          'limit': limit.toString(),
-          'offset': offset.toString(),
-        },
-      );
+      final client = await _supabaseService.client;
 
-      final comments = response?['comments'] as List<dynamic>?;
-      if (comments == null) return [];
+      final response = await client
+          .from('comments')
+          .select('''
+            *,
+            user:user_profiles!user_id(
+              username, full_name, profile_image_url
+            )
+          ''')
+          .eq('video_id', videoId)
+          .eq('is_flagged', false)
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-      return comments.map((c) => c as Map<String, dynamic>).toList();
+      return List<Map<String, dynamic>>.from(response);
     } catch (error) {
       debugPrint('Get video comments error: $error');
       return [];
@@ -191,10 +380,17 @@ class VideoService {
   }
 
   // Repost video (for New Yorkers)
-  Future<void> repostVideo(String videoId, {String? repostText}) async {
+  Future<void> repostVideo(String videoId, {String? caption}) async {
     try {
-      await _apiService.post('/videos/$videoId/repost', {
-        if (repostText != null) 'repostText': repostText,
+      final client = await _supabaseService.client;
+      final userId = _supabaseService.currentUser?.id;
+
+      if (userId == null) throw Exception('User not authenticated');
+
+      await client.from('reposts').insert({
+        'user_id': userId,
+        'video_id': videoId,
+        if (caption != null) 'caption': caption,
       });
     } catch (error) {
       debugPrint('Repost video error: $error');
@@ -209,77 +405,29 @@ class VideoService {
     int offset = 0,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/videos/reposts/$userId',
-        queryParams: {
-          'limit': limit.toString(),
-          'offset': offset.toString(),
-        },
-      );
+      final client = await _supabaseService.client;
 
-      final reposts = response?['reposts'] as List<dynamic>?;
-      if (reposts == null) return [];
+      final response = await client
+          .from('reposts')
+          .select('''
+            *,
+            video:videos!video_id(
+              *,
+              performer:user_profiles!performer_id(
+                username, full_name, profile_image_url, 
+                performance_types, is_verified
+              )
+            )
+          ''')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-      return reposts.map((r) => r as Map<String, dynamic>).toList();
+      return List<Map<String, dynamic>>.from(response);
     } catch (error) {
       debugPrint('Get user reposts error: $error');
       return [];
     }
-  }
-
-  // Get upload URL for video
-  Future<String> getUploadUrl() async {
-    try {
-      final response = await _apiService.post('/videos/upload-url', {});
-      if (response == null || response['uploadURL'] == null) {
-        throw Exception('Failed to get upload URL');
-      }
-      return response['uploadURL'] as String;
-    } catch (error) {
-      debugPrint('Get upload URL error: $error');
-      rethrow;
-    }
-  }
-
-  // Helper: Map video response to include nested performer data
-  Map<String, dynamic> _mapVideoResponse(dynamic video) {
-    final videoMap = video as Map<String, dynamic>;
-    
-    // Handle performer data - API returns it nested
-    final performer = videoMap['performer'];
-    if (performer != null) {
-      videoMap['performer'] = {
-        'id': performer['id'],
-        'username': performer['username'],
-        'full_name': performer['fullName'],
-        'profile_image_url': performer['profileImageUrl'],
-        'performance_types': performer['performanceTypes'],
-        'is_verified': performer['isVerified'],
-      };
-    }
-
-    // Map API response fields to match Supabase naming
-    return {
-      'id': videoMap['id'],
-      'title': videoMap['title'],
-      'description': videoMap['description'],
-      'video_url': videoMap['videoUrl'],
-      'thumbnail_url': videoMap['thumbnailUrl'],
-      'thumbnail_frame_time': videoMap['thumbnailFrameTime'],
-      'duration': videoMap['duration'],
-      'like_count': videoMap['likeCount'],
-      'comment_count': videoMap['commentCount'],
-      'share_count': videoMap['shareCount'],
-      'view_count': videoMap['viewCount'],
-      'repost_count': videoMap['repostCount'],
-      'location_name': videoMap['locationName'],
-      'location_latitude': videoMap['locationLatitude'],
-      'location_longitude': videoMap['locationLongitude'],
-      'borough': videoMap['borough'],
-      'hashtags': videoMap['hashtags'],
-      'created_at': videoMap['createdAt'],
-      'performer': videoMap['performer'],
-    };
   }
 
   // Helper: Check if coordinates are within NYC boundaries (approximate)

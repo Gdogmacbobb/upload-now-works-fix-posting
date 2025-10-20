@@ -8,7 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/app_export.dart';
 import '../../theme/app_theme.dart';
-import '../../services/api_service.dart';
+import '../../services/supabase_service.dart';
+import '../../services/auth_service.dart';
 import './widgets/animated_logo_widget.dart';
 import './widgets/gradient_background_widget.dart';
 import './widgets/loading_indicator_widget.dart';
@@ -31,18 +32,20 @@ class _SplashScreenState extends State<SplashScreen> {
   Timer? _timeoutTimer;
   Timer? _loadingTextTimer;
 
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-    print('DEBUG: SplashScreen init');
+    print('DEBUG: SplashScreen init - State ${hashCode} created');
     _setSystemUIOverlay();
     _startInitialization();
   }
 
   @override
   void dispose() {
+    print('DEBUG: SplashScreen dispose - State ${hashCode} being destroyed');
     _timeoutTimer?.cancel();
     _loadingTextTimer?.cancel();
     super.dispose();
@@ -74,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void _startLoadingTextAnimation() {
     final loadingMessages = [
       'Initializing YNFNY...',
-      'Connecting to server...',
+      'Connecting to Supabase...',
       'Checking authentication...',
       'Loading user preferences...',
       'Verifying NYC location services...',
@@ -109,8 +112,9 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _performInitializationTasks() async {
     try {
       print('DEBUG: Starting initialization tasks');
-      // API service is already initialized in main.dart
-      print('DEBUG: API service ready');
+      // Initialize Supabase and check authentication
+      await _supabaseService.waitForInitialization(); // Proper initialization wait
+      print('DEBUG: Supabase service ready');
 
       // Simulate other background tasks
       await Future.wait([
@@ -122,11 +126,17 @@ class _SplashScreenState extends State<SplashScreen> {
       print('DEBUG: Background tasks completed');
 
       // Ensure minimum splash display time
+      print('DEBUG: Starting 2.5s delay...');
       await Future.delayed(const Duration(milliseconds: 2500));
+      print('DEBUG: Delay complete');
 
+      print('DEBUG: After delay, mounted=$mounted');
       if (mounted) {
-        print('DEBUG: Navigating to next screen');
+        print('DEBUG: Calling _navigateToNextScreen()');
         _navigateToNextScreen();
+        print('DEBUG: _navigateToNextScreen() returned');
+      } else {
+        print('DEBUG: Widget unmounted before navigation!');
       }
     } catch (e) {
       print('DEBUG: Initialization error - ${e.toString()}');
@@ -141,9 +151,9 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthenticationStatus() async {
-    // Check real authentication status with API service
+    // Check real authentication status with Supabase
     await Future.delayed(const Duration(milliseconds: 800));
-    // Authentication check is handled by ApiService
+    // Authentication check is handled by SupabaseService
   }
 
   Future<void> _loadUserPreferences() async {
@@ -175,7 +185,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (DEV_SKIP_GEO_AUTH) {
       print('[NAV_STATE] DEV_SKIP_GEO_AUTH=true - bypassing auth/geo checks');
       nextRoute = '/video-recording';
-    } else if (_apiService.isAuthenticated) {
+    } else if (_supabaseService.isAuthenticated) {
       print('[NAV_STATE] User authenticated - routing to discovery feed');
       // Authenticated users go to Discovery Feed
       nextRoute = '/discovery-feed';

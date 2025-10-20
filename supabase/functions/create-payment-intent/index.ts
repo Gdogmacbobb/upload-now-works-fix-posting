@@ -26,7 +26,11 @@ serve(async (req) => {
         const stripe = new Stripe(stripeKey);
 
         // Get the request body
+<<<<<<< HEAD
         const { amount, currency, donation_id, use_checkout, success_url, cancel_url } = await req.json();
+=======
+        const { amount, currency, donation_id } = await req.json();
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
         // Validate input
         if (!amount || amount <= 0) {
@@ -37,6 +41,7 @@ serve(async (req) => {
             throw new Error('Donation ID required');
         }
 
+<<<<<<< HEAD
         // If checkout session is requested (PCI-DSS compliant approach)
         if (use_checkout) {
             if (!success_url || !cancel_url) {
@@ -105,6 +110,34 @@ serve(async (req) => {
                 status: 200
             });
         }
+=======
+        // Create a Stripe checkout session or payment intent
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount), // Stripe expects amount in smallest currency unit (cents)
+            currency: currency || 'usd',
+            automatic_payment_methods: {
+                enabled: true,
+            },
+            metadata: {
+                donation_id: donation_id,
+                platform: 'YNFNY'
+            },
+        });
+
+        // Return the Stripe payment intent
+        return new Response(JSON.stringify({
+            payment_intent_id: paymentIntent.id,
+            client_secret: paymentIntent.client_secret,
+            amount: paymentIntent.amount,
+            currency: paymentIntent.currency,
+        }), {
+            headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json'
+            },
+            status: 200
+        });
+>>>>>>> b1f9c438f65d3f7093efb1d909f7b1e8e83c8cb5
 
     } catch (error) {
         return new Response(JSON.stringify({

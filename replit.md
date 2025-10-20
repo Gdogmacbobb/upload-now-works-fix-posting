@@ -1,45 +1,8 @@
 # Overview
-YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. The application uses a Replit-hosted backend with Neon Postgres database, object storage, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment. The application features a production-ready video preview with TikTok-style chrome and synchronized audio replay, optimized for deployment.
+YNFNY is a cross-platform Flutter mobile application designed as a social platform for street performers. It integrates multiple AI services, Supabase for backend services, and Stripe for payment processing. The project aims to provide a robust and engaging platform for street artists to connect with their audience and monetize their performances, supporting both mobile and web deployment. The application features a production-ready video preview with TikTok-style chrome and synchronized audio replay, optimized for deployment.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
-
-# Recent Changes (October 16, 2025)
-
-## ✅ Complete Backend Migration from Supabase to Replit
-**Status: COMPLETE** - All functionality migrated and architect-reviewed
-
-### Migration Accomplishments:
-- **All Services Fully Migrated to API**:
-  - ProfileService: Uses /api/profiles endpoints
-  - ImageUploadService: Uses /api/profiles/upload-avatar with Replit object storage
-  - DonationService: Uses /api/stripe endpoints with Stripe integration
-  - VideoService: Fully migrated - uses /api/videos endpoints with NYC geofencing
-- **Comprehensive Video API Endpoints**:
-  - POST /api/videos - Upload video with NYC location verification
-  - GET /api/videos/discovery - Discovery feed with performer data
-  - GET /api/videos/following - Following feed for authenticated users
-  - GET /api/videos/performer/:performerId - Get performer's videos
-  - POST /api/videos/:videoId/like - Toggle video like
-  - GET /api/videos/:videoId/liked - Check like status
-  - POST /api/videos/:videoId/view - Record video view
-  - POST /api/videos/:videoId/comments - Add comment
-  - GET /api/videos/:videoId/comments - Get comments
-  - POST /api/videos/:videoId/repost - Repost video
-  - GET /api/videos/reposts/:userId - Get user reposts
-  - POST /api/videos/upload-url - Get object storage upload URL
-- **Social API Endpoints**:
-  - POST /api/social/follow/:userId - Follow user
-  - DELETE /api/social/follow/:userId - Unfollow user
-  - GET /api/social/follow-status/:userId - Check follow status
-  - GET /api/social/followers/:userId - Get followers
-  - GET /api/social/following/:userId - Get following
-- **Enhanced ApiService**: Added queryParams support to get() method for pagination
-- **Supabase Completely Removed**: All dependencies eliminated from frontend and backend
-- **Bug Fixes**: Fixed double API prefix issue (/api/api/* → /api/*)
-
-### Known Issues (Separate from Migration):
-- **Splash Screen Navigation**: Flutter web routing needs configuration adjustment to properly transition from splash screen to login screen. This is a Flutter web-specific routing issue, not related to the Supabase migration.
 
 # Recent Changes (October 10, 2025)
 

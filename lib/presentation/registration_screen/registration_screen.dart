@@ -7,8 +7,9 @@ import 'package:http/http.dart' as http;
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
-import '../../services/api_service.dart';
+import '../../services/supabase_service.dart';
 import '../../core/constants/user_roles.dart';
+import '../../config/supabase_config.dart';
 import './widgets/account_type_header.dart';
 import './widgets/common_form_fields.dart';
 import './widgets/location_verification_widget.dart';
@@ -460,12 +461,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     try {
       print('[USERNAME CHECK] Starting availability check for: $cleanUsername');
-      final apiService = ApiService();
+      final supabaseService = SupabaseService();
+      
+      // CRITICAL: Wait for Supabase initialization before using client
+      await supabaseService.waitForInitialization();
+      print('[USERNAME CHECK] Supabase initialized, calling RPC...');
+      
+      // Check if client is null
+      if (supabaseService.client == null) {
+        print('[USERNAME CHECK] ERROR: Supabase client is null after initialization');
+        throw Exception('Supabase client not initialized');
+      }
       
       // Check if username is available
-      final isAvailable = await apiService.checkUsernameAvailability(cleanUsername);
+      final response = await supabaseService.client!
+          .rpc('check_username_availability', params: {'p_username': cleanUsername});
       
-      print('[USERNAME CHECK] API response received: $isAvailable');
+      print('[USERNAME CHECK] RPC response received: $response');
+      final isAvailable = response as bool;
 
       if (mounted) {
         setState(() {
@@ -474,9 +487,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         });
         print('[USERNAME CHECK] ✅ Username ${isAvailable ? "AVAILABLE" : "TAKEN"}');
 
-        // If not available, generate simple suggestions locally
+        // If not available, get suggestions
         if (!isAvailable) {
-          _generateUsernameSuggestions(cleanUsername);
+          _getUsernameSuggestions(cleanUsername);
         }
       }
     } catch (e) {
@@ -499,23 +512,42 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 
-  void _generateUsernameSuggestions(String baseUsername) {
-    // Generate simple local username suggestions
-    final suggestions = <String>[];
-    final random = DateTime.now().millisecondsSinceEpoch % 1000;
-    
-    suggestions.add('${baseUsername}_nyc');
-    suggestions.add('${baseUsername}$random');
-    suggestions.add('$baseUsername${_selectedBorough?.toLowerCase() ?? 'ny'}');
-    
-    if (_selectedPerformanceTypes.isNotEmpty) {
-      suggestions.add('${baseUsername}_${_selectedPerformanceTypes.first.toLowerCase()}');
+  Future<void> _getUsernameSuggestions(String baseUsername) async {
+    try {
+      print('[USERNAME SUGGESTIONS] Getting suggestions for: $baseUsername');
+      final supabaseService = SupabaseService();
+      
+      // CRITICAL: Wait for Supabase initialization before using client
+      await supabaseService.waitForInitialization();
+      print('[USERNAME SUGGESTIONS] Supabase initialized, calling RPC...');
+      
+      // Check if client is null
+      if (supabaseService.client == null) {
+        print('[USERNAME SUGGESTIONS] ERROR: Supabase client is null');
+        return;
+      }
+      
+      final response = await supabaseService.client!.rpc(
+        'get_username_suggestions',
+        params: {
+          'p_username': baseUsername,
+          'p_borough': _selectedBorough,
+          'p_performance_types': _selectedPerformanceTypes.isEmpty 
+              ? null 
+              : _selectedPerformanceTypes,
+        },
+      );
+
+      if (mounted && response != null) {
+        final suggestions = (response as List).cast<String>();
+        print('[USERNAME SUGGESTIONS] ✅ Got ${suggestions.length} suggestions: $suggestions');
+        setState(() {
+          _usernameSuggestions = suggestions;
+        });
+      }
+    } catch (e) {
+      print('[USERNAME SUGGESTIONS] ❌ Error getting suggestions: $e');
     }
-    
-    print('[USERNAME SUGGESTIONS] ✅ Generated ${suggestions.length} suggestions: $suggestions');
-    setState(() {
-      _usernameSuggestions = suggestions;
-    });
   }
 
   void _validateConfirmPassword() {
@@ -646,68 +678,190 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
 
     try {
-      print('[API] Step 1: Starting registration...');
-      final apiService = ApiService();
+      print('[SUPABASE] Step 1: Checking connectivity...');
+      // Check Supabase connectivity first
+      final supabaseService = SupabaseService();
+      final isConnected = await supabaseService.checkSupabaseConnection();
       
-      // Determine account type
+      if (!isConnected) {
+        print('[SUPABASE] ❌ Connectivity check failed');
+        throw Exception('Unable to connect to server. Please check your internet connection and try again.');
+      }
+      print('[SUPABASE] ✅ Connectivity confirmed');
+      
+      // Real Supabase registration
+      await supabaseService.waitForInitialization();
+      
+      // Determine account type for Supabase
       final accountType = UserRoles.getCanonicalRole(_accountType);
-      print('[API] Account type: $accountType');
+      print('[SUPABASE] Account type: $accountType');
       
-      // Call API service to register
-      print('[API] Step 2: Registering user: ${_emailController.text}');
+      // Prepare user metadata
+      final Map<String, dynamic> metadata = {
+        'account_type': accountType,
+        'full_name': _fullNameController.text.trim(),
+        'handle': _handleController.text.trim(),
+        'borough': _selectedBorough,
+      };
       
-      final response = await apiService.register(
+      // Add birthday for BOTH roles
+      if (_selectedBirthDate != null) {
+        metadata['birthday'] = _selectedBirthDate!.toIso8601String().split('T').first;
+      }
+      
+      // Add role-specific metadata
+      if (accountType == 'street_performer') {
+        metadata['performance_types'] = _selectedPerformanceTypes;
+        metadata['instagram'] = _instagramController.text.trim();
+        metadata['tiktok'] = _tiktokController.text.trim();
+        metadata['youtube'] = _youtubeController.text.trim();
+      }
+      
+      print('[SUPABASE] Step 2: Creating auth account for: ${_emailController.text}');
+      
+      final response = await supabaseService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        username: _handleController.text.trim(),
-        fullName: _fullNameController.text.trim(),
-        role: accountType,
-        performanceTypes: accountType == 'street_performer' ? _selectedPerformanceTypes : null,
+        data: metadata,
       );
       
-      print('[API] ✅ Registration successful (user ID: ${response['user']['id']})');
-      
-      if (mounted) {
-        // Show success message
-        print('[UI] Showing success message to user');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                CustomIconWidget(
-                  iconName: 'check_circle',
-                  color: AppTheme.successGreen,
-                  size: 20,
-                ),
-                SizedBox(width: 3.w),
-                Expanded(
-                  child: Text(
-                    accountType == 'street_performer'
-                        ? 'Account created! Welcome to YNFNY.'
-                        : 'Welcome to YNFNY! Your account is ready.',
-                    style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textPrimary,
+      if (response.user != null) {
+        print('[SUPABASE] ✅ Auth account created successfully (user ID: ${response.user!.id})');
+        
+        try {
+          print('[SUPABASE] Step 3: Preparing profile data...');
+          // Update user profile in database (trigger already created base row)
+          final profileData = <String, dynamic>{
+            'email': _emailController.text.trim(),
+            'username': _handleController.text.trim(),
+            'full_name': _fullNameController.text.trim(),
+            'role': accountType,
+            'borough': _selectedBorough,
+            'is_active': true,
+            'is_verified': false,
+            'total_donations_received': 0,
+          };
+          
+          // Add birthday for BOTH roles
+          if (_selectedBirthDate != null) {
+            profileData['birthday'] = _selectedBirthDate!.toIso8601String().split('T').first;
+            print('[SUPABASE] Birthday: ${profileData['birthday']}');
+          }
+          
+          // Add role-specific fields
+          if (accountType == 'street_performer') {
+            print('[SUPABASE] Performance types: $_selectedPerformanceTypes');
+            profileData['performance_types'] = _selectedPerformanceTypes;
+            profileData['socials_instagram'] = _instagramController.text.trim().isNotEmpty 
+                ? _instagramController.text.trim() 
+                : null;
+            profileData['socials_tiktok'] = _tiktokController.text.trim().isNotEmpty 
+                ? _tiktokController.text.trim() 
+                : null;
+            profileData['socials_youtube'] = _youtubeController.text.trim().isNotEmpty 
+                ? _youtubeController.text.trim() 
+                : null;
+          }
+          
+          print('[SUPABASE] Step 4: Updating trigger-created profile in user_profiles table...');
+          print('[SUPABASE] Profile data: $profileData');
+          
+          // Update the profile row that was auto-created by Supabase trigger
+          final updateResponse = await supabaseService.client
+              .from('user_profiles')
+              .update(profileData)
+              .eq('id', response.user!.id)
+              .select();
+          
+          // Verify update succeeded
+          if (updateResponse == null || updateResponse.isEmpty) {
+            throw Exception('Profile update failed: trigger-created profile not found');
+          }
+          
+          print('[SUPABASE] ✅ Profile updated successfully in database');
+          print('[SECURITY] ✅ Registration complete with birthday: ${profileData['birthday']}');
+        } catch (profileError) {
+          // Profile update failed - clean up by deleting the newly created auth user
+          print('[SECURITY] ❌ Profile update FAILED: $profileError');
+          print('[SECURITY] Rolling back auth account to prevent orphaned records...');
+          
+          try {
+            // Call Edge Function to delete auth user
+            final deleteUrl = Uri.parse('${AppSupabase.url}/functions/v1/delete-auth-user');
+            
+            final deleteResponse = await http.post(
+              deleteUrl,
+              headers: {
+                'Authorization': 'Bearer ${AppSupabase.anonKey}',
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode({'userId': response.user!.id}),
+            );
+            
+            if (deleteResponse.statusCode == 200) {
+              print('[SECURITY] ✅ Orphaned auth account deleted successfully');
+            } else {
+              print('[SECURITY] ⚠️ Failed to delete auth user: ${deleteResponse.body}');
+              print('[SECURITY] ⚠️ Orphaned auth account may remain in system');
+            }
+          } catch (cleanupError) {
+            print('[SECURITY] ❌ Failed to call rollback function: $cleanupError');
+            print('[SECURITY] ⚠️ Orphaned auth account may remain in system');
+          }
+          
+          // Determine specific error message
+          final errorMessage = profileError.toString();
+          if (errorMessage.contains('duplicate key') || 
+              errorMessage.contains('unique constraint') ||
+              errorMessage.contains('username') ||
+              errorMessage.contains('23505')) {
+            throw Exception('Username "@${_handleController.text.trim()}" is already taken. Please choose a different handle.');
+          } else if (errorMessage.contains('permission') || errorMessage.contains('RLS')) {
+            throw Exception('Database permission error. Please contact support.');
+          } else if (errorMessage.contains('trigger-created profile not found')) {
+            throw Exception('Registration failed: Database trigger issue. Please try again or contact support.');
+          } else {
+            throw Exception('Failed to update profile: ${profileError.toString()}');
+          }
+        }
+        
+        if (mounted) {
+          // Show success message
+          print('[UI] Showing success message to user');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  CustomIconWidget(
+                    iconName: 'check_circle',
+                    color: AppTheme.successGreen,
+                    size: 20,
+                  ),
+                  SizedBox(width: 3.w),
+                  Expanded(
+                    child: Text(
+                      accountType == 'street_performer'
+                          ? 'Account created! Check your email for verification.'
+                          : 'Welcome to YNFNY! Your account is ready.',
+                      style: AppTheme.darkTheme.textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              backgroundColor: AppTheme.darkTheme.colorScheme.surface,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
             ),
-            backgroundColor: AppTheme.darkTheme.colorScheme.surface,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+          );
 
-        // Navigate based on user role
-        final userRole = response['user']['role'];
-        print('[NAVIGATION] Navigating based on role: $userRole');
-        
-        if (userRole == 'street_performer') {
+          // Navigate to discovery page after successful registration
+          print('[NAVIGATION] Step 5: Navigating to /discovery-feed page...');
+          print('[SECURITY] ✅ Registration and navigation complete');
           Navigator.pushReplacementNamed(context, '/discovery-feed');
-        } else {
-          Navigator.pushReplacementNamed(context, '/discovery-feed');
+          print('[NAVIGATION] ✅ Navigation triggered successfully');
         }
-        print('[NAVIGATION] ✅ Navigation triggered successfully');
       }
     } catch (e) {
       print('[ERROR] ❌ Registration failed: $e');

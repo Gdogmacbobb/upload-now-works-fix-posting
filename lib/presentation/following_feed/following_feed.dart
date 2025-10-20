@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
-import '../../services/api_service.dart';
+import '../../services/supabase_service.dart';
 import '../../services/video_service.dart';
 import '../../widgets/feed_navigation_bottom_widget.dart';
 import '../../widgets/feed_navigation_header_widget.dart';
@@ -22,7 +22,7 @@ class _FollowingFeedState extends State<FollowingFeed>
     with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   final VideoService _videoService = VideoService();
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
 
   List<Map<String, dynamic>> _videos = [];
   bool _isLoading = true;
@@ -52,9 +52,8 @@ class _FollowingFeedState extends State<FollowingFeed>
         _hasError = false;
       });
 
-      // Get user role from API service
-      final user = _apiService.currentUser;
-      _currentUserRole = user?['role'];
+      // Get user role
+      _currentUserRole = await _supabaseService.getUserRole();
 
       // Load following feed
       final videos = await _videoService.getFollowingFeed(limit: 20);

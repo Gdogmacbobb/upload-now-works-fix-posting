@@ -1,12 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import './api_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import './supabase_service.dart';
 
 class ImageUploadService {
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
   final ImagePicker _picker = ImagePicker();
 
   /// Pick image from gallery (web-compatible)
@@ -33,49 +32,46 @@ class ImageUploadService {
     }
   }
 
-  /// Upload image bytes to API and return public URL
+  /// Upload image bytes to Supabase storage and return public URL
   Future<String?> uploadProfilePhoto({
     required Uint8List imageBytes,
     required String userId,
   }) async {
     try {
-      debugPrint('ImageUploadService: Uploading profile photo for user $userId');
-
-      final token = _apiService.getToken();
-      if (token == null) {
-        debugPrint('ImageUploadService Error: No auth token available');
-        return null;
-      }
-
-      final uri = Uri.parse('${_apiService.baseUrl}/api/profiles/upload-avatar');
-      final request = http.MultipartRequest('POST', uri);
+      final client = _supabaseService.client;
       
-      request.headers['Authorization'] = 'Bearer $token';
-      request.files.add(http.MultipartFile.fromBytes(
-        'image',
+      // Generate unique filename with timestamp
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'profile_$userId\_$timestamp.jpg';
+      final filePath = 'profiles/$fileName';
+
+      debugPrint('ImageUploadService: Uploading to $filePath');
+
+      // Upload using uploadBinary for web compatibility
+      await client.storage.from('profile-photos').uploadBinary(
+        filePath,
         imageBytes,
-        filename: 'profile_$userId\_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      ));
+        fileOptions: const FileOptions(
+          contentType: 'image/jpeg',
+          cacheControl: '3600',
+          upsert: false,
+        ),
+      );
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      // Get public URL
+      final String publicUrl = client.storage
+          .from('profile-photos')
+          .getPublicUrl(filePath);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final avatarUrl = data['avatar_url'] as String;
-        debugPrint('ImageUploadService: Upload successful, URL: $avatarUrl');
-        return avatarUrl;
-      } else {
-        debugPrint('ImageUploadService Error: Upload failed with status ${response.statusCode}');
-        return null;
-      }
+      debugPrint('ImageUploadService: Upload successful, URL: $publicUrl');
+      return publicUrl;
     } catch (e) {
       debugPrint('ImageUploadService Error: Failed to upload image - $e');
       return null;
     }
   }
 
-  /// Complete flow: pick image and upload to API
+  /// Complete flow: pick image and upload to Supabase
   Future<String?> pickAndUploadProfilePhoto(String userId) async {
     final imageBytes = await pickImageFromGallery();
     if (imageBytes == null) return null;

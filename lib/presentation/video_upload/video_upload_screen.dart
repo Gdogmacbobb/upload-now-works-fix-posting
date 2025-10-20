@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import '../../theme/app_theme.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../services/api_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/profile_service.dart';
 import '../../utils/web_dom_stub.dart' if (dart.library.html) 'dart:html' as html;
 import 'dart:js' if (dart.library.html) 'dart:js' as js;
@@ -42,7 +42,6 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   double _orientationRadians = 0.0; // Rotation angle in radians (0 for portrait, 1.5708 for landscape)
   
   final ProfileService _profileService = ProfileService();
-  final ApiService _apiService = ApiService();
 
   @override
   void didChangeDependencies() {
@@ -57,13 +56,12 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
   Future<void> _loadUserProfile() async {
     try {
-      final user = _apiService.currentUser;
+      final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
         return;
       }
 
-      final userId = user['id'];
-      final profile = await _profileService.getUserProfile(userId);
+      final profile = await _profileService.getUserProfile(user.id);
       if (profile != null && profile['username'] != null) {
         if (mounted) {
           setState(() {

@@ -4,7 +4,7 @@ import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
 import '../../services/profile_service.dart';
-import '../../services/api_service.dart';
+import '../../services/supabase_service.dart';
 import '../../services/video_service.dart';
 import '../../services/image_upload_service.dart';
 import './widgets/about_section_widget.dart';
@@ -23,7 +23,7 @@ class PerformerProfile extends StatefulWidget {
 class _PerformerProfileState extends State<PerformerProfile>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  final ApiService _apiService = ApiService();
+  final SupabaseService _supabaseService = SupabaseService();
   final VideoService _videoService = VideoService();
   final ProfileService _profileService = ProfileService();
   final ImageUploadService _imageUploadService = ImageUploadService();
@@ -59,22 +59,20 @@ class _PerformerProfileState extends State<PerformerProfile>
         _errorMessage = '';
       });
 
-      // Get current user from API service
-      final currentUser = _apiService.currentUser;
+      // Get current user
+      final currentUser = _supabaseService.currentUser;
       if (currentUser == null) {
         throw Exception('User not authenticated');
       }
 
-      final userId = currentUser['id'];
-      
       // Fetch user profile data using ProfileService
-      final profileData = await _profileService.getUserProfile(userId);
+      final profileData = await _profileService.getUserProfile(currentUser.id);
       if (profileData == null) {
         throw Exception('Failed to load user profile');
       }
 
       // Fetch user's videos using ProfileService
-      final videosData = await _profileService.getUserVideos(userId);
+      final videosData = await _profileService.getUserVideos(currentUser.id);
 
       if (mounted) {
         setState(() {
@@ -152,13 +150,13 @@ class _PerformerProfileState extends State<PerformerProfile>
     try {
       setState(() => _isUploadingPhoto = true);
 
-      final currentUser = _apiService.currentUser;
+      final currentUser = _supabaseService.currentUser;
       if (currentUser == null) {
         throw Exception('User not authenticated');
       }
 
       // Pick and upload photo
-      final imageUrl = await _imageUploadService.pickAndUploadProfilePhoto(currentUser['id']);
+      final imageUrl = await _imageUploadService.pickAndUploadProfilePhoto(currentUser.id);
       
       if (imageUrl == null) {
         setState(() => _isUploadingPhoto = false);
@@ -166,7 +164,7 @@ class _PerformerProfileState extends State<PerformerProfile>
       }
 
       // Update database with new photo URL
-      final success = await _profileService.updateProfilePhoto(currentUser['id'], imageUrl);
+      final success = await _profileService.updateProfilePhoto(currentUser.id, imageUrl);
       
       if (success) {
         // Reload profile to show new photo
@@ -355,10 +353,10 @@ class _PerformerProfileState extends State<PerformerProfile>
                     performerData: _profileData ?? {},
                     isFollowing: isFollowing,
                     onFollowTap: _handleFollowTap,
-                    currentUserId: _apiService.currentUser?['id'],
+                    currentUserId: _supabaseService.currentUser?.id,
                     onEditTap: _handleEditProfile,
                     onProfileUpdated: _loadProfileData,
-                    onAvatarTap: (_apiService.currentUser?['id'] == _profileData?['id']) ? _handleAvatarTap : null,
+                    onAvatarTap: (_supabaseService.currentUser?.id == _profileData?['id']) ? _handleAvatarTap : null,
                   ),
                 ),
 
