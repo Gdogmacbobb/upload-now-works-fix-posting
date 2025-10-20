@@ -331,101 +331,104 @@ class _FollowingFeedState extends State<FollowingFeed>
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: AppTheme.backgroundDark,
-        body: SafeArea(
-          child: Stack(
-            children: [
-              // Main content - matches Discovery feed pattern
-              Column(
-                children: [
-                  // Navigation Header - Always visible
-                  FeedNavigationHeaderWidget(
-                    currentFeed: 'following',
-                    showSearch: false,
-                    unreadCount: _unreadCount,
-                    onRefresh: _refreshFeed,
-                  ),
-
-                  // Content area - changes based on state
-                  Expanded(
-                    child: _isLoading
-                        ? _buildLoadingState()
-                        : _hasError
-                            ? _buildErrorState()
-                            : _videos.isEmpty
-                                ? FollowingEmptyStateWidget(
-                                    onDiscoverTap: _navigateToDiscovery,
-                                  )
-                                : RefreshIndicator(
-                                    onRefresh: _refreshFeed,
-                                    color: AppTheme.primaryOrange,
-                                    backgroundColor: AppTheme.surfaceDark,
-                                    child: PageView.builder(
-                                      controller: _pageController,
-                                      scrollDirection: Axis.vertical,
-                                      onPageChanged: _onVideoChanged,
-                                      itemCount: _videos.length,
-                                      itemBuilder: (context, index) {
-                                        return GestureDetector(
-                                          onLongPress: _showContextMenuAction,
-                                          child: FollowingVideoPlayerWidget(
-                                            videoData: _videos[index],
-                                            onLike: () => _onLike(index),
-                                            onComment: _onComment,
-                                            onShare: _onShare,
-                                            onDonate: () =>
-                                                _onDonate(_videos[index]['id']),
-                                            onProfileTap: () => _onProfileTap(
-                                                _videos[index]['performerId'] ??
-                                                    ''),
-                                          ),
-                                        );
-                                      },
+        body: Stack(
+          children: [
+            // 👇 Video content fills the background (full screen)
+            Positioned.fill(
+              child: _isLoading
+                  ? _buildLoadingState()
+                  : _hasError
+                      ? _buildErrorState()
+                      : _videos.isEmpty
+                          ? FollowingEmptyStateWidget(
+                              onDiscoverTap: _navigateToDiscovery,
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _refreshFeed,
+                              color: AppTheme.primaryOrange,
+                              backgroundColor: AppTheme.surfaceDark,
+                              child: PageView.builder(
+                                controller: _pageController,
+                                scrollDirection: Axis.vertical,
+                                onPageChanged: _onVideoChanged,
+                                itemCount: _videos.length,
+                                itemBuilder: (context, index) {
+                                  return GestureDetector(
+                                    onLongPress: _showContextMenuAction,
+                                    child: FollowingVideoPlayerWidget(
+                                      videoData: _videos[index],
+                                      onLike: () => _onLike(index),
+                                      onComment: _onComment,
+                                      onShare: _onShare,
+                                      onDonate: () =>
+                                          _onDonate(_videos[index]['id']),
+                                      onProfileTap: () => _onProfileTap(
+                                          _videos[index]['performerId'] ??
+                                              ''),
                                     ),
-                                  ),
-                  ),
+                                  );
+                                },
+                              ),
+                            ),
+            ),
 
-                  // Bottom Navigation - Always visible
-                  FeedNavigationBottomWidget(
-                    currentFeed: 'following',
-                    showSearch: false,
-                    unreadCount: _unreadCount,
-                    onRefresh: _refreshFeed,
-                  ),
-                ],
+            // 👇 Top navigation overlay (Following | Discovery)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: FeedNavigationHeaderWidget(
+                  currentFeed: 'following',
+                  showSearch: false,
+                  unreadCount: _unreadCount,
+                  onRefresh: _refreshFeed,
+                ),
               ),
+            ),
 
-              // Loading indicator for pagination
-              if (_isLoadingMore)
-                Positioned(
-                  bottom: 10.h,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.backgroundDark.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: CircularProgressIndicator(
-                        color: AppTheme.primaryOrange,
-                        strokeWidth: 2,
-                      ),
+            // 👇 Bottom navigation overlay
+            SafeArea(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FeedNavigationBottomWidget(
+                  currentFeed: 'following',
+                  showSearch: false,
+                  unreadCount: _unreadCount,
+                  onRefresh: _refreshFeed,
+                ),
+              ),
+            ),
+
+            // Loading indicator for pagination
+            if (_isLoadingMore)
+              Positioned(
+                bottom: 10.h,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.backgroundDark.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryOrange,
+                      strokeWidth: 2,
                     ),
                   ),
                 ),
+              ),
 
-              // Context Menu Overlay
-              if (_showContextMenu)
-                FollowingContextMenuWidget(
-                  onUnfollow: _onUnfollow,
-                  onSave: _onSave,
-                  onReport: _onReport,
-                  onShare: () => _onShare(),
-                  onClose: _hideContextMenu,
-                ),
-            ],
-          ),
+            // Context Menu Overlay
+            if (_showContextMenu)
+              FollowingContextMenuWidget(
+                onUnfollow: _onUnfollow,
+                onSave: _onSave,
+                onReport: _onReport,
+                onShare: () => _onShare(),
+                onClose: _hideContextMenu,
+              ),
+          ],
         ));
   }
 
