@@ -1,0 +1,33 @@
+{
+  "role": "developer",
+  "goal": "Match the Discovery screen layout exactly to the reference screenshot provided, ensuring all UI elements (video, navigation bar, and side buttons) visually align with the example.",
+  "context": {
+    "current_state": "The layout correctly places the video underneath the top navigation bar, but spacing, proportions, and element alignment do not match the provided screenshot precisely.",
+    "desired_state": "The layout should mirror the reference image exactly — TikTok-style, with minimal space between the top notch and navigation bar, vertically centered side buttons, and proper balance between video, text, and UI overlays."
+  },
+  "instruction": {
+    "layout_adjustments": {
+      "video_layer": "Ensure the video remains in a Positioned.fill container, fully occupying the background layer behind all overlays.",
+      "top_navigation": {
+        "description": "The 'Following | Discovery' bar must sit slightly closer to the top, respecting the iPhone notch area but minimizing excess padding.",
+        "code": "Positioned(\n  top: MediaQuery.of(context).padding.top + 2, // Tighten top spacing for TikTok-like look\n  left: 0,\n  right: 0,\n  child: Container(\n    alignment: Alignment.center,\n    padding: const EdgeInsets.only(top: 2, bottom: 4),\n    child: Row(\n      mainAxisAlignment: MainAxisAlignment.center,\n      children: const [\n        Text('Following', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),\n        SizedBox(width: 20),\n        Text('Discovery', style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),\n      ],\n    ),\n  ),\n)"
+      },
+      "side_buttons": {
+        "description": "Vertically center the column of action buttons (profile, heart, comment, share, and dollar icon) along the right-hand side.",
+        "code": "Positioned(\n  right: 10,\n  top: 0,\n  bottom: 0,\n  child: Align(\n    alignment: Alignment.center,\n    child: Column(\n      mainAxisSize: MainAxisSize.min,\n      children: [\n        Icon(Icons.person_outline, color: Colors.orange, size: 28),\n        SizedBox(height: 20),\n        Icon(Icons.favorite_border, color: Colors.white, size: 28),\n        SizedBox(height: 20),\n        Icon(Icons.comment_outlined, color: Colors.white, size: 28),\n        SizedBox(height: 20),\n        Icon(Icons.share_outlined, color: Colors.white, size: 28),\n        SizedBox(height: 20),\n        Container(\n          decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle),\n          padding: const EdgeInsets.all(10),\n          child: Icon(Icons.attach_money, color: Colors.white),\n        ),\n      ],\n    ),\n  ),\n)"
+      },
+      "bottom_navigation": {
+        "description": "Keep the bottom navigation above the video layer with safe area padding intact, same as current implementation."
+      }
+    }
+  },
+  "visual_reference": "The reference image shows the 'Following | Discovery' bar tight to the top edge with correct text alignment, the video extending underneath it, and the right-side action buttons centered vertically in the middle third of the screen.",
+  "expected_result": [
+    "✅ The 'Following | Discovery' bar sits close to the top, respecting notch spacing but matching the visual hierarchy in the screenshot.",
+    "✅ The video plays fully behind all overlays with no top gap.",
+    "✅ The right-side buttons are perfectly centered vertically on the screen.",
+    "✅ The bottom navigation remains fixed with correct safe area spacing.",
+    "✅ The entire layout now visually matches the provided screenshot pixel-for-pixel."
+  ],
+  "commentary": "This version tightens top padding, refines element positioning, and aligns all overlay layers to achieve a TikTok-style aesthetic identical to the reference image."
+}
