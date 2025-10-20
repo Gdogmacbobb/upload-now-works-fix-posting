@@ -82,3 +82,10 @@ A serverless approach utilizing external services:
 - **Vertically centered action icons**: Confirmed both DiscoveryFeed and FollowingFeed use `Positioned(top: 0, bottom: 0, child: Align(alignment: Alignment.center))` pattern to vertically center the profile/heart/comment/share column
 - **Consistent cross-feed implementation**: Applied identical positioning values to both video player widgets (discovery_feed/widgets/video_player_widget.dart and following_feed/widgets/following_video_player_widget.dart) ensuring unified UX
 - **Architect-approved layout**: Code review confirmed the vertical balance matches TikTok reference with proper spacing between caption, $ button, and bottom nav while preserving edge-to-edge video rendering
+
+## Pixel-Perfect TikTok Positioning Refinements (October 20, 2025)
+- **Profile avatar repositioned to top-right**: Separated avatar from the vertically-centered action column and positioned independently at `top: 10.h, right: 3.w` to match TikTok's layout where avatar overlaps the video edge at top-right corner
+- **Action buttons maintain vertical centering**: Like, comment, and share buttons remain in the vertically-centered column (`Positioned(top: 0, bottom: 0, child: Align(alignment: Alignment.center))`) while avatar sits independently at top
+- **TikTok-accurate overlay structure**: Avatar, action buttons, caption, and $ button each positioned independently with pixel-precise offsets matching TikTok reference layout
+- **Preserved spacing hierarchy**: Caption at `bottom: 12.h` (~90px above bottom nav), $ button at `bottom: 11.h` (~45px above bottom nav), avatar at `top: 10.h` overlapping video edge
+- **Architect-verified pixel-perfect alignment**: Code review confirmed avatar overlap and vertical centering match TikTok reference with proper responsive behavior across device sizes
