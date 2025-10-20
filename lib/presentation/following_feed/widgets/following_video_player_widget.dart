@@ -151,159 +151,166 @@ class _FollowingVideoPlayerWidgetState
             ),
           ),
 
-          // Right Side Actions
+          // Right Side Actions (vertically centered)
           Positioned(
             right: 3.w,
-            bottom: 20.h,
-            child: Column(
-              children: [
-                // Profile Avatar
-                GestureDetector(
-                  onTap: widget.onProfileTap,
-                  child: Container(
-                    width: 12.w,
-                    height: 12.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppTheme.primaryOrange,
-                        width: 2,
+            top: 0,
+            bottom: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Profile Avatar
+                  GestureDetector(
+                    onTap: widget.onProfileTap,
+                    child: Container(
+                      width: 12.w,
+                      height: 12.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.primaryOrange,
+                          width: 2,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: CustomImageWidget(
+                          imageUrl: widget.videoData['performerAvatar'] ?? '',
+                          width: 12.w,
+                          height: 12.w,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                    child: ClipOval(
-                      child: CustomImageWidget(
-                        imageUrl: widget.videoData['performerAvatar'] ?? '',
-                        width: 12.w,
-                        height: 12.w,
-                        fit: BoxFit.cover,
-                      ),
+                  ),
+
+                  SizedBox(height: 3.h),
+
+                  // Like Button
+                  GestureDetector(
+                    onTap: _toggleLike,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 12.w,
+                          height: 12.w,
+                          decoration: BoxDecoration(
+                            color: _isLiked
+                                ? AppTheme.accentRed
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CustomIconWidget(
+                            iconName: _isLiked ? 'favorite' : 'favorite_border',
+                            color: _isLiked
+                                ? AppTheme.textPrimary
+                                : AppTheme.textPrimary,
+                            size: 6.w,
+                          ),
+                        ),
+                        SizedBox(height: 1.h),
+                        Text(
+                          _formatCount(widget.videoData['likesCount'] ??
+                              widget.videoData['likeCount'] ??
+                              0),
+                          style: AppTheme.videoOverlayStyle(),
+                        ),
+                      ],
                     ),
                   ),
-                ),
 
-                SizedBox(height: 3.h),
+                  SizedBox(height: 3.h),
 
-                // Like Button
-                GestureDetector(
-                  onTap: _toggleLike,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 12.w,
-                        height: 12.w,
-                        decoration: BoxDecoration(
-                          color: _isLiked
-                              ? AppTheme.accentRed
-                              : Colors.transparent,
-                          shape: BoxShape.circle,
+                  // Comment Button
+                  GestureDetector(
+                    onTap: widget.onComment,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 12.w,
+                          height: 12.w,
+                          decoration: const BoxDecoration(
+                            color: Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CustomIconWidget(
+                            iconName: 'chat_bubble_outline',
+                            color: AppTheme.textPrimary,
+                            size: 6.w,
+                          ),
                         ),
-                        child: CustomIconWidget(
-                          iconName: _isLiked ? 'favorite' : 'favorite_border',
-                          color: _isLiked
-                              ? AppTheme.textPrimary
-                              : AppTheme.textPrimary,
-                          size: 6.w,
+                        SizedBox(height: 1.h),
+                        Text(
+                          _formatCount(widget.videoData['commentsCount'] ??
+                              widget.videoData['commentCount'] ??
+                              0),
+                          style: AppTheme.videoOverlayStyle(),
                         ),
-                      ),
-                      SizedBox(height: 1.h),
-                      Text(
-                        _formatCount(widget.videoData['likesCount'] ??
-                            widget.videoData['likeCount'] ??
-                            0),
-                        style: AppTheme.videoOverlayStyle(),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Comment Button
-                GestureDetector(
-                  onTap: widget.onComment,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 12.w,
-                        height: 12.w,
-                        decoration: const BoxDecoration(
-                          color: Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: CustomIconWidget(
-                          iconName: 'chat_bubble_outline',
-                          color: AppTheme.textPrimary,
-                          size: 6.w,
-                        ),
-                      ),
-                      SizedBox(height: 1.h),
-                      Text(
-                        _formatCount(widget.videoData['commentsCount'] ??
-                            widget.videoData['commentCount'] ??
-                            0),
-                        style: AppTheme.videoOverlayStyle(),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Share Button
-                GestureDetector(
-                  onTap: widget.onShare,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 12.w,
-                        height: 12.w,
-                        decoration: const BoxDecoration(
-                          color: Colors.transparent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: CustomIconWidget(
-                          iconName: 'share',
-                          color: AppTheme.textPrimary,
-                          size: 6.w,
-                        ),
-                      ),
-                      SizedBox(height: 1.h),
-                      Text(
-                        _formatCount(widget.videoData['sharesCount'] ??
-                            widget.videoData['shareCount'] ??
-                            0),
-                        style: AppTheme.videoOverlayStyle(),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Donate Button
-                GestureDetector(
-                  onTap: widget.onDonate,
-                  child: Container(
-                    width: 12.w,
-                    height: 12.w,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryOrange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: CustomIconWidget(
-                      iconName: 'attach_money',
-                      color: AppTheme.backgroundDark,
-                      size: 6.w,
+                      ],
                     ),
                   ),
-                ),
-              ],
+
+                  SizedBox(height: 3.h),
+
+                  // Share Button
+                  GestureDetector(
+                    onTap: widget.onShare,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 12.w,
+                          height: 12.w,
+                          decoration: const BoxDecoration(
+                            color: Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CustomIconWidget(
+                            iconName: 'share',
+                            color: AppTheme.textPrimary,
+                            size: 6.w,
+                          ),
+                        ),
+                        SizedBox(height: 1.h),
+                        Text(
+                          _formatCount(widget.videoData['sharesCount'] ??
+                              widget.videoData['shareCount'] ??
+                              0),
+                          style: AppTheme.videoOverlayStyle(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // Bottom Overlay - Performer Info
+          // Donate Button (separate, positioned above bottom nav)
           Positioned(
-            bottom: 8.h,
+            right: 3.w,
+            bottom: 11.h,
+            child: GestureDetector(
+              onTap: widget.onDonate,
+              child: Container(
+                width: 12.w,
+                height: 12.w,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryOrange,
+                  shape: BoxShape.circle,
+                ),
+                child: CustomIconWidget(
+                  iconName: 'attach_money',
+                  color: AppTheme.backgroundDark,
+                  size: 6.w,
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom Overlay - Performer Info (raised for TikTok-style spacing)
+          Positioned(
+            bottom: 12.h,
             left: 4.w,
             right: 20.w,
             child: Column(
