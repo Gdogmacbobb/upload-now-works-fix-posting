@@ -1,0 +1,40 @@
+{
+  "role": "developer",
+  "goal": "Completely remove the remaining black padding above the 'Following | Discovery' navigation bar so the layout visually matches TikTok’s immersive full-screen feed.",
+  "context": {
+    "current_state": "The video and UI are rendering correctly, but a small black gap remains above the navigation bar. The 'Following | Discovery' bar is still slightly lower than the notch area, breaking the seamless TikTok-style look.",
+    "desired_state": "The video should fill the entire screen edge-to-edge. The 'Following | Discovery' bar should be positioned flush with the notch/status bar, exactly like TikTok. There must be no visible black background or SafeArea overshoot at the top."
+  },
+  "instruction": {
+    "layout_fix": {
+      "safearea_and_padding": {
+        "description": "Move SafeArea and padding handling inside the Stack hierarchy so that the navigation bar is part of the top overlay layer. Eliminate outer Container padding or Scaffold background color that causes a top gap.",
+        "code": "Stack(\n  children: [\n    Positioned.fill(child: VideoBackground()),\n    Positioned(\n      top: 0,\n      left: 0,\n      right: 0,\n      child: SafeArea(\n        top: true,\n        bottom: false,\n        child: Container(\n          color: Colors.transparent,\n          padding: EdgeInsets.only(top: 0), // No extra padding\n          child: Row(\n            mainAxisAlignment: MainAxisAlignment.center,\n            children: [\n              Text('Following', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),\n              SizedBox(width: 18),\n              Text('Discovery', style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),\n            ],\n          ),\n        ),\n      ),\n    ),\n  ],\n)"
+      },
+      "scaffold_background": {
+        "description": "Ensure Scaffold backgroundColor and body Container backgroundColor are fully transparent. No color or box decoration should push content downward.",
+        "code": "Scaffold(\n  backgroundColor: Colors.transparent,\n  body: Stack(...),\n)"
+      },
+      "video_layer": {
+        "description": "Video should cover the full viewport (including behind the notch) without overflow errors.",
+        "code": "Positioned.fill(child: FittedBox(fit: BoxFit.cover, child: VideoPlayerWidget()))"
+      }
+    }
+  },
+  "visual_reference": {
+    "target": "TikTok feed layout",
+    "key_points": [
+      "No black or empty space above the navigation bar",
+      "Navigation text aligned tightly below the notch",
+      "Video extends under top elements seamlessly",
+      "Consistent edge-to-edge immersive appearance"
+    ]
+  },
+  "expected_result": [
+    "✅ The top black gap is completely removed.",
+    "✅ The 'Following | Discovery' bar sits directly under the notch, aligned exactly like TikTok.",
+    "✅ Video fully covers the screen, no offset or SafeArea artifacts.",
+    "✅ Layout now visually matches TikTok’s feed on all iPhones."
+  ],
+  "commentary": "This refinement forces the navigation bar into the SafeArea layer rather than outside it, removing all remaining top gaps. It ensures the video background extends behind the notch and UI overlays, achieving a pixel-perfect TikTok-style layout."
+}
