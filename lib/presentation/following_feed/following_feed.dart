@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
@@ -8,7 +7,6 @@ import '../../services/supabase_service.dart';
 import '../../services/video_service.dart';
 import '../../widgets/feed_navigation_bottom_widget.dart';
 import '../../widgets/feed_navigation_header_widget.dart';
-import '../../widgets/debug_overlay_widget.dart';
 import './widgets/following_context_menu_widget.dart';
 import './widgets/following_empty_state_widget.dart';
 import './widgets/following_video_player_widget.dart';
@@ -331,22 +329,6 @@ class _FollowingFeedState extends State<FollowingFeed>
 
   @override
   Widget build(BuildContext context) {
-    // 🔍 DEBUG LOGGING - Comprehensive scaffold and layout diagnostics
-    debugPrint('═══════════════════════════════════════════════════');
-    debugPrint('[FOLLOWING_FEED] BUILD DIAGNOSTICS');
-    debugPrint('═══════════════════════════════════════════════════');
-    debugPrint('[SCAFFOLD] extendBody: true');
-    debugPrint('[SCAFFOLD] extendBodyBehindAppBar: true');
-    debugPrint('[SCAFFOLD] backgroundColor: transparent');
-    debugPrint('[SCAFFOLD] appBar: NONE (no AppBar present)');
-    debugPrint('[LAYOUT] Platform: ${kIsWeb ? "web" : "mobile"}');
-    debugPrint('[LAYOUT] MediaQuery.padding: ${MediaQuery.of(context).padding}');
-    debugPrint('[LAYOUT] MediaQuery.viewPadding: ${MediaQuery.of(context).viewPadding}');
-    debugPrint('[LAYOUT] MediaQuery.viewInsets: ${MediaQuery.of(context).viewInsets}');
-    debugPrint('[LAYOUT] Screen size: ${MediaQuery.of(context).size}');
-    debugPrint('[VIDEO_COUNT] ${_videos.length} videos loaded');
-    debugPrint('═══════════════════════════════════════════════════');
-
     return Scaffold(
         extendBody: true,
         extendBodyBehindAppBar: true,
@@ -448,15 +430,6 @@ class _FollowingFeedState extends State<FollowingFeed>
                 onShare: () => _onShare(),
                 onClose: _hideContextMenu,
               ),
-
-            // 🔍 DEBUG: Red stripe at y=0 to verify painting behind notch
-            RedStripeWidget(),
-
-            // 🔍 DEBUG: Overlay showing MediaQuery/layout info
-            DebugOverlayWidget(
-              routeName: 'Following Feed',
-              platform: kIsWeb ? 'web' : 'mobile',
-            ),
           ],
         ));
   }
