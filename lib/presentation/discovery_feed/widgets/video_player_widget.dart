@@ -182,7 +182,61 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             ),
           ),
 
-          // Right Side Actions (vertically centered)
+          // Profile Avatar (positioned at top-right, TikTok-style)
+          Positioned(
+            right: 3.w,
+            top: 10.h,
+            child: GestureDetector(
+              onTap: widget.onProfileTap,
+              child: Container(
+                width: 12.w,
+                height: 12.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppTheme.primaryOrange,
+                    width: 2,
+                  ),
+                ),
+                child: ClipOval(
+                  child: Image.network(
+                    _getPerformerAvatar(),
+                    width: 12.w,
+                    height: 12.w,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 12.w,
+                        height: 12.w,
+                        color: AppTheme.surfaceDark,
+                        child: Icon(
+                          Icons.person,
+                          color: AppTheme.textSecondary,
+                          size: 6.w,
+                        ),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        width: 12.w,
+                        height: 12.w,
+                        color: AppTheme.surfaceDark,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryOrange,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Right Side Action Buttons (vertically centered)
           Positioned(
             right: 3.w,
             top: 0,
@@ -192,59 +246,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Profile Avatar
-                  GestureDetector(
-                  onTap: widget.onProfileTap,
-                  child: Container(
-                    width: 12.w,
-                    height: 12.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppTheme.primaryOrange,
-                        width: 2,
-                      ),
-                    ),
-                    child: ClipOval(
-                      child: Image.network(
-                        _getPerformerAvatar(),
-                        width: 12.w,
-                        height: 12.w,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 12.w,
-                            height: 12.w,
-                            color: AppTheme.surfaceDark,
-                            child: Icon(
-                              Icons.person,
-                              color: AppTheme.textSecondary,
-                              size: 6.w,
-                            ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: 12.w,
-                            height: 12.w,
-                            color: AppTheme.surfaceDark,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppTheme.primaryOrange,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Like Button
+                  // Like Button
                 GestureDetector(
                   onTap: _toggleLike,
                   child: Column(

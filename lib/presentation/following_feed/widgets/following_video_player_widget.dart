@@ -151,7 +151,35 @@ class _FollowingVideoPlayerWidgetState
             ),
           ),
 
-          // Right Side Actions (vertically centered)
+          // Profile Avatar (positioned at top-right, TikTok-style)
+          Positioned(
+            right: 3.w,
+            top: 10.h,
+            child: GestureDetector(
+              onTap: widget.onProfileTap,
+              child: Container(
+                width: 12.w,
+                height: 12.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppTheme.primaryOrange,
+                    width: 2,
+                  ),
+                ),
+                child: ClipOval(
+                  child: CustomImageWidget(
+                    imageUrl: widget.videoData['performerAvatar'] ?? '',
+                    width: 12.w,
+                    height: 12.w,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Right Side Action Buttons (vertically centered)
           Positioned(
             right: 3.w,
             top: 0,
@@ -161,32 +189,6 @@ class _FollowingVideoPlayerWidgetState
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Profile Avatar
-                  GestureDetector(
-                    onTap: widget.onProfileTap,
-                    child: Container(
-                      width: 12.w,
-                      height: 12.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.primaryOrange,
-                          width: 2,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: CustomImageWidget(
-                          imageUrl: widget.videoData['performerAvatar'] ?? '',
-                          width: 12.w,
-                          height: 12.w,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 3.h),
-
                   // Like Button
                   GestureDetector(
                     onTap: _toggleLike,
