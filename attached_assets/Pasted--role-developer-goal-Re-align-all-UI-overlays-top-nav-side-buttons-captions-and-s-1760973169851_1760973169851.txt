@@ -1,0 +1,30 @@
+{
+  "role": "developer",
+  "goal": "Re-align all UI overlays (top nav, side buttons, captions, and stickers) so that their on-screen positions match the TikTok reference layout exactly, while preserving the full-screen video background.",
+  "context": {
+    "current_state": "Video background now fills correctly, but UI overlays (Following | Discovery, user avatar, like/comment/share buttons, caption text, and orange $ button) are slightly off in position compared to TikTok’s layout.",
+    "target_reference": "Picture 2 (TikTok layout) where top nav is flush near the notch, side icons are vertically centered, avatar slightly overlaps top video edge, and caption sits cleanly above the bottom navigation bar."
+  },
+  "instruction": {
+    "layout_alignment_fix": {
+      "description": "Re-position every overlay element using a Stack layout with pixel-precise alignment and SafeArea protection. All components should overlay naturally over the video as in TikTok.",
+      "code": "return Scaffold(\n  extendBody: true,\n  extendBodyBehindAppBar: true,\n  backgroundColor: Colors.transparent,\n  body: Stack(\n    fit: StackFit.expand,\n    children: [\n      // Background video\n      Positioned.fill(\n        child: FittedBox(\n          fit: BoxFit.cover,\n          alignment: Alignment.center,\n          child: VideoPlayerWidget(),\n        ),\n      ),\n\n      // TOP NAV BAR: Following | Discovery\n      Positioned(\n        top: 0,\n        left: 0,\n        right: 0,\n        child: SafeArea(\n          top: true,\n          bottom: false,\n          child: Padding(\n            padding: EdgeInsets.only(top: 4),\n            child: Row(\n              mainAxisAlignment: MainAxisAlignment.center,\n              children: [\n                Text('Following', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),\n                SizedBox(width: 22),\n                Text('Discovery', style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),\n              ],\n            ),\n          ),\n        ),\n      ),\n\n      // PROFILE AVATAR (top-right corner)\n      Positioned(\n        top: 100,\n        right: 18,\n        child: CircleAvatar(\n          radius: 22,\n          backgroundColor: Colors.orange,\n          child: CircleAvatar(radius: 20, backgroundImage: NetworkImage(userAvatarUrl)),\n        ),\n      ),\n\n      // SIDE ACTION BUTTONS (center right)\n      Align(\n        alignment: Alignment.centerRight,\n        child: Padding(\n          padding: EdgeInsets.only(right: 12),\n          child: Column(\n            mainAxisSize: MainAxisSize.min,\n            children: [\n              Icon(Icons.favorite_border, color: Colors.white, size: 28),\n              SizedBox(height: 20),\n              Icon(Icons.chat_bubble_outline, color: Colors.white, size: 28),\n              SizedBox(height: 20),\n              Icon(Icons.share_outlined, color: Colors.white, size: 28),\n              SizedBox(height: 25),\n              Container(\n                width: 46,\n                height: 46,\n                decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle),\n                child: Icon(Icons.attach_money, color: Colors.black, size: 26),\n              ),\n            ],\n          ),\n        ),\n      ),\n\n      // CAPTION & LOCATION (bottom-left)\n      Positioned(\n        bottom: 90,\n        left: 16,\n        child: Column(\n          crossAxisAlignment: CrossAxisAlignment.start,\n          children: [\n            Text('@cndnf', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),\n            SizedBox(height: 4),\n            Text('testing 123', style: TextStyle(color: Colors.white, fontSize: 14)),\n            SizedBox(height: 4),\n            Row(\n              children: [\n                Icon(Icons.location_on, color: Colors.grey, size: 14),\n                SizedBox(width: 4),\n                Text('Washington Square Park', style: TextStyle(color: Colors.grey, fontSize: 13)),\n              ],\n            ),\n          ],\n        ),\n      ),\n\n      // BOTTOM NAVIGATION\n      Positioned(\n        bottom: 0,\n        left: 0,\n        right: 0,\n        child: SafeArea(\n          top: false,\n          bottom: true,\n          child: BottomNavigationBarWidget(),\n        ),\n      ),\n    ],\n  ),\n);"
+    },
+    "key_directives": [
+      "✅ Use Positioned for avatar and caption instead of Align to achieve TikTok-accurate offsets.",
+      "✅ Keep side action buttons vertically centered relative to the video frame, not the screen padding.",
+      "✅ Maintain 90px offset above bottom nav for captions to avoid overlap.",
+      "✅ Confirm on iPhone and Android that the top nav aligns just below the notch without extra gap.",
+      "✅ All Containers and Scaffold backgrounds must remain transparent."
+    ]
+  },
+  "expected_result": [
+    "✅ Top nav sits close to the notch, centered horizontally.",
+    "✅ Avatar aligns under the navigation bar near top-right.",
+    "✅ Side icons perfectly centered vertically on the right edge.",
+    "✅ Captions and location text hover just above the bottom nav, like TikTok.",
+    "✅ Orange $ button floats below share, maintaining correct spacing.",
+    "✅ Layout identical to picture 2 (TikTok-style reference) on all devices."
+  ],
+  "commentary": "This prompt doesn’t just extend the video; it locks every overlay into TikTok-accurate positions. Once applied, all UI elements—nav bar, avatar, side actions, and captions—will permanently match the visual structure of your target layout."
+}
