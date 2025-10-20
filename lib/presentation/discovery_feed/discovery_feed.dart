@@ -168,6 +168,7 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
     super.build(context); // Required for AutomaticKeepAliveClientMixin
 
     return Scaffold(
+      extendBody: true,
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.transparent,
       body: Stack(

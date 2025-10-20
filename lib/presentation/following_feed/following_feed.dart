@@ -330,6 +330,7 @@ class _FollowingFeedState extends State<FollowingFeed>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        extendBody: true,
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.transparent,
         body: Stack(
