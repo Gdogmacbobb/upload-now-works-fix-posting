@@ -182,7 +182,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             ),
           ),
 
-          // Right Side Actions
+          // Right Side Actions (vertically centered)
           Positioned(
             right: 3.w,
             top: 0,
@@ -338,34 +338,36 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                     ],
                   ),
                 ),
-
-                SizedBox(height: 3.h),
-
-                // Donate Button
-                GestureDetector(
-                  onTap: widget.onDonate,
-                  child: Container(
-                    width: 12.w,
-                    height: 12.w,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryOrange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: CustomIconWidget(
-                      iconName: 'attach_money',
-                      color: AppTheme.backgroundDark,
-                      size: 6.w,
-                    ),
-                  ),
-                ),
               ],
             ),
             ),
           ),
 
-          // Bottom Overlay - Performer Info
+          // Donate Button (separate, positioned above bottom nav)
           Positioned(
-            bottom: 8.h,
+            right: 3.w,
+            bottom: 11.h,
+            child: GestureDetector(
+              onTap: widget.onDonate,
+              child: Container(
+                width: 12.w,
+                height: 12.w,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryOrange,
+                  shape: BoxShape.circle,
+                ),
+                child: CustomIconWidget(
+                  iconName: 'attach_money',
+                  color: AppTheme.backgroundDark,
+                  size: 6.w,
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom Overlay - Performer Info (raised for TikTok-style spacing)
+          Positioned(
+            bottom: 12.h,
             left: 4.w,
             right: 20.w,
             child: Column(
