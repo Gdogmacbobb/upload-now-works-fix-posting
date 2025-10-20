@@ -1,0 +1,99 @@
+Update the DiscoveryFeed and FollowingFeed screen UI layout to match TikTok-style vertical alignment exactly as shown in reference picture #2.
+
+✅ GOAL
+Keep the edge-to-edge video layout (already working), but reposition all floating buttons and icons to match the visual hierarchy of TikTok:
+  • Action column (profile, heart, comment, share) should align vertically, centered in the right third of the screen.
+  • The orange $ button stays slightly above bottom navigation, matching TikTok tip/gift icon height.
+  • The username and caption (@handle, description, location) stay at bottom-left, just above the camera/nav bar.
+  • The top navigation (“Following | Discovery”) remains fixed at top center.
+
+✅ STRUCTURE
+
+return Scaffold(
+  extendBody: true,
+  extendBodyBehindAppBar: true,
+  backgroundColor: Colors.transparent,
+  body: Stack(
+    children: [
+      // 1️⃣ Full-screen video
+      Positioned.fill(
+        child: VideoPlayerWidget(),
+      ),
+
+      // 2️⃣ Top navigation
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: FeedNavigationHeaderWidget(),
+      ),
+
+      // 3️⃣ Action icons (right-side vertical column)
+      Positioned(
+        right: 10,
+        bottom: MediaQuery.of(context).size.height * 0.23, // center-right column
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ProfileCircleAvatar(), // top performer image
+            SizedBox(height: 20),
+            Icon(Icons.favorite_border, color: Colors.white, size: 30),
+            SizedBox(height: 20),
+            Icon(Icons.comment_outlined, color: Colors.white, size: 30),
+            SizedBox(height: 20),
+            Icon(Icons.share, color: Colors.white, size: 28),
+            SizedBox(height: 80), // buffer before bottom $ button
+            FloatingActionButton(
+              onPressed: () {},
+              backgroundColor: Colors.orange,
+              child: Icon(Icons.attach_money, color: Colors.black),
+            ),
+          ],
+        ),
+      ),
+
+      // 4️⃣ Bottom-left caption area
+      Positioned(
+        left: 12,
+        bottom: MediaQuery.of(context).size.height * 0.15,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('@cndnf', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+            SizedBox(height: 5),
+            Text('testing 123', style: TextStyle(color: Colors.white, fontSize: 13)),
+            SizedBox(height: 5),
+            Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.white70, size: 14),
+                SizedBox(width: 4),
+                Text('Washington Square Park', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ],
+        ),
+      ),
+
+      // 5️⃣ Bottom navigation bar
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: BottomNavBar(),
+      ),
+    ],
+  ),
+);
+
+✅ NOTES
+- Preserve SafeArea only in FeedNavigationHeaderWidget (for notch protection).
+- All Positioned widgets use relative height (`MediaQuery.of(context).size.height * value`) to stay visually balanced across devices.
+- Make sure no new Containers or background colors block the video.
+- The FloatingActionButton ($) should hover ~40px above the bottom nav bar (same spacing as TikTok).
+
+✅ TEST CHECKLIST
+☑ Video extends fully behind notch and bottom bar
+☑ Navigation header stays fixed on top
+☑ Action icons column matches TikTok spacing and vertical centering
+☑ Caption text sits above nav bar with correct margin
+☑ $ button floats slightly above nav bar, not overlapping it

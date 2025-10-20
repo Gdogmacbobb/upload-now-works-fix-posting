@@ -1,0 +1,36 @@
+{
+  "task": "Fix UI Layout Alignment",
+  "description": "Rebuild the DiscoveryFeed and FollowingFeed screens to perfectly match TikTok layout shown in picture 2. Keep full-screen immersive video and reposition all overlay elements with corrected spacing.",
+  "goals": [
+    "Maintain edge-to-edge video rendering (no black gaps).",
+    "Lower the top navigation (Following | Discovery) slightly below the notch.",
+    "Keep the right-side action column vertically centered and balanced.",
+    "Raise the bottom-left caption text block ~25px higher to match TikTok proportion.",
+    "Ensure $ button floats ~45px above bottom nav bar."
+  ],
+  "actions": [
+    {
+      "file": "lib/screens/discovery_feed.dart",
+      "update": {
+        "replace_body": {
+          "code": "return Scaffold(\n  extendBody: true,\n  extendBodyBehindAppBar: true,\n  backgroundColor: Colors.transparent,\n  body: Stack(\n    children: [\n      Positioned.fill(child: VideoPlayerWidget()),\n\n      Positioned(\n        top: MediaQuery.of(context).padding.top + 18,\n        left: 0,\n        right: 0,\n        child: FeedNavigationHeaderWidget(),\n      ),\n\n      Positioned(\n        right: 12,\n        bottom: 140,\n        child: Column(\n          mainAxisAlignment: MainAxisAlignment.center,\n          children: [\n            ProfileCircleAvatar(radius: 24),\n            SizedBox(height: 28),\n            Icon(Icons.favorite_border, color: Colors.white, size: 30),\n            SizedBox(height: 28),\n            Icon(Icons.comment_outlined, color: Colors.white, size: 30),\n            SizedBox(height: 28),\n            Icon(Icons.share, color: Colors.white, size: 28),\n            SizedBox(height: 55),\n            FloatingActionButton(\n              onPressed: () {},\n              backgroundColor: Colors.orange,\n              child: Icon(Icons.attach_money, color: Colors.black),\n            ),\n          ],\n        ),\n      ),\n\n      Positioned(\n        left: 14,\n        bottom: 115,\n        child: Column(\n          crossAxisAlignment: CrossAxisAlignment.start,\n          children: [\n            Text('@cndnf', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),\n            SizedBox(height: 4),\n            Text('testing 123', style: TextStyle(color: Colors.white, fontSize: 13)),\n            SizedBox(height: 6),\n            Row(\n              children: [\n                Icon(Icons.location_on, color: Colors.white70, size: 14),\n                SizedBox(width: 4),\n                Text('Washington Square Park', style: TextStyle(color: Colors.white70, fontSize: 12)),\n              ],\n            ),\n          ],\n        ),\n      ),\n\n      Positioned(\n        left: 0,\n        right: 0,\n        bottom: 0,\n        child: BottomNavBar(),\n      ),\n    ],\n  ),\n);"
+        }
+      }
+    },
+    {
+      "file": "lib/screens/following_feed.dart",
+      "update": "Apply identical layout adjustments as discovery_feed.dart for consistency."
+    }
+  ],
+  "verification": {
+    "checklist": [
+      "✅ Video fills full screen, behind notch and bottom nav.",
+      "✅ 'Following | Discovery' centered and sits just below notch.",
+      "✅ Right-side icons vertically balanced with even spacing.",
+      "✅ Caption block raised 25px higher (aligned with picture 2).",
+      "✅ $ button floats 40–45px above bottom nav bar.",
+      "✅ BottomNavBar remains fixed and visible at screen bottom."
+    ]
+  },
+  "reviewer_notes": "Ensure FeedNavigationHeaderWidget retains internal SafeArea protection. Test on iPhone 13–15 viewport to confirm visual balance across devices."
+}
