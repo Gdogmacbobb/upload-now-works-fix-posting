@@ -1,0 +1,45 @@
+{
+  "role": "developer",
+  "goal": "Refine the Discovery screen so that it visually matches the TikTok-style layout shown in the third reference image (immersive full-screen feed with overlay navigation).",
+  "context": {
+    "current_state": "The current UI (first image) still leaves too much space above the 'Following | Discovery' bar, and the side action buttons are slightly off-center vertically. The overall proportions do not yet match TikTok's tighter, immersive video view.",
+    "desired_state": "Match TikTok’s visual hierarchy exactly — the top navigation bar should sit almost flush with the notch, videos should fill the entire viewport edge-to-edge, and the right-hand action buttons should be vertically centered relative to the video content, not the overall container."
+  },
+  "instruction": {
+    "layout_fixes": {
+      "top_navigation_bar": {
+        "description": "Reduce the SafeArea vertical padding to bring the top navigation bar ('Following | Discovery') closer to the status bar, creating the same compact spacing TikTok uses.",
+        "code": "SafeArea(top: true, bottom: false, child: Padding(padding: EdgeInsets.only(top: 4, bottom: 2), child: ... ))"
+      },
+      "video_layer": {
+        "description": "Ensure the video fully fills the screen behind all overlays with zero gaps or margins, exactly like TikTok’s feed.",
+        "code": "Positioned.fill(child: FittedBox(fit: BoxFit.cover, child: VideoPlayerWidget()))"
+      },
+      "side_buttons": {
+        "description": "Vertically center the right-side column of action buttons (profile, like, comment, share, dollar) in the middle third of the screen, matching TikTok’s visual proportions.",
+        "code": "Positioned(right: 10, top: 0, bottom: 0, child: Align(alignment: Alignment.center, child: Column(mainAxisSize: MainAxisSize.min, children: [...buttons...])))"
+      },
+      "bottom_navigation": {
+        "description": "Keep the bottom navigation floating over the video with slight padding for the iPhone home indicator, similar to TikTok’s bottom bar.",
+        "code": "Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 4))"
+      }
+    }
+  },
+  "visual_reference": {
+    "source": "The third image (TikTok reference)",
+    "key_characteristics": [
+      "Top navigation is nearly flush with the notch",
+      "Video fills the entire screen (edge-to-edge, top-to-bottom)",
+      "Right-side buttons are vertically centered and tightly stacked",
+      "Bottom navigation bar slightly overlaps video with subtle safe padding"
+    ]
+  },
+  "expected_result": [
+    "✅ The 'Following | Discovery' bar aligns closer to the status bar, matching TikTok’s spacing.",
+    "✅ The video fills the screen completely behind overlays.",
+    "✅ The right-side action buttons are visually centered in the middle third of the screen.",
+    "✅ The bottom nav overlaps slightly but respects safe area for gestures.",
+    "✅ The layout visually mirrors the TikTok reference exactly."
+  ],
+  "commentary": "This update focuses purely on achieving the pixel-perfect TikTok-like composition. The navigation bar, video scaling, and button alignment should now replicate TikTok’s balance between immersive content and minimal UI padding."
+}
