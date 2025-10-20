@@ -330,7 +330,8 @@ class _FollowingFeedState extends State<FollowingFeed>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppTheme.backgroundDark,
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.transparent,
         body: Stack(
           children: [
             // 👇 Video content fills the background (full screen)

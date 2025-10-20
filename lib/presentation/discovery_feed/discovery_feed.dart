@@ -168,7 +168,8 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
     super.build(context); // Required for AutomaticKeepAliveClientMixin
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           // 👇 Video content fills the background (full screen)
