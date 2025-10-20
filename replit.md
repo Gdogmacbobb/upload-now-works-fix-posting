@@ -4,6 +4,15 @@ YNFNY is a cross-platform Flutter mobile application designed as a social platfo
 # User Preferences
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes (October 20, 2025)
+
+## TikTok-Style Feed Layout
+- **Immersive video display**: Restructured Discovery and Following feeds from Column to Stack layout for TikTok/Instagram-style video display
+- **Video background layer**: Video content now fills entire screen using Positioned.fill, with PageView handling vertical scrolling through videos
+- **Overlay navigation**: Top navigation bar (Following | Discovery) and bottom navigation overlay on top of video using SafeArea + Align positioning
+- **Proper layering**: Videos play underneath UI chrome while maintaining full accessibility of navigation elements
+- **Consistent implementation**: Both Discovery and Following feeds use identical Stack structure for unified user experience
+
 # Recent Changes (October 10, 2025)
 
 ## Splash Screen Logo and Text Update
