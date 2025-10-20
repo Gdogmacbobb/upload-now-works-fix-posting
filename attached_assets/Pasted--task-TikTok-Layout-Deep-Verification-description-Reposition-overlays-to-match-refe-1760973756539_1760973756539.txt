@@ -1,0 +1,55 @@
+{
+  "task": "TikTok Layout + Deep Verification",
+  "description": "Reposition overlays to match reference (picture 2) AND add instrumentation to prove positions changed.",
+  "goals": [
+    "Lower header (Following | Discovery) slightly below notch.",
+    "Center the right-side action column vertically and set its baseline.",
+    "Raise the bottom-left caption block (~25px higher than current).",
+    "Place the $ FAB ~45px above bottom nav.",
+    "Add on-screen guides + console logs to verify pixel offsets."
+  ],
+  "actions": [
+    {
+      "file": "lib/widgets/debug_layout_overlay.dart",
+      "create": {
+        "code": "import 'package:flutter/material.dart';\\n\\nclass DebugLayoutOverlay extends StatelessWidget {\\n  final double headerTop;\\n  final double iconsBottom;\\n  final double captionBottom;\\n  final double fabBottom;\\n  final bool visible;\\n  const DebugLayoutOverlay({super.key, required this.headerTop, required this.iconsBottom, required this.captionBottom, required this.fabBottom, this.visible = true});\\n\\n  @override\\n  Widget build(BuildContext context) {\\n    if (!visible) return const SizedBox.shrink();\\n    final h = MediaQuery.of(context).size.height;\\n    final w = MediaQuery.of(context).size.width;\\n    return IgnorePointer(\\n      child: Stack(children: [\\n        // Top guide (header)\\n        Positioned(top: headerTop, left: 0, right: 0, child: _guideLine('HEADER', Colors.orange)),\\n        // Icons column baseline (relative to bottom)\\n        Positioned(top: h - iconsBottom, left: w - 120, right: 0, child: _guideLine('ICONS baseline', Colors.cyan)),\\n        // Caption baseline\\n        Positioned(top: h - captionBottom, left: 0, right: 0, child: _guideLine('CAPTION baseline', Colors.pinkAccent)),\\n        // FAB baseline\\n        Positioned(top: h - fabBottom, left: 0, right: 0, child: _guideLine('FAB baseline', Colors.lime)),\\n        // Corner readout\\n        Positioned(\\n          left: 8, top: MediaQuery.of(context).padding.top + 8,\\n          child: Container(\\n            padding: const EdgeInsets.all(8),\\n            color: Colors.black54,\\n            child: Text(\\n              'Debug\\nheaderTop: ' + headerTop.toStringAsFixed(1) +\\n              '\\niconsBottom: ' + iconsBottom.toStringAsFixed(1) +\\n              '\\ncaptionBottom: ' + captionBottom.toStringAsFixed(1) +\\n              '\\nfabBottom: ' + fabBottom.toStringAsFixed(1),\\n              style: const TextStyle(color: Colors.white, fontSize: 12),\\n            ),\\n          ),\\n        )\\n      ]),\\n    );\\n  }\\n\\n  Widget _guideLine(String label, Color c) {\\n    return Column(\\n      children: [\\n        Container(height: 2, color: c.withOpacity(0.9)),\\n        const SizedBox(height: 2),\\n        Text(label, style: TextStyle(color: c, fontSize: 10, fontWeight: FontWeight.w600)),\\n      ],\\n    );\\n  }\\n}\\n"
+      }
+    },
+    {
+      "file": "lib/screens/discovery_feed.dart",
+      "update": {
+        "replace_body": {
+          "code": "return Scaffold(\\n  extendBody: true,\\n  extendBodyBehindAppBar: true,\\n  backgroundColor: Colors.transparent,\\n  body: LayoutBuilder(builder: (context, constraints) {\\n    final padTop = MediaQuery.of(context).padding.top;\\n    // TARGET OFFSETS (picture 2)\\n    const headerTopOffset = 18.0;                 // header sits just below notch\\n    const iconsBottomOffset = 140.0;              // right column baseline\\n    const captionBottomOffset = 115.0;            // raised ~25px higher\\n    const fabBottomOffset = 60.0;                 // ~45px above nav (adjust if nav height differs)\\n\\n    // Debug logs\\n    // ignore: avoid_print\\n    print('[DISCOVERY] target=> headerTop:' + (padTop + headerTopOffset).toStringAsFixed(1) + ' iconsBottom:' + iconsBottomOffset.toString() + ' captionBottom:' + captionBottomOffset.toString() + ' fabBottom:' + fabBottomOffset.toString());\\n\\n    return Stack(children: [\\n      Positioned.fill(child: VideoPlayerWidget()),\\n\\n      // Header\\n      Positioned(\\n        top: padTop + headerTopOffset, left: 0, right: 0,\\n        child: const FeedNavigationHeaderWidget(),\\n      ),\\n\\n      // Right-side action column\\n      Positioned(\\n        right: 12, bottom: iconsBottomOffset,\\n        child: Column(\\n          mainAxisAlignment: MainAxisAlignment.center,\\n          children: const [\\n            ProfileCircleAvatar(radius: 24),\\n            SizedBox(height: 28),\\n            Icon(Icons.favorite_border, color: Colors.white, size: 30),\\n            SizedBox(height: 28),\\n            Icon(Icons.comment_outlined, color: Colors.white, size: 30),\\n            SizedBox(height: 28),\\n            Icon(Icons.share, color: Colors.white, size: 28),\\n          ],\\n        ),\\n      ),\\n\\n      // Floating $ button\\n      Positioned(\\n        right: 16, bottom: fabBottomOffset,\\n        child: FloatingActionButton(\\n          onPressed: null,\\n          backgroundColor: Colors.orange,\\n          child: const Icon(Icons.attach_money, color: Colors.black),\\n        ),\\n      ),\\n\\n      // Bottom-left caption block\\n      Positioned(\\n        left: 14, bottom: captionBottomOffset,\\n        child: Column(\\n          crossAxisAlignment: CrossAxisAlignment.start,\\n          children: const [\\n            Text('@cndnf', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),\\n            SizedBox(height: 4),\\n            Text('testing 123', style: TextStyle(color: Colors.white, fontSize: 13)),\\n            SizedBox(height: 6),\\n            Row(children: [\\n              Icon(Icons.location_on, color: Colors.white70, size: 14),\\n              SizedBox(width: 4),\\n              Text('Washington Square Park', style: TextStyle(color: Colors.white70, fontSize: 12)),\\n            ]),\\n          ],\\n        ),\\n      ),\\n\\n      // Bottom nav\\n      const Positioned(left: 0, right: 0, bottom: 0, child: BottomNavBar()),\\n\\n      // DEBUG OVERLAY (set visible:false to hide)\\n      DebugLayoutOverlay(\\n        headerTop: padTop + headerTopOffset,\\n        iconsBottom: iconsBottomOffset,\\n        captionBottom: captionBottomOffset,\\n        fabBottom: fabBottomOffset,\\n        visible: true,\\n      ),\\n    ]);\\n  }),\\n);"
+        }
+      }
+    },
+    {
+      "file": "lib/screens/following_feed.dart",
+      "update": "Mirror the exact same body Stack and target offsets as discovery_feed.dart (headerTop = padTop + 18, iconsBottom = 140, captionBottom = 115, fabBottom = 60), including DebugLayoutOverlay and console prints with tag [FOLLOWING]."
+    },
+    {
+      "file": "lib/widgets/feed_navigation_header_widget.dart",
+      "ensure": {
+        "notes": "Header must not add extra SafeArea externally. Keep single internal SafeArea OR MediaQuery padding. No opaque background that shifts y.",
+        "style": "Following: Colors.white60, Discovery: Colors.orangeAccent, fontSize:16, fontWeight:w600, centered."
+      }
+    }
+  ],
+  "verification": {
+    "runtime_checks": [
+      "Log must contain: [DISCOVERY] target=> headerTop: (padTop+18), iconsBottom:140, captionBottom:115, fabBottom:60",
+      "Log must contain: [FOLLOWING] target=> headerTop: (padTop+18), iconsBottom:140, captionBottom:115, fabBottom:60"
+    ],
+    "onscreen_guides": [
+      "Top ORANGE guide line appears just below the notch (HEADER).",
+      "CYAN line (ICONS baseline) sits above the $ button and through the icon column.",
+      "PINK line (CAPTION baseline) crosses just above the camera icon area as in picture 2.",
+      "LIME line (FAB baseline) shows the $ button ~45px above bottom nav."
+    ],
+    "fail_if_not_changed": {
+      "rule": "If previous bottom offsets for caption or icons equal the new targets within ±2px, confirm by printing '[VERIFIED] values updated'. Else print '[ERROR] offsets unchanged' and stop.",
+      "tolerance_px": 2
+    }
+  },
+  "reviewer_notes": "After you visually confirm with the overlay, set DebugLayoutOverlay.visible=false and commit again."
+}
