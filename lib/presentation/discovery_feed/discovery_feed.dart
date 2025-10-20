@@ -169,99 +169,102 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Main content
-            Column(
-              children: [
-                // Navigation Header
-                FeedNavigationHeaderWidget(
-                  currentFeed: 'discovery',
-                  showSearch: true,
-                ),
-
-                // Video Feed
-                Expanded(
-                  child: _isLoading
-                      ? _buildLoadingState()
-                      : _hasError
-                          ? _buildErrorState()
-                          : _videos.isEmpty
-                              ? _buildEmptyState()
-                              : PageView.builder(
-                                  controller: _pageController,
-                                  scrollDirection: Axis.vertical,
-                                  onPageChanged: (index) {
-                                    setState(() {
-                                      _currentVideoIndex = index;
-                                    });
-                                    _onVideoChanged(index);
-                                  },
-                                  itemCount: _videos.length,
-                                  itemBuilder: (context, index) {
-                                    if (index < 0 || index >= _videos.length) {
-                                      return Container(
-                                        color: AppTheme.backgroundDark,
-                                        child: Center(
-                                          child: Text(
-                                            'Loading...',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge
-                                                ?.copyWith(
-                                                  color: AppTheme.textPrimary,
-                                                ),
+      body: Stack(
+        children: [
+          // 👇 Video content fills the background (full screen)
+          Positioned.fill(
+            child: _isLoading
+                ? _buildLoadingState()
+                : _hasError
+                    ? _buildErrorState()
+                    : _videos.isEmpty
+                        ? _buildEmptyState()
+                        : PageView.builder(
+                            controller: _pageController,
+                            scrollDirection: Axis.vertical,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentVideoIndex = index;
+                              });
+                              _onVideoChanged(index);
+                            },
+                            itemCount: _videos.length,
+                            itemBuilder: (context, index) {
+                              if (index < 0 || index >= _videos.length) {
+                                return Container(
+                                  color: AppTheme.backgroundDark,
+                                  child: Center(
+                                    child: Text(
+                                      'Loading...',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: AppTheme.textPrimary,
                                           ),
-                                        ),
-                                      );
-                                    }
+                                    ),
+                                  ),
+                                );
+                              }
 
-                                    return VideoPlayerWidget(
-                                      videoData: _videos[index],
-                                      onLike: () => _onLike(index),
-                                      onComment: _onComment,
-                                      onShare: _onShare,
-                                      onDonate: () =>
-                                          _onDonate(_videos[index]['id']),
-                                      onProfileTap: () => _onProfileTap(
-                                          _videos[index]['performerId'] ?? ''),
-                                    );
-                                  },
-                                ),
-                ),
+                              return VideoPlayerWidget(
+                                videoData: _videos[index],
+                                onLike: () => _onLike(index),
+                                onComment: _onComment,
+                                onShare: _onShare,
+                                onDonate: () =>
+                                    _onDonate(_videos[index]['id']),
+                                onProfileTap: () => _onProfileTap(
+                                    _videos[index]['performerId'] ?? ''),
+                              );
+                            },
+                          ),
+          ),
 
-                // Bottom Navigation
-                FeedNavigationBottomWidget(
-                  currentFeed: 'discovery',
-                  showSearch: true,
-                ),
-              ],
+          // 👇 Top navigation overlay (Following | Discovery)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: FeedNavigationHeaderWidget(
+                currentFeed: 'discovery',
+                showSearch: true,
+              ),
             ),
+          ),
 
-            // Loading indicator for pagination
-            if (_isLoadingMore)
-              Positioned(
-                bottom: 12.h,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.backgroundDark
-                          .withAlpha((0.8 * 255).round()),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primaryOrange,
-                      strokeWidth: 2,
-                    ),
+          // 👇 Bottom navigation overlay
+          SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: FeedNavigationBottomWidget(
+                currentFeed: 'discovery',
+                showSearch: true,
+              ),
+            ),
+          ),
+
+          // Loading indicator for pagination
+          if (_isLoadingMore)
+            Positioned(
+              bottom: 12.h,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.backgroundDark
+                        .withAlpha((0.8 * 255).round()),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryOrange,
+                    strokeWidth: 2,
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
