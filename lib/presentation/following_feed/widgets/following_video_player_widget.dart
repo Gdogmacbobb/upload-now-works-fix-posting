@@ -159,6 +159,41 @@ class _FollowingVideoPlayerWidgetState
               ),
             ),
 
+          // Top Overlay - Following Indicator (positioned with MediaQuery)
+          Positioned(
+            top: topInset + headerTopOffset,
+            left: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha((0.2 * 255).round()),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withAlpha((0.5 * 255).round()),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.favorite,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Following',
+                    style: AppTheme.darkTheme.textTheme.labelMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // Profile Avatar (positioned at top-right under header, TikTok-style)
           Positioned(
             right: 12,
