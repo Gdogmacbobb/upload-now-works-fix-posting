@@ -38,13 +38,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    print('DEBUG: SplashScreen init');
+    print('DEBUG: SplashScreen init - State ${hashCode} created');
     _setSystemUIOverlay();
     _startInitialization();
   }
 
   @override
   void dispose() {
+    print('DEBUG: SplashScreen dispose - State ${hashCode} being destroyed');
     _timeoutTimer?.cancel();
     _loadingTextTimer?.cancel();
     super.dispose();
@@ -125,11 +126,17 @@ class _SplashScreenState extends State<SplashScreen> {
       print('DEBUG: Background tasks completed');
 
       // Ensure minimum splash display time
+      print('DEBUG: Starting 2.5s delay...');
       await Future.delayed(const Duration(milliseconds: 2500));
+      print('DEBUG: Delay complete');
 
+      print('DEBUG: After delay, mounted=$mounted');
       if (mounted) {
-        print('DEBUG: Navigating to next screen');
+        print('DEBUG: Calling _navigateToNextScreen()');
         _navigateToNextScreen();
+        print('DEBUG: _navigateToNextScreen() returned');
+      } else {
+        print('DEBUG: Widget unmounted before navigation!');
       }
     } catch (e) {
       print('DEBUG: Initialization error - ${e.toString()}');
