@@ -1,0 +1,90 @@
+Fix the full-screen layout issue in both DiscoveryFeed and FollowingFeed screens.
+
+✅ Goal:
+Make the video fill the *entire screen* — from the top iPhone notch to behind the bottom navigation bar — exactly like TikTok.
+
+✅ Apply these changes:
+
+1. In both feed files (e.g. discovery_feed.dart and following_feed.dart):
+
+- Set in the Scaffold:
+    extendBody: true,
+    extendBodyBehindAppBar: true,
+    backgroundColor: Colors.transparent,
+
+2. Remove any AppBar from the Scaffold.
+   The “Following | Discovery” tab bar should NOT be an AppBar—it should float above the video inside the body.
+
+3. Replace the body with this structure:
+
+return Scaffold(
+  extendBody: true,
+  extendBodyBehindAppBar: true,
+  backgroundColor: Colors.transparent,
+  body: Stack(
+    children: [
+      // Full-screen video background
+      Positioned.fill(
+        child: VideoPlayerWidget(), // or your video widget
+      ),
+
+      // Overlay UI
+      SafeArea(
+        child: Column(
+          children: [
+            // Top navigation: Following | Discovery
+            Padding(
+              padding: const EdgeInsets.only(top: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Following',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  Text(
+                    'Discovery',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Spacer(),
+
+            // Bottom nav bar or icons
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
+              child: BottomNavBar(), // use your existing widget
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+);
+
+4. Remove any parent SafeArea or Container that wraps these feeds in main.dart or home.dart.
+
+5. Rebuild using the clean build script:
+   ./build_web.sh
+
+🧠 Expected Result:
+- Video background extends fully behind notch and bottom navigation.
+- “Following | Discovery” header floats transparently over video.
+- No black or empty bars anywhere on iPhone or Safari.
+- Identical to TikTok feed immersion.
+
+Architect Review Check:
+✅ Confirmed the video container uses Positioned.fill and the Scaffold backgroundColor is transparent.
+✅ Confirmed SafeArea only protects text, not video rendering space.
+✅ This guarantees a fully immersive feed on all devices.
