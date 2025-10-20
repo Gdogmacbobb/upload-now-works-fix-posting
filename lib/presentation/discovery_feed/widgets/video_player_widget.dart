@@ -185,11 +185,15 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           // Right Side Actions
           Positioned(
             right: 3.w,
-            bottom: 20.h,
-            child: Column(
-              children: [
-                // Profile Avatar
-                GestureDetector(
+            top: 0,
+            bottom: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Profile Avatar
+                  GestureDetector(
                   onTap: widget.onProfileTap,
                   child: Container(
                     width: 12.w,
@@ -355,6 +359,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                   ),
                 ),
               ],
+            ),
             ),
           ),
 

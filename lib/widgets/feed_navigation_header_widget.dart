@@ -20,7 +20,7 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.5.h),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -32,6 +32,7 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
         ),
       ),
       child: SafeArea(
+        bottom: false,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -67,7 +68,7 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
         child: Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
