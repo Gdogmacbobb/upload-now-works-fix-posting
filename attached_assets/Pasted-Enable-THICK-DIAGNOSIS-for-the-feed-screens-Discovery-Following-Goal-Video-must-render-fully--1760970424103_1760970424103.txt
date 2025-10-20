@@ -1,0 +1,109 @@
+Enable THICK DIAGNOSIS for the feed screens (Discovery & Following). 
+Goal: Video must render fully UNDER the top nav (“Following | Discovery”) with no black gap, exactly TikTok-style, on iOS Safari/WebView. 
+Do not stop at one cause. Produce AT LEAST TWO distinct root causes with evidence and apply fixes. 
+Return a diff + log summary.
+
+A) INSTRUMENTATION (add then remove after fix)
+1) Add a debug overlay widget at top-left that prints, in real time:
+   - MediaQuery.padding/top, viewPadding/top, viewInsets
+   - ScaffoldGeometry.top, appBarMaxHeight (if any)
+   - Current route name + platform (web/iOS)
+2) Add verbose logs on build for:
+   - Is there ANY AppBar/SliverAppBar/pinned header on these pages?
+   - Is any ancestor wrapping body with SafeArea?
+   - Effective Scaffold flags: extendBody, extendBodyBehindAppBar
+   - Constraints of the video container (BoxConstraints)
+3) Add a translucent red 2px stripe at y=0 (full width) so we can see if content paints behind the notch.
+
+B) KNOWN ROOT-CAUSE CHECKLIST (check all; log PASS/FAIL)
+Layout/Flutter:
+[ ] Double SafeArea (outer in feed + inner in FeedNavigationHeaderWidget)
+[ ] Any AppBar/PreferredSizeWidget present (should be NONE)
+[ ] Scaffold.backgroundColor != transparent
+[ ] Body NOT a Stack with Positioned.fill video layer
+[ ] Extra top padding in any parent Container (e.g., EdgeInsets.only(top: …))
+[ ] SafeArea incorrectly wrapping the WHOLE Stack (should wrap header content only)
+[ ] Using SliverAppBar or NestedScrollView adding top padding
+[ ] SystemChrome not set to edge-to-edge / transparent status bar
+[ ] Missing AnnotatedRegion<SystemUiOverlayStyle> for transparent status bar icons
+
+Web/iOS specifics:
+[ ] web/index.html missing viewport-fit=cover
+[ ] iOS 100vh bug (must use dynamic viewport units: 100dvh) for <video> and html/body
+[ ] CSS not applying env(safe-area-inset-top) padding correctly to the header gradient
+[ ] Unintended stacking context (any element with transform/perspective/filter) above the video
+[ ] Icons/gradients Container has solid background blocking top pixels
+[ ] Cached old build (service worker) still serving stale index.html/CSS
+
+C) APPLY FIXES (don’t guess; change code and show diffs)
+1) Feed screens (both):
+   - Scaffold(
+       extendBody: true,
+       extendBodyBehindAppBar: true,
+       backgroundColor: Colors.transparent,
+     )
+   - body: Stack(
+       children: [
+         Positioned.fill(child: VideoPlayerWidget()),
+         Positioned(top: 0, left: 0, right: 0, child: FeedNavigationHeaderWidget()),
+         Positioned(left:0, right:0, bottom:0, child: BottomNavBar()),
+       ],
+     )
+   - REMOVE any AppBar, SliverAppBar, outer SafeArea, extra top padding.
+
+2) FeedNavigationHeaderWidget:
+   - NO outer SafeArea in the feed screen.
+   - INSIDE the widget: use ONE of these (prefer 2):
+     (1) SafeArea(top: true, child: headerRow)
+     (2) Container(
+           padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+           decoration: gradientThatStartsAtTopY0, // paints behind notch
+           child: headerRow,
+         )
+   - Ensure the gradient Container has no opaque height-constraining parent.
+
+3) iOS status bar & overlays (in main.dart):
+   - SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+   - SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+       statusBarColor: Colors.transparent,
+       statusBarIconBrightness: Brightness.light,
+       statusBarBrightness: Brightness.dark,
+     ));
+
+4) Flutter Web index.html (STRICT):
+   - <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+   - In <style> add:
+       html, body { margin:0; padding:0; height:100%; background:#000; }
+       /* Use dynamic viewport to avoid iOS 100vh bug */
+       body, #flutter_host_element { height: 100dvh; }
+       video, .video-canvas {
+         position: fixed; top:0; left:0; width:100vw; height:100dvh;
+         object-fit: cover; z-index: 0;
+       }
+       /* Safe-area support for header gradient */
+       .safe-top { padding-top: env(safe-area-inset-top); }
+   - Force SW update bypass (if using service worker) or bump app version stamp.
+
+5) Z-INDEX / STACKING CONTEXT GUARD:
+   - Ensure no ancestor of the header has transform/perspective/filter creating new stacking contexts.
+   - Ensure video layer has z-index 0, overlays >0. Remove any negative z-index hacks.
+
+6) BUILD & CACHE PURGE:
+   - Run: flutter clean && flutter pub get
+   - Production build script (with version bump): ./build_web.sh
+   - In Safari: hard refresh + clear website data. Verify logs show new index.html hash.
+
+D) EVIDENCE: FIND ≥2 ROOT CAUSES
+Return a section “ROOT CAUSES FOUND” with screenshots/log snippets for at least TWO distinct failures (for example: Double SafeArea + missing viewport-fit=cover; or Extra top padding + iOS 100vh issue). Explain why each caused the visible gap.
+
+E) DEFINITION OF DONE (verify ALL):
+[ ] Red 2px stripe visible BEHIND notch (proves paint at y=0)
+[ ] Video fills from notch to bottom, no black band
+[ ] Header gradient paints behind notch; text is readable and not clipped
+[ ] Works on iPhone Safari, iOS WebView, Chrome iOS
+[ ] No AppBar present; only ONE SafeArea (inside header) OR mediaQuery top padding
+[ ] No transforms creating stacking context over video
+[ ] Index.html includes viewport-fit=cover and 100dvh CSS
+[ ] Service worker/cache no longer serving stale build
+Provide: code diffs, final screenshots, and the instrumentation removal commit.
+Keep going until all checks pass.
