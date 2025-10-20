@@ -32,30 +32,27 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
       ),
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 0.5.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Following Button
-              _buildNavigationButton(
-                context,
-                'Following',
-                currentFeed == 'following',
-                () => _navigateToFeed(context, 'following'),
-              ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Following Button
+            _buildNavigationButton(
+              context,
+              'Following',
+              currentFeed == 'following',
+              () => _navigateToFeed(context, 'following'),
+            ),
 
-              SizedBox(width: 6.w),
+            SizedBox(width: 6.w),
 
-              // Discovery Button
-              _buildNavigationButton(
-                context,
-                'Discovery',
-                currentFeed == 'discovery',
-                () => _navigateToFeed(context, 'discovery'),
-              ),
-            ],
-          ),
+            // Discovery Button
+            _buildNavigationButton(
+              context,
+              'Discovery',
+              currentFeed == 'discovery',
+              () => _navigateToFeed(context, 'discovery'),
+            ),
+          ],
         ),
       ),
     );
