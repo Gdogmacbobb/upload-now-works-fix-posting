@@ -75,6 +75,25 @@ void main() async {
   } catch (e) {
     print('DEBUG: Orientation lock not supported (web) - $e');
   }
+
+  print('DEBUG: Setting edge-to-edge UI mode');
+  // 🚨 CRITICAL: Edge-to-edge rendering for iOS/Android (web-safe)
+  try {
+    // Enable edge-to-edge UI (content behind status bar and nav bar)
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    
+    // Set transparent status bar with light icons
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ));
+    print('DEBUG: Edge-to-edge UI mode set successfully');
+  } catch (e) {
+    print('DEBUG: Edge-to-edge UI mode not fully supported - $e');
+  }
   
   print('DEBUG: Running MyApp');
   runApp(MyApp());

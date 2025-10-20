@@ -4,9 +4,41 @@
     <base href="/">
     <meta charset="UTF-8">
     <title>YNFNY</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-store">
     <meta name="flutter-web-renderer" content="html">
+    <style>
+      /* Edge-to-edge layout for iOS/web */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+
+      /* Use dynamic viewport to avoid iOS 100vh bug */
+      body, #flutter_host_element, flt-glass-pane {
+        height: 100dvh;
+        position: relative;
+      }
+
+      /* Video layer fills screen edge-to-edge */
+      video, .video-canvas, flt-platform-view video {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100dvh;
+        object-fit: cover;
+        z-index: 0;
+      }
+
+      /* Safe-area support for header gradient - paint behind notch */
+      .safe-top {
+        padding-top: env(safe-area-inset-top);
+      }
+    </style>
   </head>
   <body>
     <script>

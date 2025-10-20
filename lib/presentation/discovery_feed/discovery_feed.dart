@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:ynfny/utils/responsive_scale.dart';
 
 import '../../core/app_export.dart';
@@ -6,6 +7,7 @@ import '../../services/supabase_service.dart';
 import '../../services/video_service.dart';
 import '../../widgets/feed_navigation_bottom_widget.dart';
 import '../../widgets/feed_navigation_header_widget.dart';
+import '../../widgets/debug_overlay_widget.dart';
 import './widgets/video_player_widget.dart';
 
 class DiscoveryFeed extends StatefulWidget {
@@ -167,6 +169,22 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
 
+    // 🔍 DEBUG LOGGING - Comprehensive scaffold and layout diagnostics
+    debugPrint('═══════════════════════════════════════════════════');
+    debugPrint('[DISCOVERY_FEED] BUILD DIAGNOSTICS');
+    debugPrint('═══════════════════════════════════════════════════');
+    debugPrint('[SCAFFOLD] extendBody: true');
+    debugPrint('[SCAFFOLD] extendBodyBehindAppBar: true');
+    debugPrint('[SCAFFOLD] backgroundColor: transparent');
+    debugPrint('[SCAFFOLD] appBar: NONE (no AppBar present)');
+    debugPrint('[LAYOUT] Platform: ${kIsWeb ? "web" : "mobile"}');
+    debugPrint('[LAYOUT] MediaQuery.padding: ${MediaQuery.of(context).padding}');
+    debugPrint('[LAYOUT] MediaQuery.viewPadding: ${MediaQuery.of(context).viewPadding}');
+    debugPrint('[LAYOUT] MediaQuery.viewInsets: ${MediaQuery.of(context).viewInsets}');
+    debugPrint('[LAYOUT] Screen size: ${MediaQuery.of(context).size}');
+    debugPrint('[VIDEO_COUNT] ${_videos.length} videos loaded');
+    debugPrint('═══════════════════════════════════════════════════');
+
     return Scaffold(
       extendBody: true,
       extendBodyBehindAppBar: true,
@@ -266,6 +284,15 @@ class _DiscoveryFeedState extends State<DiscoveryFeed>
                 ),
               ),
             ),
+
+          // 🔍 DEBUG: Red stripe at y=0 to verify painting behind notch
+          RedStripeWidget(),
+
+          // 🔍 DEBUG: Overlay showing MediaQuery/layout info
+          DebugOverlayWidget(
+            routeName: 'Discovery Feed',
+            platform: kIsWeb ? 'web' : 'mobile',
+          ),
         ],
       ),
     );
