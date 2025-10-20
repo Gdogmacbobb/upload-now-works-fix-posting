@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_export.dart';
+import '../../services/api_service.dart';
 import '../../services/profile_service.dart';
 import '../../utils/responsive_scale.dart';
 
@@ -19,6 +19,7 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _bioController = TextEditingController();
   final ProfileService _profileService = ProfileService();
+  final ApiService _apiService = ApiService();
   
   bool _isLoading = true;
   bool _isSaving = false;
@@ -56,13 +57,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       setState(() => _isSaving = true);
       
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) return;
+      // Use API service to update profile
+      final success = await _apiService.updateProfile(
+        bio: _bioController.text.trim(),
+      );
 
-      await Supabase.instance.client
-          .from('user_profiles')
-          .update({'bio': _bioController.text.trim()})
-          .eq('id', user.id);
+      if (!success) {
+        throw Exception('Profile update failed');
+      }
 
       // Navigate back after saving
       if (mounted) {

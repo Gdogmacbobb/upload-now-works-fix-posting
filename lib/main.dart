@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ynfny/utils/responsive_scale.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ynfny/presentation/video_recording/video_recording_screen.dart';
 import 'package:ynfny/presentation/video_upload/video_upload_screen.dart';
-
-
-
-
+import 'package:ynfny/services/api_service.dart';
 
 import '../core/app_export.dart';
 import '../widgets/custom_error_widget.dart';
-import '../config/supabase_config.dart';
 
 
 
@@ -28,35 +23,14 @@ void main() async {
     FlutterError.presentError(details);
   };
 
-  // Clear stale tokens once on startup
+  // Initialize API Service
+  print('DEBUG: API Service initializing...');
   try {
-    // Clear cached Supabase tokens
-    const projectRef = 'oemeugiejcjfbpmsftot';
-    final script = '''
-      localStorage.removeItem('sb-$projectRef-auth-token');
-      localStorage.removeItem('sb-$projectRef-auth-token-code-verifier');
-    ''';
-    // Note: This runs in web context automatically
+    await ApiService().init();
+    print('DEBUG: API Service initialized successfully');
   } catch (e) {
-    debugPrint('Token cleanup warning: $e');
-  }
-
-  // Initialize Supabase (single source)
-  print('DEBUG: Supabase initializing...');
-  try {
-    await Supabase.initialize(
-      url: AppSupabase.url, 
-      anonKey: AppSupabase.anonKey
-    );
-    
-    print('DEBUG: Supabase initialized successfully');
-    
-    // Safe logging (host only, never key)
-    final uri = Uri.parse(AppSupabase.url);
-    print('[SUPABASE] URL in use: ${uri.host}');
-  } catch (e) {
-    print('DEBUG: Supabase failed to initialize - ${e.toString()}');
-    debugPrint('Failed to initialize Supabase: $e');
+    print('DEBUG: API Service failed to initialize - ${e.toString()}');
+    debugPrint('Failed to initialize API Service: $e');
   }
 
   // 🚨 CRITICAL: Custom error handling - DO NOT REMOVE
