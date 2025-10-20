@@ -19,6 +19,8 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -30,30 +32,28 @@ class FeedNavigationHeaderWidget extends StatelessWidget {
           ],
         ),
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Following Button
-            _buildNavigationButton(
-              context,
-              'Following',
-              currentFeed == 'following',
-              () => _navigateToFeed(context, 'following'),
-            ),
+      padding: EdgeInsets.only(top: topPadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Following Button
+          _buildNavigationButton(
+            context,
+            'Following',
+            currentFeed == 'following',
+            () => _navigateToFeed(context, 'following'),
+          ),
 
-            SizedBox(width: 6.w),
+          SizedBox(width: 6.w),
 
-            // Discovery Button
-            _buildNavigationButton(
-              context,
-              'Discovery',
-              currentFeed == 'discovery',
-              () => _navigateToFeed(context, 'discovery'),
-            ),
-          ],
-        ),
+          // Discovery Button
+          _buildNavigationButton(
+            context,
+            'Discovery',
+            currentFeed == 'discovery',
+            () => _navigateToFeed(context, 'discovery'),
+          ),
+        ],
       ),
     );
   }
